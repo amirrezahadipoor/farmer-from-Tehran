@@ -263,7 +263,7 @@ export function addXp(s: State, n: number, ev: Events) {
     ev.toast(`🎁 پاداش پیشرفت: +${bonus.toLocaleString("fa-IR")} 🪙`, "ok");
   }
   if (lvlGained > 0 && s.stats.skillPoints > 0) {
-    ev.toast(`🧠 امتیاز مهارت جدید: ${s.stats.skillPoints} امتیاز در دسترس است (کلید K)`, "lvl");
+    ev.toast(`🧠 امتیاز مهارت جدید: ${s.stats.skillPoints} امتیاز در انتظار توست — از دکمه‌ی «مهارت» پایین صفحه خرجش کن`, "lvl");
   }
   checkAchievements(s, ev);
 }
@@ -415,15 +415,15 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       return;
     }
     if (t.k === "soil") {
-      ev.toast("خاک آماده کاشت است. ابزار بذر (کلید ۲) را انتخاب کنید.");
+      ev.toast("خاک آماده‌ی کاشت است — ابزار «کاشت» را از نوار پایین انتخاب کن.");
       return;
     }
     if (t.k === "grass") {
-      ev.toast("زمین چمن است. با بیل/شخم (کلید ۵) آن را به خاک کشاورزی تبدیل کنید.");
+      ev.toast("این زمین چمن است — با ابزار «شخم» به خاک کشاورزی تبدیلش کن.");
       return;
     }
     if (t.k === "tree" || t.k === "rock") {
-      ev.toast("برای پاکسازی موانع از تبر/کلنگ (کلید ۷) استفاده کنید.");
+      ev.toast("برای پاکسازی موانع، ابزار «پاکسازی» را انتخاب کن.");
       return;
     }
     return;
@@ -432,7 +432,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
   // 2. SEED TOOL: Only plants on tilled soil without a crop. Never clears grass, never harvests.
   if (tool === "seed") {
     if (t.k !== "soil") {
-      ev.toast("بذر فقط روی خاک شخم‌خورده کاشته می‌شود! ابتدا با بیل (کلید ۵) شخم بزنید.", "err");
+      ev.toast("بذر فقط روی خاک شخم‌خورده کاشته می‌شود! اول با ابزار «شخم» زمین را آماده کن.", "err");
       return;
     }
     if (t.crop) {

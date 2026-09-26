@@ -1,13 +1,52 @@
 @import "tailwindcss";
-@keyframes fadein { from { opacity: 0; transform: translateY(-8px) scale(.96) } to { opacity: 1; transform: none } }
 
+/* ---------- فونت وزیرمتن، میزبانی‌شده روی خود پروژه (آفلاین + بدون CDN) ---------- */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@keyframes fadein { from { opacity: 0; transform: translateY(-8px) scale(.96) } to { opacity: 1; transform: none } }
 @keyframes kenburns { 0% { transform: scale(1.04) translate3d(0,0,0) } 100% { transform: scale(1.16) translate3d(-1.5%,-1.5%,0) } }
+@keyframes sheetup { from { transform: translateY(100%) } to { transform: translateY(0) } }
 
 html, body {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
   touch-action: manipulation;
+  font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
 }
 button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 canvas { touch-action: none; }
+
+/* نصب‌شدنی به‌عنوان اپ: جلوگیری از انتخاب متن و کشیدن صفحه در کل بازی */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input, textarea { user-select: text; -webkit-user-select: text; }

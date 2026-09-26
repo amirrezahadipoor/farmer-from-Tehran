@@ -1,0 +1,30 @@
+name: پیشنهاد ویژگی (Feature)
+description: ایده‌ای برای بزرگ‌تر شدن بازی
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: چرا؟ کدام نمره‌ی ریویو را بالا می‌برد یا کدام فاز رودمپ را جلو می‌برد؟
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: دقیقاً چه چیزی اضافه شود؟
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: فاز پیشنهادی
+      options: [P1 موبایل, P2 داستان و تصویر, P3 آفلاین و فول‌تاچ, P4 UI/UX, P5 رفع نمره‌کاه‌ها, P6 گسترش]
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: تعریف «انجام‌شده» (DoD) با شاهد قابل‌سنجش
+    validations:
+      required: true

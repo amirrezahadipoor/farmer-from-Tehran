@@ -1,12 +1,20 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "golden-valley-farm",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check-assets": "node tools/check-assets.mjs",
+    "roadmap": "node tools/gen-roadmap.mjs",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "verify": "npm run typecheck && npm run check-assets && npm run test && npm run build",
+    "story-map": "node tools/story-map.mjs"
   },
   "dependencies": {
     "dotenv": "17.3.1",
@@ -17,6 +25,7 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "22.19.15",
     "@types/pg": "8.18.0",
@@ -27,6 +36,10 @@
     "eslint-config-next": "16.2.6",
     "postcss": "8.5.8",
     "tailwindcss": "4.1.17",
-    "typescript": "5.9.3"
-  }
+    "typescript": "5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "version": "0.1.0",
+  "description": "مزرعه طلایی — بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی، آفلاین‌فِرست و فول‌تاچ برای موبایل",
+  "license": "MIT"
 }

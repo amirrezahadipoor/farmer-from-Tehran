@@ -1,24 +1,35 @@
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
+/**
+ * اتصال تنبل (lazy) به پایگاه‌داده.
+ *
+ * چرا؟ چون نبودِ DATABASE_URL نباید بیلد یا اجرای آفلاین بازی را بشکند.
+ * بازی به‌صورت آفلاین‌فِرست کار می‌کند و پایگاه‌داده فقط برای همگام‌سازی ابری اختیاری است.
+ */
 
 const globalForDb = globalThis as typeof globalThis & {
-  __arenaNextJsPostgresqlPool?: Pool;
+  __goldenValleyPool?: Pool;
+  __goldenValleyDb?: NodePgDatabase<Record<string, never>>;
 };
 
-export const pool =
-  globalForDb.__arenaNextJsPostgresqlPool ??
-  new Pool({
-    connectionString: databaseUrl,
-  });
+export const hasDatabase = (): boolean => Boolean(process.env.DATABASE_URL);
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__arenaNextJsPostgresqlPool = pool;
+export function getDb(): NodePgDatabase<Record<string, never>> | null {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  if (!globalForDb.__goldenValleyPool) {
+    globalForDb.__goldenValleyPool = new Pool({
+      connectionString: url,
+      // برای محیط‌های بدون دیتابیس، سریع شکست بخورد و بازی به حالت آفلاین برود
+      connectionTimeoutMillis: 2500,
+      max: 5,
+    });
+    // خطای استخر نباید پروسه را بکشد
+    globalForDb.__goldenValleyPool.on("error", () => {});
+  }
+  if (!globalForDb.__goldenValleyDb) {
+    globalForDb.__goldenValleyDb = drizzle(globalForDb.__goldenValleyPool);
+  }
+  return globalForDb.__goldenValleyDb;
 }
-
-export const db = drizzle(pool);
