@@ -79,11 +79,12 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
       </div>
 
       {def.recipes.map((r, ri) => {
-        const ok = has(s, r.inp);
+        const lvlOk = (r.lvl ?? 0) <= s.level;
+        const ok = lvlOk && has(s, r.inp);
         const cost = Object.entries(r.inp).reduce((a, [k, n]) => a + (ITEMS[k]?.base || 0) * n, 0);
         return (
-          <div key={ri} className="flex items-center gap-2.5 rounded-2xl bg-white p-3 shadow-md">
-            <ItemIcon id={r.out} size={46} />
+          <div key={ri} className={`flex items-center gap-2.5 rounded-2xl bg-white p-3 shadow-md ${lvlOk ? "" : "opacity-60"}`}>
+            <ItemIcon id={r.out} size={46} className={lvlOk ? "" : "grayscale"} />
             <div className="flex-1">
               <div className="text-sm font-black text-slate-800">
                 {ITEMS[r.out]?.name}{" "}
@@ -116,7 +117,7 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
                 game.bump();
               }}
             >
-              تولید
+              {lvlOk ? "تولید" : `سطح ${fmt(r.lvl ?? 0)}`}
             </button>
           </div>
         );

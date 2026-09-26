@@ -424,13 +424,51 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
         for (let k = 0; k < 3; k++) { const ang = (k / 3) * Math.PI * 2 + i; ellipse(ctx, x + i * 2 + Math.cos(ang) * 3, y - 10 * sc + Math.sin(ang) * 3, 3 * sc, 3 * sc, g > 0.5 ? "#66bb6a" : "#81c784"); }
       } break;
     }
+    default:
+      drawGenericPlant(ctx, c.look ?? "bush", c.color, leaf, x, y, g, sc, sw, seed, seasonId);
   }
+}
+
+/** ظاهرهای عمومی برای محصول‌های سطح بالا (P6.1): درختِ میوه، بوته، شالیزار، پنبه */
+function drawGenericPlant(ctx: CanvasRenderingContext2D, look: string, color: string, leaf: string, x: number, y: number, g: number, sc: number, sw: number, seed: number, seasonId: string) {
+  const ripe = g >= 1;
+  const autumn = seasonId === "autumn", winter = seasonId === "winter";
+  if (look === "tree") {
+    const h = 20 + 26 * sc;
+    ctx.fillStyle = "#5d4037"; ctx.fillRect(x - 2.4, y - h * 0.55, 4.8, h * 0.55);
+    const canopy = winter ? "#b0bec5" : autumn ? "#c0a030" : leaf;
+    ellipse(ctx, x + sw * 0.4, y - h * 0.72, 13 * sc + 4, 10 * sc + 3, canopy);
+    ellipse(ctx, x - 5 * sc + sw * 0.4, y - h * 0.8, 7 * sc + 2, 5 * sc + 2, shade(canopy, 0.18));
+    if (g > 0.55) for (let i = 0; i < 6; i++) {
+      const fx = x + (hash(seed, i) - 0.5) * 22 * sc + sw * 0.4, fy = y - h * 0.72 + (hash(i, seed) - 0.5) * 14 * sc;
+      ellipse(ctx, fx, fy, 2.6 * sc + 0.6, 2.6 * sc + 0.6, ripe ? color : shade(color, 0.45));
+    }
+    return;
+  }
+  if (look === "paddy") {
+    ellipse(ctx, x, y + 1, 9, 3.5, "rgba(79,195,247,0.45)");
+    const col = ripe ? "#e0c060" : leaf;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+    for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(x + i * 1.6, y); ctx.quadraticCurveTo(x + i * 2, y - 10 * sc, x + i * 3.2 + sw, y - 20 * sc); ctx.stroke(); }
+    if (g > 0.6) for (let i = -1; i <= 1; i++) ellipse(ctx, x + i * 5 + sw, y - 20 * sc, 1.8, 3.6 * sc, ripe ? "#f5e6a8" : "#c5e1a5");
+    return;
+  }
+  if (look === "boll") {
+    ctx.strokeStyle = "#6d4c41"; ctx.lineWidth = 1.5;
+    for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 3, y); ctx.lineTo(x + i * 4 + sw * 0.4, y - 18 * sc); ctx.stroke(); }
+    for (let i = -1; i <= 1; i++) ellipse(ctx, x + i * 5 + sw * 0.4, y - 12 * sc, 4 * sc, 2.4 * sc, leaf);
+    if (g > 0.55) for (let i = -1; i <= 1; i++) { const px = x + i * 4 + sw * 0.4, py = y - 19 * sc; ellipse(ctx, px, py, (ripe ? 4 : 2.5) * sc + 0.6, (ripe ? 3.4 : 2) * sc + 0.6, ripe ? color : "#dcedc8"); }
+    return;
+  }
+  // bush
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + seed; ellipse(ctx, x + Math.cos(a) * 6 * sc + sw * 0.3, y - 7 * sc + Math.sin(a) * 3 * sc, 6 * sc + 1, 4.5 * sc + 1, i % 2 ? leaf : shade(leaf, 0.15)); }
+  if (g > 0.5) for (let i = 0; i < 5; i++) ellipse(ctx, x + (hash(seed, i + 2) - 0.5) * 14 * sc, y - 6 * sc - hash(i + 5, seed) * 8 * sc, 1.9, 1.9, ripe ? color : shade(color, 0.5));
 }
 
 function drawCrop(ctx: CanvasRenderingContext2D, t: Tile, gx: number, gy: number, now: number, seasonId: string) {
   const { x, y } = tileCenter(gx, gy);
   const g = t.g || 0;
-  const n = t.crop === "wheat" || t.crop === "carrot" || t.crop === "strawberry" || t.crop === "clover" ? 3 : 2;
+  const n = t.crop === "wheat" || t.crop === "carrot" || t.crop === "strawberry" || t.crop === "clover" ? 3 : CMAP[t.crop!]?.look === "tree" ? 1 : 2;
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const u = (i + 0.5) / n, v = (j + 0.5) / n;
     const px = x + (u - v) * A * 0.85, py = y + (u + v - 1) * B * 0.85;
@@ -664,6 +702,73 @@ function drawBuilding(ctx: CanvasRenderingContext2D, t: Tile, x: number, y: numb
       // tiny tractor wheels
       ctx.fillStyle = "#212121";
       ellipse(ctx, x - a * 0.4, y + b * 0.3, 6, 3, "#212121"); ellipse(ctx, x + a * 0.4, y + b * 0.6, 6, 3, "#212121");
+      break;
+    }
+    case "workshop": {
+      // کارگاهِ عمومیِ سطح بالا: ساختمانِ آجری با تابلوی کالای اصلی و دودکش هنگام تولید
+      const a = A * 0.66, b = B * 0.66, h = 32;
+      box(ctx, x, y, a, b, h, W);
+      faceQuad(ctx, x, y, a, b, "R", 0.38, 0.62, 0, 18, "#4e342e");
+      windowLit(ctx, x, y, a, b, "L", 0.3, 14, dark);
+      windowLit(ctx, x, y, a, b, "L", 0.7, 14, dark);
+      windowLit(ctx, x, y, a, b, "R", 0.82, 14, dark);
+      roofGable(ctx, x, y, a, b, h, 22, R);
+      const sx = x + a * 0.5, sy = y - h * 0.62;
+      ellipse(ctx, sx, sy, 9, 9, "#fff8e1"); ctx.strokeStyle = "#8d6e63"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(sx, sy, 9, 9, 0, 0, Math.PI * 2); ctx.stroke();
+      if (def.recipes[0]) drawIcon(ctx, "item:" + def.recipes[0].out, sx, sy, 13);
+      if (t.q && t.q.length) { const cx = x - a * 0.35, cy = y - h - 6; ctx.fillStyle = "#6d4c41"; ctx.fillRect(cx - 4, cy - 14, 8, 18); smoke(ctx, cx, cy - 18, now); }
+      break;
+    }
+    case "qanat": {
+      // قنات: آب‌انبارِ گنبدی + جوی روان
+      ctx.strokeStyle = `rgba(79,195,247,${0.75 + 0.2 * Math.sin(now * 3)})`; ctx.lineWidth = 4; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x + 4, y + 6); ctx.quadraticCurveTo(x + 22, y + 10, x + 34, y + 2); ctx.stroke(); ctx.lineCap = "butt";
+      const a = A * 0.42, b = B * 0.42, h = 14;
+      box(ctx, x - 6, y - 2, a, b, h, W);
+      ctx.fillStyle = shade(W, -0.1); ctx.beginPath(); ctx.ellipse(x - 6, y - 2 - h, a * 0.82, a * 0.72, 0, Math.PI, 0); ctx.fill();
+      ellipse(ctx, x - 6, y - 2 - h - a * 0.66, 2.6, 2.6, R);
+      faceQuad(ctx, x - 6, y - 2, a, b, "R", 0.35, 0.65, 0, 9, "#263238");
+      for (let k = 0; k < 3; k++) { const kx = x + 12 + k * 7; ellipse(ctx, kx, y + 8 - k * 2, 3.6, 1.8, "#8d6e63"); ellipse(ctx, kx, y + 7.6 - k * 2, 2.2, 1, "#3e2723"); }
+      break;
+    }
+    case "caravanserai": {
+      // کاروانسرا: بنای پهنِ طاق‌دار با گنبدِ کوچک
+      const a = A * 0.86, b = B * 0.86, h = 22;
+      box(ctx, x, y, a, b, h, W);
+      for (let k = 0; k < 4; k++) faceQuad(ctx, x, y, a, b, "L", 0.1 + k * 0.22, 0.24 + k * 0.22, 0, 14, "#4e342e");
+      for (let k = 0; k < 4; k++) faceQuad(ctx, x, y, a, b, "R", 0.1 + k * 0.22, 0.24 + k * 0.22, 0, 14, "#5d4037");
+      poly(ctx, [[x, y - b - h], [x + a, y - h], [x, y + b - h], [x - a, y - h]], shade(W, 0.12));
+      ctx.fillStyle = "#26a69a"; ctx.beginPath(); ctx.ellipse(x, y - h - 4, 10, 10, 0, Math.PI, 0); ctx.fill();
+      ellipse(ctx, x, y - h - 14, 2, 2, R);
+      if (t.q && t.q.length) { const cx = x + a * 0.55 + Math.sin(now * 0.8) * 6; ellipse(ctx, cx, y + 14, 6, 3, "#c8a27a"); ctx.fillStyle = "#c8a27a"; ctx.fillRect(cx + 3, y + 5, 2.4, 8); }
+      break;
+    }
+    case "tiled_pool": {
+      shadowAt(ctx, x, y, 26, sdx * 0.4);
+      diamond(ctx, x, y, A * 0.78, B * 0.78); ctx.fillStyle = "#e0f2f1"; ctx.fill();
+      diamond(ctx, x, y, A * 0.66, B * 0.66); ctx.fillStyle = "#00897b"; ctx.fill();
+      diamond(ctx, x, y, A * 0.58, B * 0.58); ctx.fillStyle = `rgba(77,208,225,${0.85 + 0.1 * Math.sin(now * 2)})`; ctx.fill();
+      for (let k = 0; k < 8; k++) { const an = (k / 8) * Math.PI * 2; ellipse(ctx, x + Math.cos(an) * A * 0.72, y + Math.sin(an) * B * 0.72, 2.2, 1.2, k % 2 ? "#1565c0" : "#fdd835"); }
+      ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x, y - 2); ctx.quadraticCurveTo(x + Math.sin(now * 2) * 3, y - 16, x + Math.sin(now * 2) * 4, y - 20); ctx.stroke();
+      break;
+    }
+    case "windcatcher": {
+      shadowAt(ctx, x, y, 16, sdx);
+      const a = A * 0.3, b = B * 0.3, h = 64;
+      box(ctx, x, y, a, b, h, W);
+      for (let k = 0; k < 3; k++) { faceQuad(ctx, x, y, a, b, "L", 0.18 + k * 0.28, 0.3 + k * 0.28, h - 22, h - 4, "#4e342e"); faceQuad(ctx, x, y, a, b, "R", 0.18 + k * 0.28, 0.3 + k * 0.28, h - 22, h - 4, "#3e2723"); }
+      roofPyramid(ctx, x, y, a, b, h, 6, R);
+      break;
+    }
+    case "tiled_portal": {
+      shadowAt(ctx, x, y, 24, sdx);
+      const a = A * 0.62, b = B * 0.2, h = 58;
+      box(ctx, x, y, a, b, h, W);
+      faceQuad(ctx, x, y, a, b, "R", 0.28, 0.72, 0, 34, "#0d47a1");
+      faceQuad(ctx, x, y, a, b, "R", 0.34, 0.66, 0, 28, "#3e2723");
+      faceQuad(ctx, x, y, a, b, "R", 0, 1, h - 8, h, R);
+      faceQuad(ctx, x, y, a, b, "L", 0, 1, h - 8, h, shade(R, -0.1));
+      for (let k = 0; k < 5; k++) faceQuad(ctx, x, y, a, b, "R", 0.06 + k * 0.2, 0.12 + k * 0.2, 38, 46, "#fdd835");
       break;
     }
     case "sawmill": {

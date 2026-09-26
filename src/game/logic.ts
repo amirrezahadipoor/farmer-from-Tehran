@@ -217,6 +217,8 @@ export function priceAt(s: State, id: string, sat: number): number {
     const dItems = ["egg","milk","wool","pork","honey","butter","cheese","sausage","sweater"];
     if (dItems.includes(id)) bonus *= 1.5;
   }
+  // بسته‌بندی صادراتی: کالاهای کارگاهی (پله‌ی ۲ به بالا) +۱۰٪
+  if (hasTech(s, "export_pack") && (ITEMS[id]?.tier ?? 1) >= 2) bonus += 0.10;
   // خشکسالی: محصولِ کشاورزی کمیاب می‌شود → قیمت محصول‌ها +۲۰٪
   if (s.currentEvent?.type === "drought" && CROP_ITEMS.has(id)) bonus *= 1 + DROUGHT.price;
   const pm = 1 + s.prestige * 0.15;
@@ -231,8 +233,30 @@ export function price(s: State, id: string): number {
 
 export function unlockedItems(s: State): string[] {
   const out: string[] = CROPS.filter((c) => c.lvl <= s.level).map((c) => c.out ?? c.id);
-  BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => out.push(r.out)); });
+  BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => { if ((r.lvl ?? 0) <= s.level) out.push(r.out); }); });
   return Array.from(new Set(out));
+}
+
+/** «بازکردنی»ها در یک سطح: محصول، ساختمان/دکور، دستورِ تازه و تحقیق (P6.1) */
+export interface Unlock { kind: "crop" | "building" | "decor" | "recipe" | "tech"; id: string; name: string; }
+export function unlocksAt(level: number): Unlock[] {
+  const out: Unlock[] = [];
+  for (const c of CROPS) if (c.lvl === level) out.push({ kind: "crop", id: c.id, name: `${c.icon} ${c.name}` });
+  for (const b of BUILDINGS) {
+    if (b.lvl === level) out.push({ kind: b.isDecor ? "decor" : "building", id: b.id, name: `${b.icon} ${b.name}` });
+    for (const r of b.recipes) if (r.lvl === level && r.lvl > b.lvl) out.push({ kind: "recipe", id: `${b.id}:${r.out}`, name: `${ITEMS[r.out]?.icon ?? ""} ${ITEMS[r.out]?.name ?? r.out}` });
+  }
+  for (const t of TECH_TREE) if (t.lvl === level) out.push({ kind: "tech", id: t.id, name: `${t.icon} ${t.name}` });
+  return out;
+}
+
+/** نزدیک‌ترین سطحِ بعدی که چیزی باز می‌کند (برای «بازکردنیِ بعدی» در UI) */
+export function nextUnlock(level: number, max = 60): { level: number; items: Unlock[] } | null {
+  for (let l = level + 1; l <= max; l++) {
+    const items = unlocksAt(l);
+    if (items.length) return { level: l, items };
+  }
+  return null;
 }
 
 export function genOrder(s: State): Order {
@@ -243,6 +267,7 @@ export function genOrder(s: State): Order {
   const val = items.reduce((a, it) => a + (ITEMS[it.id]?.base || 10) * it.n, 0);
   let m = 1.3 + s.rep * 0.012 + Math.random() * 0.2;
   if (hasTech(s, "order_bonus")) m *= 1.25;
+  if (hasTech(s, "global_market")) m *= 1.15;
   if (hasSkill(s, "zen_master")) m *= 1.05;
   return {
     id: s.nextId++, npc: Math.floor(Math.random() * NPCS.length), items,
@@ -265,10 +290,7 @@ export function addXp(s: State, n: number, ev: Events) {
     s.level++;
     lvlGained++;
     s.stats.skillPoints += 1;
-    const unl = [
-      ...CROPS.filter((c) => c.lvl === s.level).map((c) => c.icon + " " + c.name),
-      ...BUILDINGS.filter((b) => b.lvl === s.level).map((b) => b.icon + " " + b.name),
-    ];
+    const unl = unlocksAt(s.level).map((u) => u.name);
     ev.toast(`🎉 سطح ${fmt(s.level)}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
     ev.sound("lvl");
     const bonus = s.level * 45;
@@ -347,6 +369,7 @@ export const queueMax = (s: State) => 3 + Math.floor(s.level / 4) + (hasTech(s, 
 export function queueRecipe(s: State, t: Tile, ri: number, ev: Events, silent = false): boolean {
   const b = BMAP[t.b!]; if (!b) return false;
   const r = b.recipes[ri]; if (!r) return false;
+  if ((r.lvl ?? 0) > s.level) { if (!silent) ev.toast(`این دستور از سطح ${fmt(r.lvl ?? 0)} باز می‌شود`, "err"); return false; }
   const maxQ = queueMax(s);
   if ((t.q?.length || 0) >= maxQ) { if (!silent) ev.toast("صف تولید این کارگاه پر است", "err"); return false; }
   if (!has(s, r.inp)) { if (!silent) ev.toast("مواد اولیه کافی در انبار نیست", "err"); return false; }
@@ -662,6 +685,7 @@ export function setPlayerName(s: State, name: string) {
 export function unlockTech(s: State, id: string, ev: Events) {
   const t = TECH_TREE.find((x) => x.id === id);
   if (!t || s.techs.includes(id)) return;
+  if ((t.lvl ?? 0) > s.level) { ev.toast(`این تحقیق از سطح ${fmt(t.lvl ?? 0)} باز می‌شود`, "err"); return; }
   if (t.req && !s.techs.includes(t.req)) { ev.toast("ابتدا دانش پیش‌نیاز را بیاموزید", "err"); return; }
   if (s.coins < t.cost) { ev.toast("سکه کافی برای تحقیق ندارید", "err"); return; }
   s.coins -= t.cost; s.stats.spent += t.cost;
@@ -805,13 +829,15 @@ export function tick(s: State, dt: number, ev: Events) {
   if (s.currentEvent && s.time >= s.currentEvent.endsAt) { s.currentEvent = null; ev.toast("رویداد فصلی دهکده به پایان رسید"); }
   const season = SEASONS[s.seasonIndex];
   const drought = s.currentEvent?.type === "drought";
-  const dryRate = drought ? DROUGHT.dry : 1;
+  // خشکسالی خشک‌شدن را تند و «شبکه‌ی قنات» کُند می‌کند (رطوبت ۵۰٪ ماندگارتر)
+  const dryRate = (drought ? DROUGHT.dry : 1) / (hasTech(s, "qanat_net") ? 1.5 : 1);
   let gMult = season.growthRate;
   if (s.currentEvent?.type === "bountiful_harvest") gMult *= 1.2;
   if (s.weather === "heatwave") gMult *= 0.9;
   if (s.weather === "snow") gMult *= 0.82;
   if (s.weather === "fog") gMult *= 0.95;
   if (hasSkill(s, "grow_master")) gMult *= 1.10;
+  if (hasTech(s, "biotech")) gMult *= 1.15;
 
   let autoR = 0;
   if (hasTech(s, "precision_agri")) autoR = 1;
@@ -846,13 +872,14 @@ export function tick(s: State, dt: number, ev: Events) {
     if (t.k === "bld" && t.b) {
       const b = BMAP[t.b]; if (!b) continue;
       const r = (b.radius || 0) + autoR;
-      if (t.b === "sprinkler" || t.b === "mega_sprinkler" || t.b === "well") {
-        // چاه = چهار زمینِ مجاور (بعلاوه‌ای)؛ آب‌پاش‌ها = مربعِ کامل (۸ و ۲۴ زمین)
+      if (t.b === "sprinkler" || t.b === "mega_sprinkler" || t.b === "well" || t.b === "qanat") {
+        // چاه و قنات = لوزی (فاصله‌ی منهتن)؛ آب‌پاش‌ها = مربعِ کامل (۸ و ۲۴ زمین)
+        const diamondShape = t.b === "well" || t.b === "qanat";
         const wr = r + waterBonus;
         for (let dy = -wr; dy <= wr; dy++) for (let dx = -wr; dx <= wr; dx++) {
           const nx = x+dx, ny = y+dy;
           if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
-          if (t.b === "well" && Math.abs(dx)+Math.abs(dy) > wr) continue;
+          if (diamondShape && Math.abs(dx)+Math.abs(dy) > wr) continue;
           const n = s.tiles[idx(nx, ny)];
           if (n.k === "soil") { n.wet = true; n.dry = Math.max(n.dry ?? 0, SPRINKLER_SECONDS); }
         }
