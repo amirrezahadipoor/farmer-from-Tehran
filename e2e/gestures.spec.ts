@@ -120,7 +120,7 @@ test.describe("فول‌تاچ و آفلاین‌تایم", () => {
 
     // اینترنت قطع است تا سیوِ محلی (۲ ساعت پیش) مرجع باشد، نه نسخه‌ی تازه‌ی سرور
     await context.setOffline(true);
-    await page.reload({ waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "load" });
     await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
     const splash = page.getByRole("button", { name: /آغاز|شروع|بازی/ }).first();
     if (await splash.count()) await splash.tap().catch(() => undefined);
