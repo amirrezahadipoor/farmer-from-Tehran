@@ -5,9 +5,11 @@
  *  • سازگارسازی خودکار رزولوشن (dpr) تا دستگاه ضعیف لگ نزند
  *  • tick منطق، افکت‌ها، هوش راه‌روندگان (کارگرها)، رندر و بررسی هدف داستان
  *  • هر ۰.۲۵ ثانیه یک‌بار UI را باخبر می‌کند (نه ۶۰ بار)
+ *  • هر ۱ ثانیه حالِ دره (ساعت، فصل، هوا) را به صدای محیط و موسیقی می‌دهد (P5.12)
  */
 
-import { N } from "./data";
+import { ambience, type AmbientEnv } from "./audio";
+import { DAY_LEN, N, SEASONS } from "./data";
 import { tick, locked, idx, type Events, type State } from "./logic";
 import { render } from "./render";
 import { updateStory } from "./story";
@@ -21,6 +23,15 @@ export function nextDpr(cur: number, avgFrameMs: number, max: number): number {
   if (avgFrameMs > 20 && cur > MIN_DPR) return Math.max(MIN_DPR, cur - 0.15); // کند → رزولوشن کمتر
   if (avgFrameMs < 13.5 && cur < max) return Math.min(max, cur + 0.1); // جا هست → کیفیت بیشتر
   return cur;
+}
+
+/** حالِ صوتیِ دره از وضعیتِ بازی (خالص؛ تست‌پذیر) */
+export function soundEnv(s: State): AmbientEnv {
+  return {
+    hour: ((s.time % DAY_LEN) / DAY_LEN) * 24,
+    season: SEASONS[s.seasonIndex]?.id ?? "spring",
+    weather: s.weather,
+  };
 }
 
 function stepWalkers(s: State, dt: number) {
@@ -80,6 +91,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   let raf = 0,
     last = performance.now(),
     uiAcc = 0,
+    audioAcc = 1,
     lastFrame = performance.now();
 
   const resize = () => {
@@ -132,6 +144,11 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       stepWalkers(s, dt);
       render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values()]);
       updateStory(s, ev); // بررسی هدف فصلِ داستان
+      audioAcc += dt;
+      if (audioAcc >= 1) {
+        audioAcc = 0;
+        ambience(soundEnv(s));
+      }
       uiAcc += dt;
       if (uiAcc > 0.25) {
         uiAcc = 0;

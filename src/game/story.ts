@@ -263,7 +263,7 @@ function finishChapter(s: State, ch: StoryChapter, ev: Events) {
     if (ch.reward.xp) addXp(s, ch.reward.xp, ev);
     if (ch.reward.coins > 0 || ch.reward.sp > 0) {
       ev.toast(`فصل ${fmt(ch.num)} «${ch.title}» تمام شد! +${fmt(ch.reward.coins)} سکه و ${fmt(ch.reward.sp)} امتیاز مهارت`, "lvl");
-      ev.sound("lvl");
+      ev.sound("chapter");
     }
   }
   st.chapter++;
@@ -305,7 +305,7 @@ export function updateStory(s: State, ev: Events) {
     s.story.sceneIdx = 0;
     s.story.shown = true;
     ev.toast(`هدفِ فصل «${ch.title}» کامل شد! صحنه‌ی پایانی را ببین`, "lvl");
-    ev.sound("lvl");
+    ev.sound("goal");
   }
 }
 

@@ -22,6 +22,7 @@ const files: Record<string, string> = {
   touch: sized(uiSvg("hand")),
   save: sized(uiSvg("save")),
   persian: sized(uiSvg("contracts")),
+  music: sized(uiSvg("music")),
   wheat: sized(itemSvg("wheat")),
   // ROADMAP — وضعیت آیتم‌ها و KPI
   done: sized(uiSvg("check")),
