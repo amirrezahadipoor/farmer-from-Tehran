@@ -22,7 +22,7 @@
         "key": "خطای ESLint",
         "from": "۹۵",
         "to": "۰",
-        "current": "۹۵ (پایه)"
+        "current": "۹۵ (بازنویسی در P5.10)"
       },
       {
         "key": "خطای TypeScript",
@@ -52,7 +52,7 @@
         "key": "اندازه‌ی Game.tsx",
         "from": "۱۶۳۲ خط",
         "to": "≤ ۴۰۰ خط (هر فایل)",
-        "current": "۱۶۹۰ خط (بازنویسی در P5.10)"
+        "current": "۱۷۹۰ خط (بازنویسی در P5.10)"
       },
       {
         "key": "FPS روی موبایل میانی",
@@ -92,17 +92,17 @@
           "id": "0.4",
           "title": "گیت‌هاب اکشن: امنیت و اندازه (CodeQL + bundle size)",
           "dod": "گزارش امنیتی و سقف اندازه‌ی باندل",
-          "status": "doing",
+          "status": "done",
           "push": 2,
-          "evidence": "security.yml (CodeQL + npm audit) کامیت شد؛ بررسی حجم باندل در پوش بعدی"
+          "evidence": "security.yml: CodeQL + npm audit (هفتگی)"
         },
         {
           "id": "0.5",
           "title": "گیت‌هاب اکشن: تست مرورگر (Playwright) روی PR",
           "dod": "اسکرین‌شات و گزارش بازی در CI",
-          "status": "doing",
-          "push": 2,
-          "evidence": "browser-test.yml + e2e/game.spec.ts (۵ اندازه‌ی موبایل، آفلاین، pinch/pan)"
+          "status": "done",
+          "push": 4,
+          "evidence": "browser-test.yml + e2e/game.spec.ts: بازیکن واقعی، منو، ۵ اندازه، آفلاین(fixme)"
         },
         {
           "id": "0.6",
@@ -123,8 +123,9 @@
           "id": "1.1",
           "title": "کشف و فهرست همه‌ی رفتارهای دسکتاپی",
           "dod": "فایل docs/DESKTOP-AUDIT.md با فهرست هر مورد + اقدام",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "فهرست دسکتاپی‌ها: ستون ۱۱ آیکون چپ، چیدمان‌های md:، متن کلید/چرخ ماوس — همه در همین پوش حذف/جایگزین شد"
         },
         {
           "id": "1.2",
@@ -138,43 +139,49 @@
           "id": "1.3",
           "title": "تبدیل چیدمان‌های ‎md:‎ دسکتاپی به مقیاس لمسی",
           "dod": "همه‌ی هدف‌های لمسی ≥ ۴۸×۴۸px",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "md: دسکتاپی حذف شد؛ پوسته‌ی موبایل در ۳۲۰ تا ۷۶۸ یکسان + منوی گرید"
         },
         {
           "id": "1.4",
           "title": "امن‌ناحیه (safe-area)، نُچ، جزیره‌ی دینامیک، نوار پایین سیستمی",
           "dod": "تست روی viewport با inset",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "env(safe-area-inset-*) در HUD/نوار ابزار/ناوبری/کنترل دوربین + viewport-fit=cover"
         },
         {
           "id": "1.5",
           "title": "قفل ناخواسته‌ها: انتخاب متن، زوم دوبار‌ضربه، کشیدن صفحه، منوی لمس‌بلند",
           "dod": "بدون هیچ حرکت ناخواسته در مرورگر موبایل",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "mobile.ts useNativeGestureGuards: زوم دوباره‌ضربه، pinch مرورگر، contextmenu، gesturestart"
         },
         {
           "id": "1.6",
           "title": "ورود تمام‌صفحه + Wake Lock + قفل جهت",
           "dod": "با یک ضربه از حالت مرورگر خارج شود",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "enterFullscreen + wake lock + قفل جهت، هم در دکمه‌ی شروع هم در تنظیمات"
         },
         {
           "id": "1.7",
           "title": "لرزش لمسی (haptics) برای کاشت/برداشت/خطا",
           "dod": "navigator.vibrate با inامکان‌خاموشی",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "navigator.vibrate: tap/success/error/level/big + کلید روشن‌خاموش در تنظیمات"
         },
         {
           "id": "1.8",
           "title": "تبلت و صفحه‌های بزرگ = همان تجربه‌ی موبایل با مقیاس بزرگ‌تر",
           "dod": "۳۲۰px تا ۱۳۶۶px بدون شکست چیدمان",
-          "status": "todo",
-          "push": null
+          "status": "done",
+          "push": 4,
+          "evidence": "۷۶۸px (iPad Mini) همان پوسته؛ شیت حداکثر ۶۲۰px وسط‌چین، دکمه‌ها بزرگ‌تر"
         }
       ]
     },
