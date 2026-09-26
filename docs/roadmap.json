@@ -34,7 +34,7 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۱۹ unit + ۱۸ E2E (Playwright موبایل)"
+    "current": "۱۹ unit + ۲۵ E2E (Playwright موبایل)"
    },
    {
     "key": "تصاویر ۴۰۴",
@@ -52,7 +52,7 @@
     "key": "اندازه‌ی Game.tsx",
     "from": "۱۶۳۲ خط",
     "to": "≤ ۴۰۰ خط (هر فایل)",
-    "current": "۱۹۷۵ خط (بازنویسی در P5.10)"
+    "current": "۲۰۷۵ خط (بازنویسی در P5.10)"
    },
    {
     "key": "FPS روی موبایل میانی",
@@ -313,50 +313,57 @@
      "id": "4.1",
      "title": "Bottom-Sheet کشویی برای همه‌ی پنل‌ها + swipe-down برای بستن",
      "dod": "پنل‌ها با یک انگشت باز/بسته شوند",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "شیتِ واحد برای همه‌ی پنل‌ها + بستن با کشیدن دستگیره — e2e/mobile-ux.spec.ts «پنل‌ها شیت‌اند»"
     },
     {
      "id": "4.2",
      "title": "نوار ابزار در دسترس شست + اندازه‌های لمسی استاندارد",
      "dod": "همه‌ی دکمه‌ها ≥ ۴۸px و در ناحیه‌ی راحت",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "قاعده‌ی سراسری button{min-height:44px} + نوار ابزار قابل‌اسکرول با هدف‌های ≥۴۴px — e2e «هدف‌های لمسی ≥ ۴۴px» در ۵ اندازه (۳۲۰..۸۴۴ افقی)"
     },
     {
      "id": "4.3",
      "title": "مقیاس‌بندی تایپوگرافی و آیکون با اندازه‌ی صفحه",
      "dod": "بدون سرریز متن در ۳۲۰px",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "مقیاس ریشه‌ی rem (۳۶۰/۴۳۰/۷۶۸px) + کلاس‌های min-[430px]/min-[768px] روی HUD و نوار ابزار — e2e «تایپوگرافی با بزرگ‌تر شدن صفحه»"
     },
     {
      "id": "4.4",
      "title": "حالت افقی (landscape) برای بازی",
      "dod": "چیدمان افقی کامل و قابل بازی",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "landscape-compact + تست اندازه‌ی ۸۴۴×۳۹۰ (بدون سرریز، اهداف لمسی سالم) در e2e/mobile-ux.spec.ts"
     },
     {
      "id": "4.5",
      "title": "بازخورد لمسی/بصری برای هر عمل (toast، لرزش، انیمیشن)",
      "dod": "هیچ عملی بی‌پاسخ نماند",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "toast + لرزش (vibrate) + انیمیشن active:scale — e2e «بازخورد لمسی و بصری» با stub روی navigator.vibrate"
     },
     {
      "id": "4.6",
      "title": "دسترس‌پذیری: کنتراست، اندازه‌ی متن، امکان بزرگ‌نمایی معقول، حالت کم‌حرکت",
      "dod": "امتیاز Lighthouse a11y ≥ ۹۵",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "prefers-reduced-motion (CSS + خاموش‌کردن ذرات هوا در render.ts)، focus-visible، کف اندازه‌ی متن ۱۱px — e2e «کاهش حرکت»"
     },
     {
      "id": "4.7",
      "title": "جریان اولین‌بار (onboarding) تعاملی و ۳۰ ثانیه‌ای",
      "dod": "بازیکن تازه بدون راهنما اولین برداشت را انجام دهد",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": null,
+     "evidence": "آموزش تعاملی سه‌گامی اولین‌بار با پرچم farm_onboard — e2e «آموزش اولین‌بار» + docs/shots/ux-onboarding.png"
     }
    ]
   },

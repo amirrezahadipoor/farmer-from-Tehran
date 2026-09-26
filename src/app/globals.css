@@ -42,6 +42,12 @@ html, body {
   font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
 }
 button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* استاندارد لمسی: هر کنترل حداقل ۴۴×۴۴ CSS px (راهنمای iOS/Android) */
+button { min-height: var(--tap-min); }
+button:not(.tap-tight) { min-width: var(--tap-min); }
+/* کنترل‌های ریزِ درون‌متنی (بستن توست، بج‌های تزئینی) از این قاعده مستثنا می‌شوند */
+.tap-tight { min-width: 0 !important; min-height: 0 !important; }
 canvas { touch-action: none; }
 
 /* نصب‌شدنی به‌عنوان اپ: جلوگیری از انتخاب متن و کشیدن صفحه در کل بازی */
@@ -50,3 +56,48 @@ body {
   -webkit-user-select: none;
 }
 input, textarea { user-select: text; -webkit-user-select: text; }
+
+/* ==========================================================================
+   لایه‌ی UI/UX موبایل (P4)
+   ۱. مقیاس تایپوگرافی با اندازه‌ی صفحه: ریشه‌ی rem با عرض صفحه گره می‌خورد
+      تا متن‌های px-based هم در گوشی کوچک ریز نشوند و در تبلت بزرگ‌تر شوند.
+   ۲. احترام به «کاهش حرکت» سیستم (دسترس‌پذیری).
+   ۳. حلقه‌ی فوکوس واضح، اندازه‌ی متن حداقل، و کنتراست.
+   ========================================================================== */
+
+:root {
+  /* مقیاس تایپوگرافی واکنشی: ۳۲۰px → 0.94 و ۷۶۸px+ → 1.12 */
+  --ui-scale: clamp(0.94, 0.78 + 0.06vw * 3.4, 1.12);
+  --tap-min: 44px;
+}
+
+/* اندازه‌ی کمینه‌ی متن‌های ریز HUD: هیچ متنی ریزتر از ۱۱px نمی‌شود */
+.text-\[9px\], .text-\[8px\] { font-size: 11px !important; line-height: 1.15 !important; }
+.text-\[10px\] { font-size: 11px !important; }
+
+/* ریشه: مقیاس درشت‌تر برای صفحه‌های بزرگ (تبلت/دسکتاپ = همان تجربه، بزرگ‌تر) */
+@media (min-width: 430px) { html { font-size: 17px; } }
+@media (min-width: 768px) { html { font-size: 18px; } }
+@media (max-width: 360px) { html { font-size: 15px; } }
+
+/* احترام به تنظیم «کاهش حرکت» کاربر */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* حلقه‌ی فوکوس برای دسترس‌پذیری (کاربر کیبورد/سوییچ) */
+:where(button, [role="button"], input, a):focus-visible {
+  outline: 3px solid #0ea5e9;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* حالت افقی: پنل‌ها کوتاه‌تر و نوار ابزار باریک‌تر تا نقشه دیده شود */
+@media (orientation: landscape) and (max-height: 520px) {
+  .landscape-compact { max-height: 66vh !important; }
+}

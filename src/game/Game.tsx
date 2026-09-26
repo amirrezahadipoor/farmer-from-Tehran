@@ -283,6 +283,7 @@ export default function Game() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("");
+  const [onboard, setOnboard] = useState(0); // ۰ = بسته، ۱..۳ = گام آموزش اولین‌بار
   const [away, setAway] = useState<null | {
     minutes: number; coins: number; xp: number; levels: number; ready: number; days: number;
   }>(null);
@@ -476,6 +477,16 @@ export default function Game() {
     saveRef.current = save;
   }, [save]);
 
+  // آموزش تعاملی اولین‌بار (۳ گام، ~۲۰ ثانیه) — جایگزین متن‌های دسکتاپیِ حذف‌شده
+  useEffect(() => {
+    if (!ready || !started) return;
+    try {
+      if (localStorage.getItem("farm_onboard") !== "1") setOnboard(1);
+    } catch {
+      /* حافظه در دسترس نیست */
+    }
+  }, [ready, started]);
+
   useEffect(() => {
     if (!ready) return;
     const iv = setInterval(save, 12000);
@@ -507,6 +518,7 @@ export default function Game() {
       cv.style.width = v.w + "px";
       cv.style.height = v.h + "px";
       if (v.w < 700) v.cam.z = Math.min(v.cam.z, 0.6);
+      v.reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     };
     resize();
     window.addEventListener("resize", resize);
@@ -936,8 +948,8 @@ export default function Game() {
             size={30}
           />
           <span className="text-right leading-tight">
-            <span className="block text-[11px] font-black">روز {fmt(s.day)}</span>
-            <span className="block font-mono text-[10px] opacity-80">{String(hh).padStart(2, "0")}:{String(mm).padStart(2, "0")}</span>
+            <span className="block text-[12px] font-black min-[430px]:text-[13px]">روز {fmt(s.day)}</span>
+            <span className="block font-mono text-[11px] opacity-85 min-[430px]:text-[12px]">{String(hh).padStart(2, "0")}:{String(mm).padStart(2, "0")}</span>
           </span>
           <Icon name={curSeason.id} size={22} />
           {saveState && <Icon name={saveState === "cloud" ? "cloud" : "save"} size={16} className={saveState === "saving" ? "animate-pulse opacity-60" : "opacity-80"} />}
@@ -976,7 +988,7 @@ export default function Game() {
 
       {/* Toolbar */}
       <div
-        className="absolute left-1/2 z-30 flex w-[calc(100vw-8px)] max-w-[520px] -translate-x-1/2 gap-1 rounded-[22px] bg-gradient-to-b from-amber-100 to-amber-200 p-1.5 shadow-2xl ring-1 ring-amber-900/20"
+        className="absolute left-1/2 z-30 flex w-[calc(100vw-8px)] max-w-[520px] -translate-x-1/2 gap-1 overflow-x-auto overscroll-contain rounded-[22px] bg-gradient-to-b from-amber-100 to-amber-200 p-1.5 shadow-2xl ring-1 ring-amber-900/20"
         style={{ bottom: "max(8px, env(safe-area-inset-bottom))", paddingLeft: "max(6px, env(safe-area-inset-left))", paddingRight: "max(6px, env(safe-area-inset-right))" }}
       >
         {tools.map((t) => (
@@ -985,12 +997,12 @@ export default function Game() {
             type="button"
             aria-label={t.name}
             onClick={() => { setTool(t.id); if (t.id === "build") setPanel("build"); sound("click"); }}
-            className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center rounded-2xl transition ${
+            className={`relative flex h-[56px] min-w-[44px] flex-1 shrink-0 flex-col items-center justify-center rounded-2xl transition ${
               tool === t.id ? "-translate-y-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-xl ring-2 ring-white" : "bg-white/90 shadow active:scale-90"
             }`}
           >
             {t.id === "seed" ? <ItemIcon id={seed} size={26} /> : <Icon name={t.id} size={26} />}
-            <span className={`mt-0.5 text-[10px] font-black leading-none ${tool === t.id ? "text-white" : "text-amber-950"}`}>{t.name}</span>
+            <span className={`mt-0.5 text-[11px] font-black leading-none min-[430px]:text-[12px] min-[768px]:text-[13px] ${tool === t.id ? "text-white" : "text-amber-950"}`}>{t.name}</span>
           </button>
         ))}
       </div>
@@ -1011,6 +1023,72 @@ export default function Game() {
           </div>
         ))}
       </div>
+
+      {/* آموزش اولین‌بار — سه گام لمسی، یک‌بار برای همیشه */}
+      {onboard > 0 && started && !s.story.shown && !!s.story.name && (
+        <div className="absolute inset-0 z-[60] flex items-end justify-center bg-slate-950/70 p-3 backdrop-blur-sm">
+          <div className="mb-[max(84px,env(safe-area-inset-bottom))] w-full max-w-[440px] rounded-3xl bg-white p-4 shadow-2xl">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-xs font-black text-emerald-700">آموزش سریع · گام {fmt(onboard)} از ۳</span>
+              <button
+                type="button"
+                aria-label="رد کردن آموزش"
+                className="rounded-xl bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600"
+                onClick={() => {
+                  try { localStorage.setItem("farm_onboard", "1"); } catch { /* ignore */ }
+                  setOnboard(0);
+                  haptic("tap");
+                }}
+              >
+                رد کردن
+              </button>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50">
+                <Icon name={onboard === 1 ? "hand" : onboard === 2 ? "sparkle" : "menu"} size={34} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-black text-slate-900">
+                  {onboard === 1 ? "ضربه = یک زمین" : onboard === 2 ? "نگه‌داشتن انگشت = ۳×۳" : "ابزارها و منو"}
+                </h3>
+                <p className="mt-0.5 text-[12px] font-bold leading-6 text-slate-600">
+                  {onboard === 1
+                    ? "با ابزارِ انتخاب‌شده در نوار پایین، روی هر زمین ضربه بزن: شخم، کاشت، آبیاری یا برداشت."
+                    : onboard === 2
+                      ? "انگشتت را نیم‌ثانیه روی زمین نگه دار تا همان کار روی ۹ زمین اطراف انجام شود — برای کاشتِ ردیفی، عالی است."
+                      : "کاشت/آب/کود/شخم/ساخت در نوار پایینِ شست‌رس است؛ منو و وضعیت بازی در بالای صفحه، و بزرگ/کوچک‌نمایی کنارِ نقشه."}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              {onboard > 1 && (
+                <button
+                  type="button"
+                  className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-slate-100 text-sm font-black text-slate-700 active:scale-95"
+                  onClick={() => { setOnboard(onboard - 1); haptic("tap"); }}
+                >
+                  قبلی
+                </button>
+              )}
+              <button
+                type="button"
+                className="flex h-12 flex-[1.6] items-center justify-center rounded-2xl bg-emerald-600 text-sm font-black text-white shadow-lg active:scale-95"
+                onClick={() => {
+                  haptic("tap");
+                  if (onboard < 3) setOnboard(onboard + 1);
+                  else {
+                    try { localStorage.setItem("farm_onboard", "1"); } catch { /* ignore */ }
+                    setOnboard(0);
+                    toast("🌱 حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok");
+                  }
+                }}
+              >
+                {onboard < 3 ? "بعدی" : "بزن بریم!"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* گزارش «در غیاب شما» — آفلاین‌تایم باید دیده شود، نه اینکه در سکوت بگذرد */}
       {away && started && (
@@ -1089,7 +1167,7 @@ export default function Game() {
       {panel && (
         <div
           ref={sheetRef}
-          className="absolute inset-x-0 bottom-0 top-[10%] z-40 mx-auto flex flex-col overflow-hidden rounded-t-3xl bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 shadow-[0_-10px_40px_rgba(0,0,0,0.35)] sm:bottom-[max(12px,env(safe-area-inset-bottom))] sm:max-w-[620px] sm:rounded-3xl sm:ring-2 sm:ring-amber-800/40"
+          className="landscape-compact absolute inset-x-0 bottom-0 top-[10%] z-40 mx-auto flex flex-col overflow-hidden rounded-t-3xl bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 shadow-[0_-10px_40px_rgba(0,0,0,0.35)] sm:bottom-[max(12px,env(safe-area-inset-bottom))] sm:max-w-[620px] sm:rounded-3xl sm:ring-2 sm:ring-amber-800/40"
         >
           {/* منطقه‌ی کشیدن: کشیدن به پایین پنل را می‌بندد */}
           <div
@@ -1103,7 +1181,7 @@ export default function Game() {
           </div>
           {/* Panel Header */}
           <div className="flex items-center justify-between bg-gradient-to-l from-amber-700 to-orange-600 px-3 py-2.5 text-white shadow md:px-4 md:py-3">
-            <h2 className="flex min-w-0 items-center gap-2 text-base font-black md:text-lg">
+            <h2 className="flex min-w-0 items-center gap-2 text-base font-black min-[430px]:text-lg min-[768px]:text-xl">
               {typeof panel === "string" && PANEL_META[panel] && (<><Icon name={PANEL_META[panel].icon} size={28} /><span className="truncate">{PANEL_META[panel].title}</span></>)}
               {bt && bt.b && (<><Icon name="home" size={26} /><span className="truncate">{BMAP[bt.b]?.name || "ساختمان"}</span></>)}
             </h2>

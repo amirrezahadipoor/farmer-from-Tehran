@@ -10,6 +10,8 @@ const B = TH / 2;
 export interface View {
   w: number; h: number; dpr: number; cam: { x: number; y: number; z: number };
   hover: { x: number; y: number } | null; tool: string; arg: string;
+  /** حالت «کاهش حرکت» سیستم: ذره‌ها و انیمیشن‌های اضافه خاموش می‌شوند. */
+  reduced?: boolean;
 }
 export interface Walker { x: number; y: number; tx: number; ty: number; kind: string; face: number; wait: number }
 
@@ -1023,7 +1025,9 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   // تعداد ذره‌ها با مساحت صفحه مقیاس می‌گیرد تا موبایل ضعیف هم ۵۵+ FPS بدهد
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const pk = Math.max(0.28, Math.min(1, (w * h) / (390 * 844)));
-  if (s.weather === "rain") {
+  if (v.reduced) {
+    // دسترس‌پذیری: با «کاهش حرکت»، فقط ته‌رنگ هوا می‌ماند و ذره‌ای رسم نمی‌شود
+  } else if (s.weather === "rain") {
     ctx.strokeStyle = "rgba(190,225,255,0.5)"; ctx.lineWidth = 1.3; ctx.beginPath();
     for (let i = 0; i < Math.round(300 * pk) + 40; i++) { const rx = (hash(i, 7) * w + now * 80) % w, ry = (hash(7, i) * h + now * 780 * (0.8 + hash(i, i) * 0.4)) % h; ctx.moveTo(rx, ry); ctx.lineTo(rx - 5, ry + 16); }
     ctx.stroke();
