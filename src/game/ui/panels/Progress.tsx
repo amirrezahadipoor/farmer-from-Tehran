@@ -5,10 +5,25 @@
  */
 
 import { SKILLS, TECH_TREE, fmt } from "../../data";
-import { learnSkill, unlockTech } from "../../logic";
-import { Icon, skillIcon, techIcon } from "../../icons";
+import { learnSkill, unlockTech, nextUnlock } from "../../logic";
+import { Icon, skillIcon, stripEmoji, techIcon } from "../../icons";
 import { game } from "../../store";
 import { Coin, btn, type PanelProps } from "../common";
+
+/** «بازکردنیِ بعدی»: هدفِ روشن برای سطحِ بعد (P5.4) */
+function NextUnlockCard({ level }: { level: number }) {
+  const nx = nextUnlock(level);
+  if (!nx) return null;
+  return (
+    <div className="rounded-2xl bg-emerald-50 p-3 ring-1 ring-emerald-200">
+      <div className="flex items-center gap-1.5 text-xs font-black text-emerald-900">
+        <Icon name="target" size={18} />
+        بازکردنیِ بعدی · سطح {fmt(nx.level)}
+      </div>
+      <div className="mt-1 text-[12px] font-bold leading-6 text-emerald-800">{nx.items.map((u) => stripEmoji(u.name)).join("، ")}</div>
+    </div>
+  );
+}
 
 export function SkillsPanel({ s, ui }: PanelProps) {
   return (
@@ -23,6 +38,8 @@ export function SkillsPanel({ s, ui }: PanelProps) {
         </div>
         <div className="rounded-xl bg-purple-700 px-3 py-1.5 text-xs font-black text-white shadow">موجودی: {fmt(s.stats.skillPoints)} امتیاز</div>
       </div>
+
+      <NextUnlockCard level={s.level} />
 
       <div className="grid grid-cols-1 gap-2.5">
         {SKILLS.map((sk) => {
@@ -81,6 +98,7 @@ export function TechPanel({ s, ui }: PanelProps) {
         {TECH_TREE.map((tech) => {
           const unlocked = s.techs.includes(tech.id);
           const reqOk = !tech.req || s.techs.includes(tech.req);
+          const lvlOk = (tech.lvl ?? 0) <= s.level;
           return (
             <div
               key={tech.id}
@@ -102,15 +120,15 @@ export function TechPanel({ s, ui }: PanelProps) {
               ) : (
                 <button
                   type="button"
-                  aria-label={`تحقیق ${tech.name}`}
-                  disabled={!reqOk || s.coins < tech.cost}
+                  aria-label={lvlOk ? `تحقیق ${tech.name}` : `${tech.name} — سطح ${fmt(tech.lvl ?? 0)}`}
+                  disabled={!reqOk || !lvlOk || s.coins < tech.cost}
                   onClick={() => {
                     unlockTech(s, tech.id, ui.ev);
                     game.bump();
                   }}
                   className={`${btn} bg-indigo-600 text-xs text-white`}
                 >
-                  <Coin v={tech.cost} size={14} />
+                  {lvlOk ? <Coin v={tech.cost} size={14} /> : <>سطح {fmt(tech.lvl ?? 0)}</>}
                 </button>
               )}
             </div>

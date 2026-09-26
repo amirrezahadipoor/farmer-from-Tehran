@@ -201,6 +201,49 @@ const shp = {
     `<path d="M3.2 14.5C3 9 7 5.2 12.4 5.4c5.2.2 8.6 3.6 8.4 8.4-.2 4.4-3.8 6.8-8.8 6.8-5 0-8.6-2-8.8-6.1z" fill="#d9a15a" ${S}/>` +
     [[8, 10], [12, 9], [16, 10.5], [9.5, 14], [13.5, 13.4], [17, 14.6], [11.2, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.3" ry=".9" fill="#8d5a2b"/>`).join("") +
     `<path d="M6 12c1.6-3 4-4.4 7-4.4" stroke="#f5d29a" stroke-width="1.2" stroke-linecap="round" fill="none"/>`,
+  pistachioNut: (shell: string, kernel: string) =>
+    `<path d="M12 3.2c4.4 0 7.4 4.3 7.4 9.2 0 4.8-3.2 8.4-7.4 8.4s-7.4-3.6-7.4-8.4c0-4.9 3-9.2 7.4-9.2z" fill="${shell}" ${S}/><path d="M9 6.2c1.7-1.4 4.3-1.4 6 0l-1.2 7.6c-.5 1.2-3.1 1.2-3.6 0z" fill="${kernel}" ${S}/><path d="M12 6.4v7" stroke="#33691e" stroke-width=".8"/><ellipse cx="8.2" cy="11" rx="1.2" ry="2.6" ${HL}/>`,
+  almondNut: (c: string) =>
+    `<path d="M12 2.8c3.8 3.4 6.4 7.4 6.4 11.2 0 3.8-2.8 6.6-6.4 6.6S5.6 17.8 5.6 14C5.6 10.2 8.2 6.2 12 2.8z" fill="${c}" ${S}/><path d="M9.2 9.5c.8 1 1 2.4.8 3.6M12.4 7.5c.9 1.6 1.2 3.4.8 5.4M14.8 10.5c.6 1.2.6 2.6.2 3.8" stroke="#8d6e63" stroke-width=".9" stroke-linecap="round" fill="none"/>`,
+  walnutNut: () =>
+    `<circle cx="12" cy="12.6" r="8.4" fill="#c9a27e" ${S}/><path d="M12 4.2v16.8" stroke="${OL}" stroke-width="1.1"/><path d="M6.6 8.6c1.4 1.2 1.4 3 0 4.2 1.4 1.2 1.4 3 0 4.2M17.4 8.6c-1.4 1.2-1.4 3 0 4.2-1.4 1.2-1.4 3 0 4.2M9.4 6.4c.8 1.4.8 2.6 0 4M14.6 6.4c-.8 1.4-.8 2.6 0 4" stroke="#8d6e63" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+  pomegranateFruit: (c: string) =>
+    `<circle cx="12" cy="13.4" r="7.8" fill="${c}" ${S}/><path d="M9.4 5.8 10.2 3.4 12 5 13.8 3.4 14.6 5.8z" fill="${c}" ${S}/><ellipse cx="9" cy="11" rx="1.6" ry="2.4" ${HL}/><circle cx="14.6" cy="15.6" r="1" fill="#ff8a80"/>`,
+  figFruit: (c: string) =>
+    `<path d="M12 4.2c.6 2.4 1.6 3.6 3.4 5 2.6 2 3.8 4.2 3.8 6.6 0 3-3.2 5-7.2 5s-7.2-2-7.2-5c0-2.4 1.2-4.6 3.8-6.6 1.8-1.4 2.8-2.6 3.4-5z" fill="${c}" ${S}/><path d="M12 4.2c-.2-1 .2-1.8 1.2-2.4" stroke="#6d4c41" stroke-width="1.4" stroke-linecap="round"/><ellipse cx="9.4" cy="13" rx="1.4" ry="2.4" ${HL}/>`,
+  datesFruit: (c: string) =>
+    [[8, 9, -20], [14.5, 8.6, 18], [11.2, 15, 0]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.2" ry="5.4" transform="rotate(${r} ${x} ${y})" fill="${c}" ${S}/><ellipse cx="${x - 1}" cy="${y - 2}" rx=".9" ry="1.8" transform="rotate(${r} ${x} ${y})" ${HL}/>`).join(""),
+  berriesTwig: (c: string) =>
+    `<path d="M4 20c4-3 8-8 15-15" stroke="#6d4c41" stroke-width="1.6" stroke-linecap="round" fill="none"/>` +
+    [[7, 15], [9.6, 16.6], [10.4, 12.4], [13, 13.6], [13.4, 9.4], [16, 10.4], [16.4, 6.6]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.9" ry="2.6" fill="${c}" ${S}/>`).join("") +
+    `<path d="M15 4.8c1.8-.4 3.2.2 4 1.6-1.8.4-3.2-.2-4-1.6z" fill="#6dbb4a" ${S}/>`,
+  cottonBoll: () =>
+    `<path d="M12 21v-5" stroke="#6d4c41" stroke-width="1.6" stroke-linecap="round"/><path d="M7 15.5 12 13l5 2.5-2 2.6h-6z" fill="#8d6e63" ${S}/>` +
+    [[9, 10.4, 3.6], [15, 10.4, 3.6], [12, 7, 4], [12, 12.4, 3.4]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fafafa" ${S}/>`).join(""),
+  teaLeaves: (c: string) =>
+    `<path d="M12 21c0-4 .4-7.4 2-10" stroke="#5d4037" stroke-width="1.4" stroke-linecap="round" fill="none"/><path d="M12.4 13C7 13 4 9.6 4.4 4.4c5.2-.2 8.4 3 8 8.6z" fill="${c}" ${S}/><path d="M13.6 11.6c.2-4.4 2.8-7 6.8-7.2.4 4.2-2.2 7-6.8 7.2z" fill="${c}" ${S}/><path d="M12 12.6 6.4 6.4M14.2 10.8l4.6-4.6" stroke="#fff" stroke-opacity=".5" stroke-width=".9" stroke-linecap="round"/>`,
+  bowlOf: (cols: string[]) =>
+    [[8, 10.6], [11.2, 9.6], [14.6, 10.4], [9.6, 8], [13.2, 7.6], [16.4, 8.6], [6.8, 9]].map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="2.1" ry="1.5" fill="${cols[i % cols.length]}" ${S}/>`).join("") +
+    `<path d="M3 11h18c-.6 5.4-4.4 9-9 9s-8.4-3.6-9-9z" fill="#5c6bc0" ${S}/><path d="M6 14.4c1.8.8 4 1.2 6 1.2s4.2-.4 6-1.2" stroke="#fdd835" stroke-width="1.2" fill="none"/>`,
+  plateOf: (mound: string, dots: string) =>
+    `<ellipse cx="12" cy="16.4" rx="9.6" ry="3.8" fill="#eceff1" ${S}/><path d="M5 15.4c0-4.4 3.2-8 7-8s7 3.6 7 8z" fill="${mound}" ${S}/>` +
+    [[9, 11.6], [12.4, 10], [14.6, 12.4], [10.8, 13.6], [13.6, 14.4], [7.8, 14.2], [16, 14.6]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".95" fill="${dots}"/>`).join(""),
+  fabricRoll: (c: string) =>
+    `<path d="M5 6h11v12H5z" fill="${c}" ${S}/><ellipse cx="16" cy="12" rx="3.2" ry="6" fill="${c}" ${S}/><ellipse cx="16" cy="12" rx="1.2" ry="2.4" fill="#fff" ${S}/><path d="M5 18c-1.4 1.2-2 2.2-1.6 3h10" fill="none" ${S}/><path d="M7.4 6v12M10.4 6v12" stroke="#fff" stroke-opacity=".45" stroke-width="1"/>`,
+  carpetRug: () =>
+    `<rect x="4" y="3" width="16" height="18" rx="1" fill="#b71c1c" ${S}/><rect x="6" y="5" width="12" height="14" fill="none" stroke="#1a237e" stroke-width="1.6"/><path d="M12 7.6 15.2 12 12 16.4 8.8 12z" fill="#fdd835" ${S}/><circle cx="12" cy="12" r="1.2" fill="#1a237e"/><path d="M5 21v1.6M7.5 21v1.6M10 21v1.6M12.5 21v1.6M15 21v1.6M17.5 21v1.6M5 3V1.4M7.5 3V1.4M10 3V1.4M12.5 3V1.4M15 3V1.4M17.5 3V1.4" stroke="#fff3e0" stroke-width=".9"/>`,
+  teaGlass: (c: string) =>
+    `<ellipse cx="12" cy="19.6" rx="7" ry="2" fill="#eceff1" ${S}/><path d="M8 5.4h8l-1 12.4c-.1.9-.8 1.6-1.7 1.6h-2.6c-.9 0-1.6-.7-1.7-1.6z" fill="#fff" fill-opacity=".7" ${S}/><path d="M8.4 9h7.2l-.8 8.8c-.1.7-.6 1.2-1.3 1.2h-3c-.7 0-1.2-.5-1.3-1.2z" fill="${c}"/><path d="M9.6 10v6" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`,
+  teapot: (c: string) =>
+    `<ellipse cx="11" cy="14" rx="6.6" ry="5.6" fill="${c}" ${S}/><path d="M17 12.6c2.2-.4 3.6.4 4 2-1.6.4-3 .6-4.2 0" fill="none" ${S}/><path d="M4.6 12.4C2.6 12.6 2 14.4 3 15.8c1 1.2 2.2 1 2.4.6" fill="none" ${S}/><rect x="9" y="6.4" width="4" height="2.6" rx="1" fill="${c}" ${S}/><circle cx="11" cy="5.6" r="1.1" fill="#fdd835" ${S}/><path d="M7 13.4c1.6 1.2 5.4 1.2 8 0" stroke="#fff" stroke-width="1.1" fill="none"/>`,
+  sweetBox: (c: string, band: string) =>
+    `<rect x="3.5" y="8" width="17" height="12" rx="1.4" fill="${c}" ${S}/><path d="M3.5 12h17" stroke="${band}" stroke-width="2"/>` +
+    [[7, 15.8], [12, 15.8], [17, 15.8]].map(([x, y]) => `<rect x="${x - 2}" y="${y - 1.6}" width="4" height="3.2" rx=".8" fill="#fffde7" ${S}/><circle cx="${x}" cy="${y}" r=".7" fill="#7cb342"/>`).join("") +
+    `<path d="M9 8c.4-2.4 1.4-3.6 3-3.6S14.6 5.6 15 8" fill="none" stroke="${band}" stroke-width="1.6"/>`,
+  giftBox: (c: string, ribbon: string) =>
+    `<rect x="4" y="9.5" width="16" height="11" rx="1.2" fill="${c}" ${S}/><rect x="3" y="6.8" width="18" height="3.6" rx="1" fill="${c}" ${S}/><path d="M12 6.8v13.7" stroke="${ribbon}" stroke-width="2.6"/><path d="M12 6.8C9.4 3 6.4 3.6 7 5.6c.4 1.2 2.6 1.4 5 1.2zm0 0c2.6-3.8 5.6-3.2 5-1.2-.4 1.2-2.6 1.4-5 1.2z" fill="${ribbon}" ${S}/>`,
+  saffronTin: () =>
+    `<ellipse cx="12" cy="18" rx="7.4" ry="2.6" fill="#b71c1c" ${S}/><path d="M4.6 10v8c0 1.4 3.3 2.6 7.4 2.6s7.4-1.2 7.4-2.6v-8" fill="#c62828" ${S}/><ellipse cx="12" cy="10" rx="7.4" ry="2.6" fill="#fdd835" ${S}/><path d="M10 9.6c.4-3 1-5 2.2-6.6M12 9.8c.2-2.8.8-4.6 2-6M13.8 9.6c.4-2 1.2-3.2 2.4-4" stroke="#d50000" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M7 14.4h10" stroke="#fdd835" stroke-width="1.2"/>`,
   feedBowl: () =>
     `<path d="M3 13h18l-1.8 5.4c-.3.9-1.1 1.4-2 1.4H6.8c-.9 0-1.7-.5-2-1.4z" fill="#8d6e63" ${S}/>` +
     [[7, 11.6], [10, 10.6], [13, 11], [16, 10.4], [9, 12.4], [15, 12.4], [12, 9.6]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.8" ry="1.1" fill="#d7a64a" ${S}/>`).join(""),
@@ -229,6 +272,31 @@ const ITEM_SVG: Record<string, string> = {
   cut_stone: shp.cutStone(),
   millstone: shp.millstone(),
   sangak: shp.sangak(),
+  pistachio: shp.pistachioNut("#e8d9b0", "#8bc34a"),
+  roasted_pistachio: shp.pistachioNut("#c9a36b", "#689f38"),
+  almond: shp.almondNut("#c8955a"),
+  walnut: shp.walnutNut(),
+  pomegranate: shp.pomegranateFruit("#c62828"),
+  fig: shp.figFruit("#6a1b9a"),
+  dates: shp.datesFruit("#8d5524"),
+  barberry: shp.berriesTwig("#e53935"),
+  rice: shp.grain("#f1ead0"),
+  cotton: shp.cottonBoll(),
+  tea: shp.teaLeaves("#43a047"),
+  nut_mix: shp.bowlOf(["#c8955a", "#8bc34a", "#8d5524", "#c9a27e"]),
+  noghl: shp.bowlOf(["#fffde7", "#fff8e1", "#fce4ec"]),
+  shirberenj: shp.plateOf("#fffaf0", "#8d6e63"),
+  zereshk_polo: shp.plateOf("#fff3c4", "#e53935"),
+  fabric: shp.fabricRoll("#90caf9"),
+  carpet: shp.carpetRug(),
+  brewed_tea: shp.teaGlass("#c1440e"),
+  herbal_tea: shp.teapot("#f48fb1"),
+  pom_paste: shp.jar("#7f0000", "#5d4037"),
+  fig_jam: shp.jar("#6a1b9a", "#8d6e63"),
+  rosewater: shp.bottle("#f8bbd0", "#ad1457"),
+  gaz: shp.sweetBox("#e3f2fd", "#1565c0"),
+  premium_saffron: shp.saffronTin(),
+  souvenir: shp.giftBox("#43a047", "#fdd835"),
   flour: shp.sack("#f5ecd7", "#90caf9"),
   popcorn: shp.popcorn(),
   egg: shp.egg(),
