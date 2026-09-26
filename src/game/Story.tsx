@@ -52,6 +52,16 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [full]);
 
+  // پیش‌بارگذاری تصویر صحنه‌ی بعدی تا هیچ‌وقت تأخیرِ سیاه‌شدن نبینی (P2.5)
+  useEffect(() => {
+    const next = scenes[Math.min(st.sceneIdx + 1, scenes.length - 1)];
+    if (next?.bg && next.bg !== scene?.bg) {
+      const img = new window.Image();
+      img.decoding = "async";
+      img.src = next.bg;
+    }
+  }, [scenes, st.sceneIdx, scene?.bg]);
+
   // Name entry gate at the very start
   if (!st.name) {
     return (
