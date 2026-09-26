@@ -12,6 +12,14 @@ import { test, expect, type Page } from "@playwright/test";
 
 const SW_READY_TIMEOUT = 45_000;
 
+/**
+ * محدودیت ابزار، نه باگ بازی: WebKit در Playwright وقتی context آفلاین است
+ * («reload/navigation») خطای داخلی می‌دهد. پوششِ آفلاین روی کروم اندروید اجرا
+ * می‌شود و روی iOS نصب و کنترل Service Worker (تست اول همین فایل) بررسی می‌شود.
+ */
+const skipOfflineReload = ({ browserName }: { browserName: string }) => browserName === "webkit";
+const SKIP_REASON = "Playwright WebKit با ناوبری در حالت آفلاین خطای داخلی می‌دهد (محدودیت ابزار تست)";
+
 async function bootGame(page: Page) {
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
@@ -67,6 +75,7 @@ test.describe("آفلاین — مزرعه طلایی", () => {
   });
 
   test("قطع اینترنت → بازی همان‌طور بالا می‌آید و لمس پاسخ می‌دهد", async ({ page, context }) => {
+    test.skip(skipOfflineReload, SKIP_REASON);
     await bootGame(page);
     await waitForSwControl(page);
 
@@ -120,6 +129,7 @@ test.describe("آفلاین — مزرعه طلایی", () => {
   });
 
   test("بعد از پاک‌کردن داده‌های ابری، بازی از سیو آفلاین ادامه می‌دهد", async ({ page, context }) => {
+    test.skip(skipOfflineReload, SKIP_REASON);
     // ۱) یک سیو بساز و بازی را ببند
     await bootGame(page);
     await page.evaluate(async () => {
