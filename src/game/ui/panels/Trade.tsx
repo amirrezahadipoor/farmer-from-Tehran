@@ -120,7 +120,7 @@ export function OrdersPanel({ s, ui }: PanelProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Portrait html={npcSvg(o.npc)} size={42} />
-                <span className="font-black text-slate-800">{NPCS[o.npc]?.n || "مشتری"}</span>
+                <span className="font-black text-slate-800">{NPCS[o.npc] || "مشتری"}</span>
               </div>
               <span className="text-xs font-bold text-slate-500">
                 <Icon name="clock" size={14} /> {fmt(Math.floor(left / 60))}:{String(Math.floor(left % 60)).padStart(2, "0")}

@@ -166,5 +166,5 @@ console.log(JSON.stringify({
   issues: report.issues,
   devices: report.devices.map((d) => ({ n: d.name, viewport: `${d.viewport.width}x${d.viewport.height}`, overflow: `${d.state.scrollW}/${d.state.clientW}`, small: d.state.smallButtons.length, hook: d.state.hasHook, market: d.openedMarket, render: d.render.ok, fonts: (d.render.fonts || []).length, named: d.named, taps: d.storyTaps, lvl: d.state.level, coins: d.state.coins })),
 }, null, 2));
-console.log(`\n📸 اسکرین‌شات‌ها در ${OUT}/`);
+console.log(`\nاسکرین‌شات‌ها در ${OUT}/`);
 process.exit(report.issues.length ? 1 : 0);

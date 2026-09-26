@@ -73,7 +73,7 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     }
     if (opened && !done) setPanel({ bx: tx, by: ty });
     sound(done ? "click" : "err");
-    ev.toast(done ? `⚡ عملیات دسته‌ای روی ${fmt(done)} زمین اجرا شد` : "برای عمل دسته‌ای زمین آزادِ بیشتری لازم است", done ? "ok" : "err");
+    ev.toast(done ? `عملیات دسته‌ای روی ${fmt(done)} زمین اجرا شد` : "برای عمل دسته‌ای زمین آزادِ بیشتری لازم است", done ? "ok" : "err");
     game.bump();
   };
 

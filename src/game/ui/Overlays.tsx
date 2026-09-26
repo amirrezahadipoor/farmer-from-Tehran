@@ -224,17 +224,19 @@ export function AwayCard({ away, onClose }: { away: AwayReport; onClose: () => v
       </div>
       <p className="mt-0.5 text-[11px] font-bold text-slate-500">{fmt(away.minutes)} دقیقه بیرون بودی؛ مزرعه خواب نماند:</p>
       <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[11px] font-black text-slate-700">
-        <span className="rounded-xl bg-amber-50 px-2 py-1">🌾 {fmt(away.ready)} محصول رسیده</span>
-        <span className="rounded-xl bg-emerald-50 px-2 py-1">
-          💰 {sign(away.coins)}
+        <span className="flex items-center gap-1 rounded-xl bg-amber-50 px-2 py-1">
+          <Icon name="sprout" size={16} /> {fmt(away.ready)} محصول رسیده
+        </span>
+        <span className="flex items-center gap-1 rounded-xl bg-emerald-50 px-2 py-1">
+          <Icon name="coin" size={16} /> {sign(away.coins)}
           {fmt(Math.abs(away.coins))} سکه
         </span>
-        <span className="rounded-xl bg-sky-50 px-2 py-1">
-          ⭐ {sign(away.xp)}
+        <span className="flex items-center gap-1 rounded-xl bg-sky-50 px-2 py-1">
+          <Icon name="star" size={16} /> {sign(away.xp)}
           {fmt(Math.abs(away.xp))} تجربه
         </span>
-        <span className="rounded-xl bg-purple-50 px-2 py-1">
-          📅 {fmt(away.days)} روز گذشته{away.levels > 0 ? ` · ${fmt(away.levels)} سطح` : ""}
+        <span className="flex items-center gap-1 rounded-xl bg-purple-50 px-2 py-1">
+          <Icon name="calendar" size={16} /> {fmt(away.days)} روز گذشته{away.levels > 0 ? ` · ${fmt(away.levels)} سطح` : ""}
         </span>
       </div>
     </div>

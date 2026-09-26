@@ -103,6 +103,7 @@ const UI_ICONS: Record<string, string> = {
   mute: `<path d="M4 9.5h3.6L12 5.4v13.2L7.6 14.5H4z" fill="#90a4ae" ${S}/><path d="M15.6 9.6l5 4.8M20.6 9.6l-5 4.8" stroke="#c62828" stroke-width="2.2" stroke-linecap="round"/>`,
   trash: `<path d="M4.5 6.5h15" stroke="${OL}" stroke-width="2" stroke-linecap="round"/><path d="M9 6.5V4.8c0-.7.6-1.3 1.3-1.3h3.4c.7 0 1.3.6 1.3 1.3v1.7" fill="none" ${S}/><path d="M6.4 6.5h11.2l-.9 13a1.6 1.6 0 0 1-1.6 1.5H8.9a1.6 1.6 0 0 1-1.6-1.5z" fill="#ef9a9a" ${S}/><path d="M10 10.5v7M14 10.5v7" stroke="#b71c1c" stroke-width="1.5" stroke-linecap="round"/>`,
   info: `<circle cx="12" cy="12" r="9.2" fill="#78909c" ${S}/><circle cx="12" cy="7.6" r="1.3" fill="#fff"/><path d="M12 10.8v6.4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
+  calendar: `<rect x="3.5" y="5" width="17" height="15.5" rx="2" fill="#fffaf0" ${S}/><path d="M3.5 5h17v4.2h-17z" fill="#e2574c" ${S}/><path d="M8 3v4M16 3v4" stroke="${OL}" stroke-width="1.8" stroke-linecap="round"/><path d="M7 12.5h2M11 12.5h2M15 12.5h2M7 16h2M11 16h2" stroke="#b88b4a" stroke-width="1.6" stroke-linecap="round"/><rect x="14.6" y="14.8" width="2.8" height="2.6" rx=".5" fill="#43a047"/>`,
   home: `<path d="M3 11.2 12 3.8l9 7.4" fill="none" ${S}/><path d="M5.2 10v10.2h13.6V10L12 4.6z" fill="#f3dfb7" ${S}/><path d="M2.5 11.6 12 3.6l9.5 8-1.5 1.6L12 6.6 4 13.2z" fill="#e2574c" ${S}/><rect x="10" y="14" width="4" height="6.2" fill="#9b6a3f" ${S}/>`,
 };
 UI_ICONS.summer = UI_ICONS.sun;
@@ -375,10 +376,6 @@ const SPK: Record<string, PortraitSpec> = {
   scientist: { skin: "#f3c6a2", hair: "#6d4c41", cloth: "#f5f5f5", bg: "#e1bee7", glasses: true, long: true },
   vet: { skin: "#d9a070", hair: "#212121", cloth: "#00897b", bg: "#b2dfdb", hat: "cap", hatColor: "#00796b" },
 };
-const AV_TO_SPK: Record<string, string> = {
-  "🧑": "hero", "🕴️": "boss", "👴": "notary", "🌾": "grandpa", "👵": "rana", "👩‍🌾": "sara",
-  "🧔": "nowruz", "💼": "zelli", "🎖️": "judge",
-};
 const NPC_SPECS: PortraitSpec[] = [
   SPK.rana,
   { skin: "#eab48d", hair: "#3e2723", cloth: "#fafafa", bg: "#ffccbc", hat: "cap", hatColor: "#fafafa" },
@@ -392,7 +389,10 @@ const NPC_SPECS: PortraitSpec[] = [
   { skin: "#f1c29c", hair: "#212121", cloth: "#e3f2fd", bg: "#b3e5fc", glasses: true },
   SPK.judge,
 ];
-export const speakerSvg = (av: string) => (av === "📖" ? wrap(`<circle cx="12" cy="12" r="11.4" fill="#fff3e0"/><g transform="translate(2.4 2.6) scale(.8)">${UI_ICONS.story}</g>`) : portraitSvg(SPK[AV_TO_SPK[av] || "hero"]));
+/** چهره‌ی گوینده‌ی داستان با شناسه‌ی متنی («narrator» = کتابِ راوی) */
+export const speakerSvg = (av: string) =>
+  av === "narrator" ? wrap(`<circle cx="12" cy="12" r="11.4" fill="#fff3e0"/><g transform="translate(2.4 2.6) scale(.8)">${UI_ICONS.story}</g>`) : portraitSvg(SPK[av] || SPK.hero);
+
 export const npcSvg = (i: number) => portraitSvg(NPC_SPECS[i % NPC_SPECS.length]);
 export const workerSvg = (kind: string) => portraitSvg(SPK[kind] || SPK.farmhand);
 
@@ -439,9 +439,8 @@ export function drawIcon(ctx: CanvasRenderingContext2D, key: string, x: number, 
   if (img) ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
 }
 
-/* Emoji → item id, used to turn legacy emoji strings from game logic into icons */
-export const EMOJI_RE = /(\p{Extended_Pictographic}(\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
-export const stripEmoji = (s: string) => s.replace(EMOJI_RE, "").replace(/\s{2,}/g, " ").trim();
+/* No emoji anywhere (P5.16): the guard lives in noEmoji.ts; re-exported for UI code */
+export { EMOJI_RE, dropEmoji, stripEmoji } from "./noEmoji";
 
 /* ------------------------------------------------------------ React */
 function Svg({ html, size, className, style, title }: { html: string; size: number | string; className?: string; style?: CSSProperties; title?: string }) {

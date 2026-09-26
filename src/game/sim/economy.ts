@@ -82,12 +82,12 @@ export function unlockedItems(s: State): string[] {
 export interface Unlock { kind: "crop" | "building" | "decor" | "recipe" | "tech"; id: string; name: string; }
 export function unlocksAt(level: number): Unlock[] {
   const out: Unlock[] = [];
-  for (const c of CROPS) if (c.lvl === level) out.push({ kind: "crop", id: c.id, name: `${c.icon} ${c.name}` });
+  for (const c of CROPS) if (c.lvl === level) out.push({ kind: "crop", id: c.id, name: c.name });
   for (const b of BUILDINGS) {
-    if (b.lvl === level) out.push({ kind: b.isDecor ? "decor" : "building", id: b.id, name: `${b.icon} ${b.name}` });
-    for (const r of b.recipes) if (r.lvl === level && r.lvl > b.lvl) out.push({ kind: "recipe", id: `${b.id}:${r.out}`, name: `${ITEMS[r.out]?.icon ?? ""} ${ITEMS[r.out]?.name ?? r.out}` });
+    if (b.lvl === level) out.push({ kind: b.isDecor ? "decor" : "building", id: b.id, name: b.name });
+    for (const r of b.recipes) if (r.lvl === level && r.lvl > b.lvl) out.push({ kind: "recipe", id: `${b.id}:${r.out}`, name: ITEMS[r.out]?.name ?? r.out });
   }
-  for (const t of TECH_TREE) if (t.lvl === level) out.push({ kind: "tech", id: t.id, name: `${t.icon} ${t.name}` });
+  for (const t of TECH_TREE) if (t.lvl === level) out.push({ kind: "tech", id: t.id, name: t.name });
   return out;
 }
 
@@ -132,14 +132,14 @@ export function addXp(s: State, n: number, ev: Events) {
     lvlGained++;
     s.stats.skillPoints += 1;
     const unl = unlocksAt(s.level).map((u) => u.name);
-    ev.toast(`🎉 سطح ${fmt(s.level)}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
+    ev.toast(`سطح ${fmt(s.level)}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
     ev.sound("lvl");
     const bonus = s.level * 45;
     s.coins += bonus;
-    ev.toast(`🎁 پاداش پیشرفت: +${bonus.toLocaleString("fa-IR")} 🪙`, "ok");
+    ev.toast(`پاداش پیشرفت: +${bonus.toLocaleString("fa-IR")} سکه`, "ok");
   }
   if (lvlGained > 0 && s.stats.skillPoints > 0) {
-    ev.toast(`🧠 ${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
+    ev.toast(`${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
   }
   checkAchievements(s, ev);
 }
@@ -182,7 +182,7 @@ export function sell(s: State, id: string, n: number, ev: Events) {
   const whole = Math.floor(s.xpAcc);
   if (whole > 0) { s.xpAcc -= whole; addXp(s, whole, ev); }
   updateContract(s, "coins", pv.coins, ev);
-  ev.toast(`فروش ${fmt(pv.n)} ${ITEMS[id]?.name || "کالا"}: +${fmt(pv.coins)} 🪙`, "ok");
+  ev.toast(`فروش ${fmt(pv.n)} ${ITEMS[id]?.name || "کالا"}: +${fmt(pv.coins)} سکه`, "ok");
   ev.sound("coin");
 }
 
@@ -194,7 +194,7 @@ export function fulfill(s: State, oi: number, ev: Events) {
   s.rep = Math.min(100, s.rep + o.repReward);
   addXp(s, o.xp, ev);
   updateContract(s, "orders", 1, ev);
-  ev.toast(`🚚 سفارش ${NPCS[o.npc]?.n || "مشتری"} تحویل شد: +${o.coins.toLocaleString("fa-IR")} 🪙`, "ok");
+  ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${o.coins.toLocaleString("fa-IR")} سکه`, "ok");
   ev.sound("lvl");
   s.orders[oi] = genOrder(s);
 }
@@ -205,7 +205,7 @@ export function claimContract(s: State, id: string, ev: Events) {
   if (!c || !cs || cs.claimed || cs.progress < c.target) return;
   cs.claimed = true;
   s.coins += c.rewardCoins; s.rep = Math.min(100, s.rep + c.rewardRep); addXp(s, c.rewardXp, ev);
-  ev.toast(`📜 پاداش قرارداد دولتی وصول شد: +${c.rewardCoins.toLocaleString("fa-IR")} 🪙`, "lvl"); ev.sound("lvl");
+  ev.toast(`پاداش قرارداد دولتی وصول شد: +${c.rewardCoins.toLocaleString("fa-IR")} سکه`, "lvl"); ev.sound("lvl");
 }
 
 export function updateContract(s: State, type: string, amount: number, _ev: Events) {
@@ -234,7 +234,7 @@ function checkAchievements(s: State, ev: Events) {
     if (ach.id === "zoo" && countB(s, "coop")>0 && countB(s, "barn")>0 && countB(s, "sheep")>0 && countB(s, "pigpen")>0 && countB(s, "beehive")>0) ok = true;
     if (ach.id === "decorator" && s.stats.decorations >= 10) ok = true;
     if (ach.id === "skill_master" && s.skills.length >= 10) ok = true;
-    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`🏆 دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} 🪙)`, "lvl"); ev.sound("lvl"); }
+    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("lvl"); }
   }
 }
 
@@ -258,5 +258,5 @@ export function doPrestige(s: State, ev: Events) {
   fresh.story = s.story;
   fresh.rep = s.rep;
   Object.assign(s, fresh);
-  ev.toast(`👑 نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("lvl");
+  ev.toast(`نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("lvl");
 }

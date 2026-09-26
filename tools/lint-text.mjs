@@ -123,7 +123,7 @@ for (const f of files) {
 }
 
 if (total) {
-  console.log(`\n❌ ${total} مورد در ${scanned} متن فارسی — lint متن رد شد.`);
+  console.log(`\n[خطا] ${total} مورد در ${scanned} متن فارسی — lint متن رد شد.`);
   process.exit(1);
 }
-console.log(`✅ lint متن: ${scanned} متن فارسی در ${files.length} فایل بررسی شد — ۰ مورد غیرفارسی.`);
+console.log(`lint متن: ${scanned} متن فارسی در ${files.length} فایل بررسی شد — ۰ مورد غیرفارسی.`);

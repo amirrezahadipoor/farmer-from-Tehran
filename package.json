@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "verify": "npm run typecheck && npm run lint && npm run lint:text && npm run check-assets && npm run test:coverage && npm run build",
-    "story-map": "node tools/story-map.mjs"
+    "story-map": "node tools/story-map.mjs",
+    "doc-icons": "npx --yes tsx tools/doc-icons.mts"
   },
   "dependencies": {
     "dotenv": "17.3.1",

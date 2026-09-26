@@ -94,7 +94,7 @@ export function usePersistence(toast: ToastFn) {
       if (rep) {
         setAway(rep);
         const minutes = rep.minutes;
-        setTimeout(() => toast(`👋 خوش آمدی! ${fmt(minutes)} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"), 800);
+        setTimeout(() => toast(`خوش آمدی! ${fmt(minutes)} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"), 800);
       }
     })();
     return () => {
@@ -137,7 +137,7 @@ export function usePersistence(toast: ToastFn) {
       game.set(out.state);
       setSaveIssue("");
       setCanRestore(false);
-      toast("♻️ مزرعه‌ات از نسخه‌ی پشتیبان بازیابی شد", "ok");
+      toast("مزرعه‌ات از نسخه‌ی پشتیبان بازیابی شد", "ok");
       void save();
     } else {
       toast("پشتیبان قابل بازیابی نبود؛ همین بازی ادامه می‌یابد", "err");

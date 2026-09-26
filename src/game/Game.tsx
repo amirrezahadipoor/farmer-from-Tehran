@@ -93,7 +93,7 @@ export default function Game() {
   useEffect(
     () =>
       registerServiceWorker((e) => {
-        if (e === "update") toast("🔄 نسخه‌ی تازه آماده است؛ با بستن و باز کردن اپ فعال می‌شود", "info");
+        if (e === "update") toast("نسخه‌ی تازه آماده است؛ با بستن و باز کردن اپ فعال می‌شود", "info");
       }),
     [toast]
   );
@@ -153,7 +153,7 @@ export default function Game() {
       <Toasts toasts={toasts} />
 
       {saveIssue && inGame && <SaveIssueBanner issue={saveIssue} canRestore={canRestore} onRestore={recoverFromBackup} onDismiss={dismissIssue} />}
-      {inGame && !!s.story.name && <Onboarding onDone={() => toast("🌱 حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok")} />}
+      {inGame && !!s.story.name && <Onboarding onDone={() => toast("حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok")} />}
       {away && started && <AwayCard away={away} onClose={dismissAway} />}
 
       {menuOpen && (
