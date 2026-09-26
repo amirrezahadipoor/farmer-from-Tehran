@@ -64,11 +64,10 @@ import { Icon, ItemIcon, Portrait, npcSvg, workerSvg, techIcon, skillIcon, achIc
 import { drawBuildingThumb } from "./render";
 import { CHAPTERS, currentChapter, goalProgress, updateStory, advanceStory, isStoryFinished } from "./story";
 import {
-  readLocalSave,
+  readLocalWithBackup,
   fetchCloudSave,
   ensurePlayerId,
   pickNewer,
-  readQuarantined,
   restoreQuarantined,
   sanitizeSave,
   readLS,
@@ -413,8 +412,8 @@ export default function Game() {
 
   useEffect(() => {
     if (!ready || !online || !hasPendingSave()) return;
-    void flushOutbox().then((ok) => {
-      if (ok) setSaveState("cloud"); // صف خالی شد
+    void flushOutbox().then((mode) => {
+      if (mode) setSaveState(mode); // صف خالی شد — حالت واقعی (ابری یا فقط محلی)
     });
   }, [ready, online]);
 
@@ -443,12 +442,14 @@ export default function Game() {
       let s: State | null = null;
       try {
         // خواندن سیوها با «درمان»: نه JSON خراب و نه شکل نامعتبر، بازی را قفل نمی‌کند
-        const localSave = readLocalSave();
+        // اگر سیوِ اصلی خراب باشد، پشتیبانِ چرخشی (یک نوبتِ ذخیره عقب‌تر) خودکار جایگزین می‌شود
+        const localSave = readLocalWithBackup();
         const cloudSave = await fetchCloudSave(id);
         const picked = pickNewer(localSave, cloudSave);
         s = picked.state;
         setSaveIssue(picked.corrupt ? picked.note : "");
-        setCanRestore(!!readQuarantined());
+        // دکمه‌ی «بازیابی» فقط وقتی نشان داده می‌شود که واقعاً کار کند (نه یک وعده‌ی توخالی)
+        setCanRestore(picked.corrupt && !picked.state && !!restoreQuarantined().state);
       } catch {
         s = null; // حتی اگر غیرمنتظره چیزی ترکید، بازی تازه بالا می‌آید
         setSaveIssue("سیو خوانده نشد؛ بازی تازه شروع شد");
@@ -551,10 +552,15 @@ export default function Game() {
 
     const loop = (t: number) => {
       // ── سازگارسازی خودکار رزولوشن: تا نرمی روی دستگاه ضعیف قربانی نشود
-      perf.current.acc += t - lastFrame;
-      perf.current.n += 1;
+      // پنجره‌ی سنجش: ۴۰ فریم یا ۱ ثانیه (هرکدام زودتر) — روی دستگاه خیلی کند (≈۴ فریم)
+      // هم واکنش سریع است؛ فاصله‌های بیش از ۱ ثانیه (تب پنهان/توقف) شمرده نمی‌شوند.
+      const gap = t - lastFrame;
       lastFrame = t;
-      if (perf.current.n >= 40) {
+      if (gap > 0 && gap < 1000) {
+        perf.current.acc += gap;
+        perf.current.n += 1;
+      }
+      if (perf.current.n >= 40 || (perf.current.acc >= 1000 && perf.current.n >= 3)) {
         const avg = perf.current.acc / perf.current.n;
         perf.current = { acc: 0, n: 0 };
         const maxDpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1062,7 +1068,10 @@ export default function Game() {
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-black text-amber-900">سیوِ قبلی سالم نبود — بازی از دست نرفت</p>
               <p className="mt-0.5 text-[11px] font-bold leading-5 text-amber-800">
-                {saveIssue}. نسخه‌ی خراب در پشتیبان نگه داشته شد؛ می‌توانی بازی را از همان‌جا بازیابی کنی.
+                {saveIssue}.{" "}
+                {canRestore
+                  ? "نسخه‌ی خراب قرنطینه شد و قابل بازیابی است."
+                  : "نسخه‌ی خراب برای بررسی قرنطینه شد و بازی بی‌وقفه ادامه دارد."}
               </p>
               <div className="mt-2 flex gap-2">
                 {canRestore && (

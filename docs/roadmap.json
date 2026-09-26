@@ -22,7 +22,7 @@
     "key": "خطای ESLint",
     "from": "۹۵",
     "to": "۰",
-    "current": "۹۵ (بازنویسی در P5.10)"
+    "current": "۱۰۵ (بازنویسی در P5.10)"
    },
    {
     "key": "خطای TypeScript",
@@ -34,7 +34,7 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۱۹ unit + ۲۵ E2E (Playwright موبایل)"
+    "current": "۷۰ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل"
    },
    {
     "key": "تصاویر ۴۰۴",
@@ -52,7 +52,7 @@
     "key": "اندازه‌ی Game.tsx",
     "from": "۱۶۳۲ خط",
     "to": "≤ ۴۰۰ خط (هر فایل)",
-    "current": "۲۰۷۵ خط (بازنویسی در P5.10)"
+    "current": "۲۱۸۰ خط (بازنویسی در P5.10)"
    },
    {
     "key": "FPS روی موبایل میانی",
@@ -378,7 +378,7 @@
      "dod": "تست: سیو معیوب → بازی بالا می‌آید",
      "status": "done",
      "push": 11,
-     "evidence": "src/game/persist.ts (sanitizeSave/readLocalSave/quarantine) + بنر «سیوِ قبلی سالم نبود» و دکمه‌ی بازیابی در Game.tsx — ۲۱ تست واحد tests/persist.test.ts + ۲ تست e2e/resilience.spec.ts (سیوِ خراب → بازی بالا می‌آید)"
+     "evidence": "persist.ts: sanitizeSave + قرنطینه + «پشتیبانِ چرخشی» farm_save_bak (هر ذخیره نسخه‌ی سالمِ قبلی را نگه می‌دارد و سیوِ خراب خودکار از آن بالا می‌آید) + بنر صادق در Game.tsx — ۲۷ تست واحد tests/persist.test.ts + e2e/resilience.spec.ts سبز روی هر دو پروفایل (سیوِ نیمه‌نوشته → پول ۹۸۷۶۵۴ از پشتیبان برمی‌گردد؛ docs/shots/resilience-restored-*.png)"
     },
     {
      "id": "5.2",

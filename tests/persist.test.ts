@@ -8,6 +8,10 @@ import {
   readQuarantined,
   restoreQuarantined,
   pickNewer,
+  writeLocalSave,
+  readBackupSave,
+  readLocalWithBackup,
+  BACKUP_KEY,
   readLS,
   writeLS,
   dropLS,
@@ -208,6 +212,65 @@ describe("restoreQuarantined — بازگرداندن پیشرفتِ بازیک�
 
   it("بدون پشتیبان هیچ کاری نمی‌کند", () => {
     expect(restoreQuarantined().state).toBeNull();
+  });
+});
+
+describe("پشتیبانِ چرخشی — سیوِ خراب، پیشرفت را نمی‌بَرد", () => {
+  it("هر ذخیره، نسخه‌ی سالمِ قبلی را به پشتیبان منتقل می‌کند", () => {
+    const a = newState();
+    a.coins = 111;
+    const b = newState();
+    b.coins = 222;
+    writeLocalSave(JSON.stringify(a));
+    expect(localStorage.getItem(BACKUP_KEY)).toBeNull(); // نسخه‌ی قبلی نبود
+    writeLocalSave(JSON.stringify(b));
+    expect(readBackupSave().state?.coins).toBe(111);
+    expect(readLocalSave().state?.coins).toBe(222);
+  });
+
+  it("سیوِ خراب هیچ‌وقت جای پشتیبانِ سالم را نمی‌گیرد", () => {
+    const a = newState();
+    a.coins = 333;
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(a));
+    localStorage.setItem(SAVE_KEY, '{"v":5,"tiles":['); // نیمه‌نوشته
+    writeLocalSave(JSON.stringify(newState()));
+    expect(readBackupSave().state?.coins).toBe(333);
+  });
+
+  it("سیوِ اصلیِ خراب → خودکار از پشتیبان بالا می‌آید و پرچم خرابی حفظ می‌شود", () => {
+    const a = newState();
+    a.coins = 987654;
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(a));
+    localStorage.setItem(SAVE_KEY, '{"v":5,"tiles":[{"k":"soil"');
+    const out = readLocalWithBackup();
+    expect(out.state?.coins).toBe(987654);
+    expect(out.source).toBe("backup");
+    expect(out.corrupt).toBe(true);
+    expect(out.note).toContain("پشتیبان");
+    expect(readQuarantined()?.raw).toBe('{"v":5,"tiles":[{"k":"soil"');
+  });
+
+  it("اگر پشتیبان هم خراب باشد، بازی تازه با پرچم خرابی شروع می‌شود", () => {
+    localStorage.setItem(BACKUP_KEY, "{{{");
+    localStorage.setItem(SAVE_KEY, "}}}");
+    const out = readLocalWithBackup();
+    expect(out.state).toBeNull();
+    expect(out.corrupt).toBe(true);
+  });
+
+  it("سیوِ سالم → پشتیبان دست نمی‌خورد", () => {
+    const a = newState();
+    a.coins = 5;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(a));
+    const out = readLocalWithBackup();
+    expect(out.source).toBe("local");
+    expect(out.corrupt).toBe(false);
+  });
+
+  it("حافظه‌ی پر/مسدود → writeLocalSave پرتاب نمی‌کند", () => {
+    vi.stubGlobal("localStorage", fakeLS({ throwOn: "set" }));
+    expect(() => writeLocalSave("{}")).not.toThrow();
+    expect(writeLocalSave("{}")).toBe(false);
   });
 });
 
