@@ -74,6 +74,25 @@ import {
   lockOrientation,
   unlockOrientation,
 } from "./mobile";
+/** ثبت اشاره‌گر با گارد: در بعضی مرورگرها/رویدادهای مصنوعی خطای NotFoundError می‌دهد. */
+function capturePointer(el: Element | null, pointerId: number) {
+  try {
+    (el as HTMLElement | null)?.setPointerCapture?.(pointerId);
+  } catch {
+    /* اشاره‌گر دیگر فعال نیست؛ کنترل کشیدن را با رویدادهای بعدی از دست نمی‌دهیم */
+  }
+}
+
+import {
+  saveGame,
+  flushOutbox,
+  useOnline,
+  registerServiceWorker,
+  prefetchStoryArt,
+  STORY_ART_URLS,
+  hasPendingSave,
+  type SaveState,
+} from "./net";
 
 type Panel =
   | null
@@ -263,12 +282,18 @@ export default function Game() {
   const [panel, setPanel] = useState<Panel>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [saveState, setSaveState] = useState("");
+  const [saveState, setSaveState] = useState<SaveState>("");
+  const [away, setAway] = useState<null | {
+    minutes: number; coins: number; xp: number; levels: number; ready: number; days: number;
+  }>(null);
   const [sfx, setSfx] = useState(true);
   const [hapticsState, setHapticsState] = useState(true);
   useWakeLock(started);
+  const online = useOnline();
   const pid = useRef("");
   const toastMemo = useRef<{ text: string; at: number }>({ text: "", at: 0 });
+  const saveRef = useRef<(() => Promise<void>) | null>(null); // قلاب تست/ذخیره‌ی فوری
+  const perf = useRef({ acc: 0, n: 0 }); // سنجش فریم برای سازگارسازی رزولوشن
 
   // ── لایه‌ی موبایل: تمام‌صفحه، بیداری صفحه، بستن ژست‌های مرورگر، ارتفاع درست
   useNativeGestureGuards();
@@ -339,8 +364,18 @@ export default function Game() {
       },
       toast,
       view: () => viewRef.current,
+      save: () => saveRef.current?.(),
     };
   }, [toast]);
+
+  // بازگشت به بازی: اگر قبلاً شروع کرده‌ای، اسپلش را رد کن (رفتار یک اپ نصب‌شده)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("farm_started") === "1") setStarted(true);
+    } catch {
+      /* حافظه در دسترس نیست */
+    }
+  }, []);
 
   // بازیابی تنظیم لرزش لمسی
   useEffect(() => {
@@ -349,6 +384,25 @@ export default function Game() {
     setHaptics(on);
     setHapticsState(on);
   }, []);
+
+  // ── لایه‌ی آفلاین: ثبت Service Worker + پیش‌کش آرت داستان + تخلیه‌ی صف ذخیره
+  useEffect(() => {
+    const off = registerServiceWorker((e) => {
+      if (e === "update") toast("🔄 نسخه‌ی تازه آماده است؛ با بستن و باز کردن اپ فعال می‌شود", "info");
+    });
+    return off;
+  }, [toast]);
+
+  useEffect(() => {
+    if (ready) prefetchStoryArt(STORY_ART_URLS); // برای اجرای کامل آفلاین
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready || !online || !hasPendingSave()) return;
+    void flushOutbox().then((ok) => {
+      if (ok) setSaveState("cloud"); // صف خالی شد
+    });
+  }, [ready, online]);
 
   // Load game state
   useEffect(() => {
@@ -373,39 +427,54 @@ export default function Game() {
       const ls = local ? migrate(JSON.parse(local)) : null;
       if (ls && (!s || ls.savedAt > s.savedAt)) s = ls;
       if (s) {
-        const away = Math.min(7200, (Date.now() - s.savedAt) / 1000);
+        const elapsed = Math.min(7200, (Date.now() - s.savedAt) / 1000);
         const silent: Events = { toast: () => {}, fx: () => {}, sound: () => {} };
-        for (let t = 0; t < away; t += 5) tick(s, Math.min(5, away - t), silent);
-        if (away > 60)
+        // عکسِ لحظه‌ی قبل از جبران آفلاین‌تایم تا گزارش صادقانه ساخته شود
+        const snap = (st: State) => ({
+          coins: st.coins,
+          xp: st.xp,
+          level: st.level,
+          day: st.day,
+          ready: st.tiles.reduce((a, t) => a + (t.crop && (t.g || 0) >= 1 ? 1 : 0), 0),
+        });
+        const before = snap(s);
+        for (let t = 0; t < elapsed; t += 5) tick(s, Math.min(5, elapsed - t), silent);
+        const after = snap(s);
+        if (elapsed > 60) {
+          const rep = {
+            minutes: Math.round(elapsed / 60),
+            coins: after.coins - before.coins,
+            xp: after.xp - before.xp,
+            levels: after.level - before.level,
+            ready: after.ready - before.ready,
+            days: after.day - before.day,
+          };
+          // فقط اگر اتفاق معناداری افتاده باشد گزارش نشان بده
+          if (rep.coins || rep.xp || rep.ready || rep.levels || rep.days > 0) setAway(rep);
           setTimeout(
-            () => toast(`👋 خوش آمدید! ${Math.round(away / 60)} دقیقه مزرعه شما در غیاب شما رشد کرد`, "ok"),
+            () => toast(`👋 خوش آمدید! ${rep.minutes} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"),
             800
           );
+        }
       }
       sRef.current = s || newState();
       setReady(true);
     })();
   }, [toast]);
 
-  // Save game state
+  // Save game state — آفلاین‌فرست: اول محلی، سپس ابری؛ شکستِ شبکه به «صف» می‌رود
   const save = useCallback(async () => {
     const s = sRef.current;
     if (!s) return;
     s.savedAt = Date.now();
-    const json = JSON.stringify(s);
-    localStorage.setItem("farm_save", json);
-    try {
-      setSaveState("saving");
-      const r = await fetch("/api/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: pid.current, data: s }),
-      });
-      setSaveState(r.ok ? "cloud" : "local");
-    } catch {
-      setSaveState("local");
-    }
+    setSaveState("saving");
+    const st = await saveGame(pid.current, s);
+    setSaveState(st);
   }, []);
+
+  useEffect(() => {
+    saveRef.current = save;
+  }, [save]);
 
   useEffect(() => {
     if (!ready) return;
@@ -425,7 +494,8 @@ export default function Game() {
     const ctx = cv.getContext("2d")!;
     let raf = 0,
       last = performance.now(),
-      uiAcc = 0;
+      uiAcc = 0,
+      lastFrame = performance.now();
 
     const resize = () => {
       const v = viewRef.current;
@@ -442,6 +512,24 @@ export default function Game() {
     window.addEventListener("resize", resize);
 
     const loop = (t: number) => {
+      // ── سازگارسازی خودکار رزولوشن: تا نرمی روی دستگاه ضعیف قربانی نشود
+      perf.current.acc += t - lastFrame;
+      perf.current.n += 1;
+      lastFrame = t;
+      if (perf.current.n >= 40) {
+        const avg = perf.current.acc / perf.current.n;
+        perf.current = { acc: 0, n: 0 };
+        const maxDpr = Math.min(2, window.devicePixelRatio || 1);
+        const v = viewRef.current;
+        let d = v.dpr;
+        if (avg > 20 && d > 0.6) d = Math.max(0.6, d - 0.15); // کند است → رزولوشن را کم کن
+        else if (avg < 13.5 && d < maxDpr) d = Math.min(maxDpr, d + 0.1); // جا هست → کیفیت را برگردان
+        if (Math.abs(d - v.dpr) > 0.01) {
+          v.dpr = d;
+          cv.width = Math.round(v.w * d);
+          cv.height = Math.round(v.h * d);
+        }
+      }
       const dt = Math.min(0.1, (t - last) / 1000);
       last = t;
       const s = sRef.current!;
@@ -530,6 +618,33 @@ export default function Game() {
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinch = useRef<number>(0);
 
+  /**
+   * عمل دسته‌ای: نگه‌داشتن انگشت روی یک زمین، همان ابزار را روی ۹ زمین (۳×۳) اجرا می‌کند.
+   * چرا؟ بازیکن موبایل نباید برای کاشت یک ردیف ۹ بار ضربه بزند.
+   */
+  const groupAct = (tx: number, ty: number) => {
+    const s = sRef.current!;
+    if (tool === "build") { setPanel("build"); return; }
+    haptic("big");
+    let done = 0;
+    let opened = false;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const x = tx + dx, y = ty + dy;
+        if (x < 0 || y < 0 || x >= N || y >= N) continue;
+        if (locked(s, x, y)) continue;
+        const before = JSON.stringify(s.tiles[idx(x, y)]);
+        const r = toolAction(s, x, y, tool, tool === "seed" ? seed : "", ev);
+        if (r === "open") { opened = true; continue; }
+        if (JSON.stringify(s.tiles[idx(x, y)]) !== before) done++;
+      }
+    }
+    if (opened && !done) setPanel({ bx: tx, by: ty });
+    sound(done ? "click" : "err");
+    toast(done ? `⚡ عملیات دسته‌ای روی ${done} زمین اجرا شد` : "برای عمل دسته‌ای زمین آزادِ بیشتری لازم است", done ? "ok" : "err");
+    setTick((n) => n + 1);
+  };
+
   const act = (tx: number, ty: number) => {
     const s = sRef.current!;
     const arg = tool === "seed" ? seed : tool === "build" ? bsel : "";
@@ -555,7 +670,7 @@ export default function Game() {
   const sheetDrag = useRef({ y: 0, dy: 0, active: false });
   const onSheetDown = (e: React.PointerEvent) => {
     sheetDrag.current = { y: e.clientY, dy: 0, active: true };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    capturePointer(e.currentTarget, e.pointerId);
   };
   const onSheetMove = (e: React.PointerEvent) => {
     const d = sheetDrag.current;
@@ -575,6 +690,12 @@ export default function Game() {
   };
 
   const hoverClear = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdFired = useRef(false);
+  const cancelHold = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  };
   const keepHover = (t: { x: number; y: number } | null) => {
     viewRef.current.hover = t;
     if (hoverClear.current) clearTimeout(hoverClear.current);
@@ -582,18 +703,24 @@ export default function Game() {
   };
 
   const onDown = (e: React.PointerEvent) => {
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    capturePointer(e.target as Element, e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const v = viewRef.current;
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinch.current = Math.hypot(a.x - b.x, a.y - b.y);
       drag.current = null;
+      cancelHold();
       keepHover(null);
       return;
     }
     drag.current = { x: e.clientX, y: e.clientY, cx: v.cam.x, cy: v.cam.y, moved: false, painted: new Set() };
-    keepHover(screenToTile(v, e.clientX, e.clientY));
+    const t0 = screenToTile(v, e.clientX, e.clientY);
+    keepHover(t0);
+    // نگه‌داشتن انگشت = عمل دسته‌ای روی ۳×۳
+    holdFired.current = false;
+    cancelHold();
+    if (t0) holdTimer.current = setTimeout(() => { holdFired.current = true; groupAct(t0.x, t0.y); }, 480);
   };
 
   const onMove = (e: React.PointerEvent) => {
@@ -611,6 +738,7 @@ export default function Game() {
     const dx = e.clientX - dr.x, dy = e.clientY - dr.y;
     if (Math.abs(dx) + Math.abs(dy) > 7) {
       dr.moved = true;
+      cancelHold();
       v.cam.x = dr.cx + dx;
       v.cam.y = dr.cy + dy;
       keepHover(null);
@@ -620,11 +748,13 @@ export default function Game() {
   };
 
   const endPointer = (e: React.PointerEvent, cancelled = false) => {
+    cancelHold();
     pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinch.current = 0;
     const dr = drag.current;
     drag.current = null;
     if (cancelled || !dr || dr.moved) { keepHover(null); return; }
+    if (holdFired.current) { holdFired.current = false; keepHover(null); return; } // دسته‌ای اجرا شد؛ ضربه‌ی دوم لازم نیست
     const t = screenToTile(viewRef.current, e.clientX, e.clientY);
     if (t) { keepHover(t); act(t.x, t.y); } else keepHover(null);
   };
@@ -810,7 +940,8 @@ export default function Game() {
             <span className="block font-mono text-[10px] opacity-80">{String(hh).padStart(2, "0")}:{String(mm).padStart(2, "0")}</span>
           </span>
           <Icon name={curSeason.id} size={22} />
-          {saveState && <Icon name={saveState === "local" ? "save" : "cloud"} size={16} className={saveState === "saving" ? "animate-pulse opacity-60" : "opacity-80"} />}
+          {saveState && <Icon name={saveState === "cloud" ? "cloud" : "save"} size={16} className={saveState === "saving" ? "animate-pulse opacity-60" : "opacity-80"} />}
+          {!online && <span className="rounded-full bg-amber-400/95 px-1.5 py-0.5 text-[9px] font-black text-amber-950">آفلاین</span>}
         </div>
       </div>
 
@@ -880,6 +1011,34 @@ export default function Game() {
           </div>
         ))}
       </div>
+
+      {/* گزارش «در غیاب شما» — آفلاین‌تایم باید دیده شود، نه اینکه در سکوت بگذرد */}
+      {away && started && (
+        <div className="pointer-events-auto absolute inset-x-3 bottom-[96px] z-40 rounded-3xl bg-white/97 p-3 shadow-2xl ring-1 ring-emerald-900/10 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-sm font-black text-emerald-900">
+              <Icon name="moon" size={22} /> در غیاب شما
+            </span>
+            <button
+              type="button"
+              aria-label="بستن گزارش غیاب"
+              onClick={() => { haptic("tap"); setAway(null); }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-lg font-black text-slate-600"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="mt-0.5 text-[11px] font-bold text-slate-500">
+            {fmt(away.minutes)} دقیقه بیرون بودی؛ مزرعه خواب نماند:
+          </p>
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[11px] font-black text-slate-700">
+            <span className="rounded-xl bg-amber-50 px-2 py-1">🌾 {fmt(away.ready)} محصول رسیده</span>
+            <span className="rounded-xl bg-emerald-50 px-2 py-1">💰 {away.coins >= 0 ? "+" : "−"}{fmt(Math.abs(away.coins))} سکه</span>
+            <span className="rounded-xl bg-sky-50 px-2 py-1">⭐ {away.xp >= 0 ? "+" : "−"}{fmt(Math.abs(away.xp))} تجربه</span>
+            <span className="rounded-xl bg-purple-50 px-2 py-1">📅 {fmt(away.days)} روز گذشته{away.levels > 0 ? ` · ${fmt(away.levels)} سطح` : ""}</span>
+          </div>
+        </div>
+      )}
 
       {/* منوی اصلی موبایل — گرید لمسی با برچسب، به‌جای ستون آیکون‌های دسکتاپی */}
       {menuOpen && (
@@ -1596,7 +1755,8 @@ export default function Game() {
                 <div className="rounded-2xl bg-white p-3 text-xs font-bold leading-6 text-slate-700 shadow">
                   <div className="mb-1 flex items-center gap-1.5 text-sm font-black text-slate-800"><Icon name="info" size={20} />وضعیت بازی</div>
                   روز {fmt(s.day)} · نسل {fmt(s.prestige)} · {fmt(s.bought)} قطعه زمین خریداری‌شده
-                  <br />ذخیره‌سازی: {saveState === "cloud" ? "ابری و محلی" : saveState === "saving" ? "در حال ذخیره" : "محلی"} — هر ۱۲ ثانیه خودکار
+                  <br />ذخیره‌سازی: {saveState === "cloud" ? "ابری و محلی" : saveState === "saving" ? "در حال ذخیره" : saveState === "queued" ? "محلی — در صف ارسال ابری" : "محلی"} — هر ۱۲ ثانیه خودکار
+                  <br />اتصال: {online ? "آنلاین" : "آفلاین — بازی کامل ادامه دارد و سیو در صف می‌ماند"}
                   <br />نصب‌شدنی: {typeof navigator !== "undefined" && "serviceWorker" in navigator ? "آفلاین آماده (PWA)" : "بدون پشتیبانی مرورگر"}
                   <br />اندازه‌ی صفحه: {typeof window !== "undefined" ? `${fmt(window.innerWidth)}×${fmt(window.innerHeight)}` : "—"}
                 </div>
@@ -1798,6 +1958,7 @@ export default function Game() {
                 haptic("big");
                 void enterFsAndLock();
                 if (vsync) void lockOrientation("portrait");
+                try { localStorage.setItem("farm_started", "1"); } catch { /* حافظه در دسترس نیست */ }
                 setStarted(true);
                 s.story.shown = true;
                 setTick((x) => x + 1);

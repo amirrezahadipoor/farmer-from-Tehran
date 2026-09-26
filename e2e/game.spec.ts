@@ -138,7 +138,7 @@ test.describe("مزرعه طلایی — موبایل", () => {
     await page.waitForTimeout(500);
     await page.getByRole("button", { name: "بازار" }).first().tap();
     await page.waitForTimeout(600);
-    await expect(page.getByText("انبار و بازار", { exact: false })).toBeVisible();
+    await expect(page.getByText("بازار و انبار", { exact: false })).toBeVisible();
   });
 
   for (const vp of VIEWPORTS) {
@@ -167,12 +167,5 @@ test.describe("مزرعه طلایی — موبایل", () => {
     });
   }
 
-  // TODO(P3.2): با افزودن Service Worker این تست فعال می‌شود.
-  test.fixme("آفلاین بالا می‌آید (بعد از یک بازدید)", async ({ page, context }) => {
-    await enterGame(page);
-    await context.setOffline(true);
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
-    await context.setOffline(false);
-  });
+  // تست‌های آفلاین در e2e/offline.spec.ts پیاده‌سازی شدند (P3.2/P3.3).
 });
