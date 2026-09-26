@@ -76,6 +76,10 @@ export const rt = {
     arg: "",
   } as View,
   perf: { acc: 0, n: 0 },
+  /** شمارنده‌ی رندرهای واقعی و زمانِ JSِ آن‌ها (برای سنجشِ P5.14/P6.6 و window.__game.perf) */
+  stats: { renders: 0, renderMs: 0 },
+  /** قفلِ دستیِ رزولوشن برای سنجش (null = خودکار) */
+  dprLock: null as number | null,
 };
 
 /** پاک‌کردن حالت زمان‌اجرا (شروع دوباره از ابتدا). */

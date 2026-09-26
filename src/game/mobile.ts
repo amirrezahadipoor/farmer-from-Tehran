@@ -168,12 +168,22 @@ export function unlockOrientation() {
 export function useNativeGestureGuards(enabled = true) {
   useEffect(() => {
     if (!enabled || typeof document === "undefined") return;
-    let lastTouchEnd = 0;
+    let last = { t: 0, x: -99, y: -99 };
 
+    /**
+     * فقط «دوباره‌ضربه‌ی واقعی» (همان نقطه، زیرِ ۳۲۰ms، نه روی دکمه/کنترل) مهار می‌شود. پیش از P6.6
+     * هر touchendِ دوم در ۳۲۰ms، هرجای صفحه، preventDefault می‌شد و کلیکِ مرورگر نمی‌آمد: «منو» و
+     * بلافاصله «بازار» ← بازار باز نمی‌شد. دکمه‌ها touch-action: manipulation دارند (globals.css)
+     * و زومِ دوباره‌ضربه رویشان از قبل خاموش است.
+     */
     const onTouchEnd = (e: TouchEvent) => {
       const now = Date.now();
-      if (now - lastTouchEnd <= 320) e.preventDefault(); // زوم دوباره‌ضربه
-      lastTouchEnd = now;
+      const p = e.changedTouches?.[0];
+      const x = p?.clientX ?? 0, y = p?.clientY ?? 0;
+      const el = e.target as Element | null;
+      const control = !!el?.closest?.("button, a, input, select, textarea, label, [role=button]");
+      if (!control && now - last.t <= 320 && Math.abs(x - last.x) < 24 && Math.abs(y - last.y) < 24) e.preventDefault();
+      last = { t: now, x, y };
     };
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 1) e.preventDefault(); // pinch-zoom مرورگر (pinch داخل بازی خودمان مدیریت می‌شود)

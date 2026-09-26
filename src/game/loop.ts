@@ -2,7 +2,9 @@
 
 /**
  * src/game/loop.ts — حلقه‌ی ۶۰ فریمِ بازی (بیرون از React)
- *  • سازگارسازی خودکار رزولوشن (dpr) تا دستگاه ضعیف لگ نزند
+ *  • سازگارسازی خودکار رزولوشن (dpr) تا دستگاه ضعیف لگ نزند؛ با سقفِ پسماند (P6.6) تا
+ *    بعد از یک شروعِ کند دوباره بالا برود ولی بینِ دو سطح نوسان نکند
+ *  • پشتِ پرده‌ی تمام‌صفحه‌ی داستان رندر نمی‌شود (باتری)؛ شبیه‌سازی ادامه دارد
  *  • tick منطق، افکت‌ها، هوش راه‌روندگان (کارگرها)، رندر و بررسی هدف داستان
  *  • هر ۰.۲۵ ثانیه یک‌بار UI را باخبر می‌کند (نه ۶۰ بار)
  *  • هر ۱ ثانیه حالِ دره (ساعت، فصل، هوا) را به صدای محیط و موسیقی می‌دهد (P5.12)
@@ -11,7 +13,7 @@
 import { ambience, type AmbientEnv } from "./audio";
 import { DAY_LEN, N, SEASONS } from "./data";
 import { tick, locked, idx, ensureQuests, type Events, type State } from "./logic";
-import { render } from "./render";
+import { applyScreenFx, render, renderStats, screenFx } from "./render";
 import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
@@ -19,11 +21,28 @@ import { game, rt } from "./store";
 const MIN_DPR = 0.6;
 const maxDpr = () => Math.min(2, window.devicePixelRatio || 1);
 
-/** تصمیمِ رزولوشن برای پنجره‌ی سنجش (خالص؛ تست‌پذیر). */
-export function nextDpr(cur: number, avgFrameMs: number, max: number): number {
-  if (avgFrameMs > 20 && cur > MIN_DPR) return Math.max(MIN_DPR, cur - 0.15); // کند → رزولوشن کمتر
-  if (avgFrameMs < 13.5 && cur < max) return Math.min(max, cur + 0.1); // جا هست → کیفیت بیشتر
+/**
+ * تصمیمِ رزولوشن برای پنجره‌ی سنجش (خالص؛ تست‌پذیر).
+ * کند (> ۲۰ms) → کمتر؛ هم‌پای vsync (< ۱۷.۵ms، یعنی ۵۷+ فریم) → بیشتر تا سقف. پیش از P6.6
+ * آستانه‌ی بالا رفتن ۱۳.۵ms بود که در ۶۰ هرتز هرگز رخ نمی‌دهد: یک شروعِ کند رزولوشن را
+ * برای همیشه روی ۰.۶ نگه می‌داشت.
+ */
+export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max): number {
+  if (avgFrameMs > 18.5 && cur > MIN_DPR) {
+    // زیرِ ۵۴ فریم → رزولوشن کمتر. هزینه‌ی رسم ≈ تعدادِ پیکسل ≈ dpr²، پس کندیِ شدید یک‌جا به
+    // تخمین می‌پرد (۱۰٪ حاشیه) به‌جای ده‌ها پله‌ی ۰.۱۵ (دستگاهِ ضعیف در ۱ تا ۲ پنجره می‌نشیند)
+    const est = Math.round(cur * Math.sqrt(16.7 / avgFrameMs) * 0.9 * 20) / 20;
+    return Math.max(MIN_DPR, Math.min(cur - 0.15, est));
+  }
+  const top = Math.min(max, ceil);
+  if (avgFrameMs < 17.3 && cur < top - 0.001) return Math.min(top, cur + 0.1); // ۵۸+ فریم → کیفیت بیشتر
   return cur;
+}
+export interface DprState { dpr: number; ceil: number }
+/** با سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود؛ سقف = آخرین سطحِ سالمِ زیرِ آن */
+export function adaptDpr(st: DprState, avgFrameMs: number, max: number): DprState {
+  const d = nextDpr(st.dpr, avgFrameMs, max, st.ceil);
+  return { dpr: d, ceil: d < st.dpr ? Math.max(MIN_DPR, st.dpr - 0.1) : st.ceil };
 }
 
 /** حالِ صوتیِ دره از وضعیتِ بازی (خالص؛ تست‌پذیر) */
@@ -87,17 +106,23 @@ function stepFx(dt: number) {
 
 /** حلقه را روی بوم شروع می‌کند؛ خروجی = تابع توقف. */
 export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () => void {
+  // بومِ شفاف: آسمان و رنگ‌های صفحه‌ای لایه‌ی CSS زیر/روی بوم هستند (ui/ScreenLayers.tsx)
   const ctx = cv.getContext("2d");
   if (!ctx) return () => {};
   let raf = 0,
     last = performance.now(),
     uiAcc = 0,
     audioAcc = 1,
-    lastFrame = performance.now();
+    lastFrame = performance.now(),
+    ceil = maxDpr(),
+    skipGap = false;
 
   const resize = () => {
     const v = rt.view;
-    v.dpr = maxDpr();
+    // شروع از ≤ ۱.۵: دستگاهِ قوی در چند ثانیه به سقف می‌رسد، دستگاهِ ضعیف چند ثانیه‌ی اول را
+    // با کشِ زمینِ غول‌آسا و فریم‌های نیم‌ثانیه‌ای شروع نمی‌کند
+    v.dpr = Math.min(1.5, maxDpr());
+    ceil = maxDpr(); // اندازه‌ی تازه = سنجشِ تازه
     v.w = window.innerWidth;
     v.h = window.innerHeight;
     cv.width = v.w * v.dpr;
@@ -116,6 +141,17 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     const p = rt.perf;
     const gap = t - lastFrame;
     lastFrame = t;
+    const v = rt.view;
+    if (rt.dprLock && Math.abs(v.dpr - rt.dprLock) > 0.001) { // قفلِ دستی (سنجش/تست)
+      v.dpr = rt.dprLock;
+      cv.width = Math.round(v.w * v.dpr);
+      cv.height = Math.round(v.h * v.dpr);
+    }
+    // فریمی که کشِ زمین را از نو ساخت یا پشتِ پرده بود، معیارِ نرمیِ بازی نیست
+    if (skipGap || v.covered || rt.dprLock) {
+      skipGap = false;
+      return;
+    }
     if (gap > 0 && gap < 1000) {
       p.acc += gap;
       p.n += 1;
@@ -123,8 +159,9 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     if (p.n >= 40 || (p.acc >= 1000 && p.n >= 3)) {
       const avg = p.acc / p.n;
       rt.perf = { acc: 0, n: 0 };
-      const v = rt.view;
-      const d = nextDpr(v.dpr, avg, maxDpr());
+      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr());
+      const d = next.dpr;
+      ceil = next.ceil;
       if (Math.abs(d - v.dpr) > 0.01) {
         v.dpr = d;
         cv.width = Math.round(v.w * d);
@@ -143,7 +180,15 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       tick(s, dt, ev);
       stepFx(dt);
       stepWalkers(s, dt);
-      render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values()]);
+      if (!rt.view.covered) {
+        const r0 = renderStats().rebuilds;
+        const t0 = performance.now();
+        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values()]);
+        rt.stats.renders++;
+        rt.stats.renderMs += performance.now() - t0;
+        if (renderStats().rebuilds !== r0) skipGap = true;
+        if (cv.parentElement) applyScreenFx(cv.parentElement, screenFx(s));
+      }
       updateStory(s, ev); // بررسی هدف فصلِ داستان
       updateLineage(s, ev); // قولِ وارثِ نسلِ جاری (P6.4)
       audioAcc += dt;
