@@ -8,13 +8,14 @@
  */
 import { migrate, newStoryState, type State, type Tile } from "./state";
 import { newState } from "./economy";
+import { normalizeQuests } from "./quests";
 import { ITEMS, N, CH, WEATHER_TYPES } from "../data";
 
 const NCH = Math.ceil(N / CH);
 
 /** کلیدهای مجازِ ریشه‌ی سیو: هرچه newState دارد + فیلدهای اختیاری (تنبل: ساختِ نقشه فقط یک بار) */
 let stateKeys: Set<string> | null = null;
-const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), "xpAcc"]));
+const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), "xpAcc", "quests"]));
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -144,6 +145,11 @@ export function sanitizeSave(raw: unknown): State | null {
   if (s.story.phase !== "scenes" && s.story.phase !== "goal" && s.story.phase !== "end") s.story.phase = "scenes";
   if (!Array.isArray(s.story.completed)) s.story.completed = [];
   s.story.done = s.story.done === true;
+
+  // ── P6.2: اهدافِ نامعتبر حذف و از نو ساخته می‌شوند
+  const quests = normalizeQuests((s as { quests?: unknown }).quests);
+  if (quests) s.quests = quests;
+  else delete s.quests;
 
   // ── P5.13: فقط کلیدهای شناخته‌شده‌ی State می‌مانند؛ سرور نمی‌تواند انبارِ دادهِ دلخواه شود
   const allowed = allowedKeys();
