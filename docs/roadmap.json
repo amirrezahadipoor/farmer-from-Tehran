@@ -376,22 +376,25 @@
      "id": "5.1",
      "title": "سیو خراب → بازیابی به‌جای قفل ابدی (try/catch + بنر شروع تازه)",
      "dod": "تست: سیو معیوب → بازی بالا می‌آید",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "src/game/persist.ts (sanitizeSave/readLocalSave/quarantine) + بنر «سیوِ قبلی سالم نبود» و دکمه‌ی بازیابی در Game.tsx — ۲۱ تست واحد tests/persist.test.ts + ۲ تست e2e/resilience.spec.ts (سیوِ خراب → بازی بالا می‌آید)"
     },
     {
      "id": "5.2",
      "title": "۷ تصویر ۴۰۴ و لوگوی شکسته",
      "dod": "کنسول بدون ۴۰۴ تصویری",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "README: story_farm.jpg → .webp + tools/check-assets.mjs حالا کل ریپو، آیکون‌های manifest و فهرست پیش‌کش sw.js را می‌سنجد (۲۷ دارایی، ۰ گم‌شده) + e2e/assets.spec.ts: ۰ درخواست تصویری ۴۰۴ در نشست واقعی"
     },
     {
      "id": "5.3",
      "title": "بیلد بدون DATABASE_URL (lazy DB) + اسکریپت db:push + مستندات",
      "dod": "npm run build بدون هیچ متغیری موفق شود",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "db/index.ts lazy از قبل بود؛ شاهد تازه: tests/api.test.ts — build و هر سه endpoint بدون DATABASE_URL (۵ تست) + جدول رفتار در README"
     },
     {
      "id": "5.4",
@@ -404,22 +407,25 @@
      "id": "5.5",
      "title": "بستن حفره‌های خودکارسازی (بذرپاش/کودپاش) و کارگر",
      "dod": "تست اقتصاد: هیچ حلقه‌ی سود بی‌پایانی نماند",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "logic.ts: بذرپاش خودکار و کارگر مزرعه‌دار به‌ازای هر کاشت یک بذر از انبار مصرف می‌کنند + کودپاش پول کود را می‌پردازد — ۵ تست اقتصاد (حلقه‌ی سود بی‌پایان بسته شد)"
     },
     {
      "id": "5.6",
      "title": "خاک زمان‌دار (خشک شدن) + آبیاری معنا‌دار",
      "dod": "تست: پس از ۹۰ ثانیه خشک شود",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "logic.ts: WATER_SECONDS=90 — خاک پس از آبیاری ۹۰ ثانیه خیس می‌ماند، باران ۴۵ و پاشنده ۲۲ ثانیه؛ پیام «هنوز خیس است» شمارش معکوس دارد — ۵ تست اقتصاد"
     },
     {
      "id": "5.7",
      "title": "فروش ایمن + پیش‌نمایش درآمد + جلوگیری از XP فروش تکی",
      "dod": "XP تابع ارزش باشد نه تعداد کلیک",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 11,
+     "evidence": "logic.ts sellPreview + sell ایمن (مبلغ یک‌جا، XP بر پایه‌ی ارزش با xpAcc) + دکمه‌ی «۱۰» و تأیید دو مرحله‌ای «همه» و کارت پیش‌نمایش درآمد در Game.tsx — ۶ تست اقتصاد"
     },
     {
      "id": "5.8",

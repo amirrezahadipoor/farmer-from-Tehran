@@ -4,7 +4,7 @@
 > ساخته‌شده با Next.js 16 + React 19 + TypeScript · موتور گرافیکی دست‌نویس روی Canvas 2D
 
 <p align="center">
-  <img src="public/images/story_farm.jpg" alt="دره زرین" width="100%">
+  <img src="public/images/story_farm.webp" alt="دره زرین — مزرعه طلایی" width="100%">
 </p>
 
 ## ✨ چه چیزی این بازی را متفاوت می‌کند
@@ -31,6 +31,22 @@ npm run dev          # http://localhost:3000
 cp .env.example .env    # اگر همگام‌سازی ابری می‌خواهی
 npm run db:push         # ساخت جدول farm_saves
 ```
+
+### پایگاه‌داده اختیاری است (lazy DB)
+
+اتصال به Postgres **تنبل** ساخته می‌شود: `getDb()` تا وقتی `DATABASE_URL` نباشد
+هیچ استخری باز نمی‌کند و `null` برمی‌گرداند. نتیجه‌ی عملی:
+
+| بدون `DATABASE_URL` | رفتار |
+|---|---|
+| `npm run build` | ✅ موفق — هیچ متغیری لازم نیست (در CI هم همین تست می‌شود) |
+| `GET /api/save` | `{ data: null, mode: "offline" }` — بازی از سیوِ روی دستگاه ادامه می‌دهد |
+| `POST /api/save` | `{ ok: false, mode: "offline" }` — کلاینت ذخیره را در «صندوق خروجی» می‌گذارد |
+| `GET /api/health` | `{ ok: true, database: "offline", configured: false }` |
+
+با داشتن دیتابیس: `cp .env.example .env` → `npm run db:push` (ساخت جدول `farm_saves`)
+→ سرور خودکار ابری می‌شود و سیوهای در صف، هنگام برگشت اینترنت ارسال می‌شوند.
+شاهد خودکار: `tests/api.test.ts` همین رفتار را بدون دیتابیس تست می‌کند.
 
 ## 🧪 کیفیت
 

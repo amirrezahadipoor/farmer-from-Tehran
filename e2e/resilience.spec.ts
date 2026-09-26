@@ -23,9 +23,12 @@ async function enterGame(page: Page) {
       /* ignore */
     }
   });
-  await page.goto("/", { waitUntil: "networkidle" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
-  await page.getByRole("button", { name: /آغاز|شروع|بازی/ }).first().tap().catch(() => undefined);
+
+  // اسپلش ممکن است رد شده باشد (اگر قبلاً شروع کرده‌ایم) — پس فقط اگر هست، بزن
+  const splash = page.getByRole("button", { name: "آغاز داستان" }).first();
+  if (await splash.count()) await splash.tap({ timeout: 10_000 }).catch(() => undefined);
   await page.waitForTimeout(900);
 
   const nameInput = page.locator("input").first();
@@ -103,17 +106,15 @@ test.describe("تاب‌آوری سیو — هیچ سیوِ خرابی بازی 
     );
     expect(after.backup, "پشتیبانِ قرنطینه‌شده باید باقی بماند").not.toBeNull();
 
-    // ۵) دکمه‌ی بازیابی، پیشرفتِ پشتیبان را برمی‌گرداند
-    const banner = page.getByText("سیوِ قبلی سالم نبود");
-    const hasBanner = (await banner.count()) > 0;
-    if (hasBanner) {
-      const restore = page.getByRole("button", { name: "بازیابی از پشتیبان" });
-      if (await restore.count()) {
-        await restore.first().tap();
-        await page.waitForTimeout(900);
-        expect(await coins(page), "پولِ پشتیبان باید برگردد").toBe(987654);
-      }
-    }
+    // ۵) بنر بازیابی باید دیده شود و دکمه‌اش پیشرفتِ پشتیبان را برگرداند
+    await expect(page.getByText("سیوِ قبلی سالم نبود"), "بازیکن باید صادقانه باخبر شود").toBeVisible({
+      timeout: 15_000,
+    });
+    const restore = page.getByRole("button", { name: "بازیابی از پشتیبان" });
+    await expect(restore, "پشتیبان باید قابل بازیابی باشد (نه فقط هشدار)").toBeVisible();
+    await restore.first().tap();
+    await page.waitForTimeout(1000);
+    expect(await coins(page), "پولِ پشتیبان باید برگردد").toBe(987654);
   });
 
   test("سیوِ نیمه‌خرابِ شکل‌دار (NaN و market: null) بازی را از کار نمی‌اندازد", async ({ page }) => {

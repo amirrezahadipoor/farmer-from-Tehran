@@ -8,6 +8,8 @@ import {
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
 export interface Tile {
   k: TileKind; v: number; crop?: string; g?: number; wet?: boolean; fert?: boolean;
+  /** ثانیه‌های باقی‌مانده‌ی رطوبت (P5.6): خاک بعد از WATER_SECONDS ثانیه خشک می‌شود */
+  dry?: number;
   b?: string; q?: number[]; p?: number; out?: string[]; lr?: number; autoMode?: boolean;
 }
 export interface Order { id: number; npc: number; items: { id: string; n: number }[]; coins: number; xp: number; repReward: number; exp: number; }
@@ -27,6 +29,8 @@ export interface State {
   stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; };
   story: { name: string; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
+  /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
+  xpAcc?: number;
 }
 
 export function newStoryState() {
@@ -195,6 +199,28 @@ export const countB = (s: State, id: string) => s.tiles.filter((t) => t.b === id
 export const hasTech = (s: State, id: string) => s.techs.includes(id);
 export const hasSkill = (s: State, id: string) => s.skills.includes(id);
 
+/** قیمت با درجه‌ی اشباعِ دلخواه (برای پیش‌نمایش فروشِ انبوه بدون تغییر وضعیت) */
+export function priceAt(s: State, id: string, sat: number): number {
+  const m = s.market[id];
+  if (!m) return 10;
+  const base = ITEMS[id]?.base || 10;
+  const wave = 1 + 0.22 * Math.sin(s.time / 90 + m.ph) + 0.08 * Math.sin(s.time / 23 + m.ph * 2);
+  let bonus = 1;
+  if (s.workers.some((w) => w.kind === "trader")) bonus += 0.12 * s.workers.filter((w) => w.kind === "trader").length;
+  if (hasTech(s, "market1")) bonus += 0.08;
+  if (hasTech(s, "export_license")) bonus += 0.20;
+  if (hasSkill(s, "price_mind")) bonus += 0.10;
+  if (hasSkill(s, "economist")) bonus += 0.15;
+  if (s.currentEvent?.type === "market_boom") bonus *= 1.35;
+  if (s.currentEvent?.type === "fair") bonus *= 1.25;
+  if (s.currentEvent?.type === "livestock_show") {
+    const dItems = ["egg","milk","wool","pork","honey","butter","cheese","sausage","sweater"];
+    if (dItems.includes(id)) bonus *= 1.5;
+  }
+  const pm = 1 + s.prestige * 0.15;
+  return Math.max(1, Math.round(base * wave * Math.max(0.35, 1 - sat) * bonus * pm));
+}
+
 export function price(s: State, id: string): number {
   const m = s.market[id];
   if (!m) return 10;
@@ -339,19 +365,37 @@ export function queueRecipe(s: State, t: Tile, ri: number, ev: Events, silent = 
   return true;
 }
 
-export function sell(s: State, id: string, n: number, ev: Events) {
-  n = Math.min(n, s.inv[id] || 0);
-  if (n <= 0) return;
-  let total = 0;
-  for (let i = 0; i < n; i++) {
-    total += price(s, id);
-    if (!s.market[id]) s.market[id] = { sat: 0, hist: [], ph: Math.random() * 6 };
-    s.market[id].sat = Math.min(0.65, s.market[id].sat + 0.02);
+/** پیش‌نمایش دقیق درآمد و تجربه‌ی فروش — بدون دست‌زدن به وضعیت (P5.7) */
+export function sellPreview(s: State, id: string, n: number) {
+  const have = s.inv[id] || 0;
+  const count = Math.max(0, Math.min(Math.floor(n), have));
+  const m = s.market[id] || { sat: 0, hist: [], ph: 0 };
+  let sat = m.sat;
+  let coins = 0;
+  for (let i = 0; i < count; i++) {
+    coins += priceAt(s, id, sat);
+    sat = Math.min(0.65, sat + 0.02);
   }
-  s.inv[id] -= n; s.coins += total; s.stats.earned += total;
-  addXp(s, Math.max(1, Math.round(total / 50)), ev);
-  updateContract(s, "coins", total, ev);
-  ev.toast(`فروش ${n} ${ITEMS[id]?.name || id}: +${total.toLocaleString("fa-IR")} 🪙`, "ok");
+  const frac = (s.xpAcc || 0) + coins / 50; // تجربه فقط تابع ارزش است، نه تعداد کلیک
+  return { n: count, coins, xp: Math.floor(frac), satAfter: sat, priceNow: price(s, id) };
+}
+
+/**
+ * فروش ایمن: کل مبلغ یک‌جا حساب می‌شود (نه حلقه‌ی کلیک‌به‌کلیک) و تجربه فقط
+ * از روی «ارزش» داده می‌شود؛ پس ۱۰۰ بار فروشِ تکی هیچ تجربه‌ی اضافه‌ای نمی‌دهد.
+ */
+export function sell(s: State, id: string, n: number, ev: Events) {
+  const pv = sellPreview(s, id, n);
+  if (pv.n <= 0) return;
+  if (!s.market[id]) s.market[id] = { sat: 0, hist: [], ph: Math.random() * 6 };
+  s.inv[id] -= pv.n;
+  s.coins += pv.coins; s.stats.earned += pv.coins;
+  s.market[id].sat = pv.satAfter;
+  s.xpAcc = (s.xpAcc || 0) + pv.coins / 50;
+  const whole = Math.floor(s.xpAcc);
+  if (whole > 0) { s.xpAcc -= whole; addXp(s, whole, ev); }
+  updateContract(s, "coins", pv.coins, ev);
+  ev.toast(`فروش ${pv.n} ${ITEMS[id]?.name || id}: +${pv.coins.toLocaleString("fa-IR")} 🪙`, "ok");
   ev.sound("coin");
 }
 
@@ -367,6 +411,13 @@ export function fulfill(s: State, oi: number, ev: Events) {
   ev.sound("lvl");
   s.orders[oi] = genOrder(s);
 }
+
+/** مدت رطوبت خاک پس از هر آبیاری (ثانیه) — P5.6 */
+export const WATER_SECONDS = 90;
+/** رطوبتی که باران به خاک می‌دهد (کوتاه‌تر از آبیاری دستی) */
+export const RAIN_SECONDS = 45;
+/** رطوبتی که هر پاشنده/چاه در شعاع خود نگه می‌دارد */
+export const SPRINKLER_SECONDS = 22;
 
 export const expandCost = (s: State) => Math.round(500 * Math.pow(1.15, s.bought));
 
@@ -466,11 +517,12 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       return;
     }
     if (t.wet) {
-      ev.toast("این خاک هنوز خیس و مرطوب است.");
+      ev.toast(`این خاک هنوز ${Math.ceil(t.dry ?? WATER_SECONDS)} ثانیه رطوبت دارد.`);
       return;
     }
     t.wet = true;
-    ev.fx(x, y, "💧", "#b3e5fc", "#4fc3f7"); ev.sound("water");
+    t.dry = WATER_SECONDS;
+    ev.fx(x, y, `💧 ${WATER_SECONDS}ث`, "#b3e5fc", "#4fc3f7"); ev.sound("water");
     return;
   }
 
@@ -714,7 +766,13 @@ export function tick(s: State, dt: number, ev: Events) {
 
   for (let i = 0; i < s.tiles.length; i++) {
     const t = s.tiles[i]; const x = i % N, y = Math.floor(i / N);
-    if (s.weather === "rain" && t.k === "soil") t.wet = true;
+    // ── رطوبتِ زمان‌دار: خاک بعد از مدت محدود خشک می‌شود (P5.6)
+    if (t.k === "soil" && t.wet) {
+      if (t.dry === undefined) t.dry = WATER_SECONDS;
+      t.dry -= dt;
+      if (t.dry <= 0) { t.dry = 0; t.wet = false; }
+    }
+    if (s.weather === "rain" && t.k === "soil") { t.wet = true; t.dry = Math.max(t.dry ?? 0, RAIN_SECONDS); }
     if (t.crop && (t.g || 0) < 1) {
       const c = CMAP[t.crop]; if (!c) continue;
       let sp = (dt / c.time) * gMult;
@@ -739,7 +797,7 @@ export function tick(s: State, dt: number, ev: Events) {
           if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
           if (Math.abs(dx)+Math.abs(dy) > r && t.b !== "mega_sprinkler") continue;
           const n = s.tiles[idx(nx, ny)];
-          if (n.k === "soil") n.wet = true;
+          if (n.k === "soil") { n.wet = true; n.dry = Math.max(n.dry ?? 0, SPRINKLER_SECONDS); }
         }
       }
       if (t.b === "composter") {
@@ -760,17 +818,17 @@ export function tick(s: State, dt: number, ev: Events) {
         }
       }
       if (t.b === "auto_planter") {
-        const cropsInInv = CROPS.filter((c) => (s.inv[c.id] || 0) > 0);
-        if (cropsInInv.length > 0) {
-          for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-            const nx = x+dx, ny = y+dy;
-            if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
-            const n = s.tiles[idx(nx, ny)];
-            if (n.k === "soil" && !n.crop) {
-              const cPick = cropsInInv[Math.floor(Math.random() * cropsInInv.length)].id as string;
-              plant(s, nx, ny, cPick, ev, true);
-            }
-          }
+        // P5.5: بذرپاش باید بذرِ واقعی از انبار مصرف کند؛ وگرنه با یک بذرِ ذخیره‌شده
+        // می‌شد بی‌نهایت زمین کاشت و حلقه‌ی سود بی‌پایان ساخت.
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+          const nx = x+dx, ny = y+dy;
+          if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
+          const n = s.tiles[idx(nx, ny)];
+          if (n.k !== "soil" || n.crop) continue;
+          const cPick = CROPS.filter((c) => (s.inv[c.id] || 0) > 0)[0];
+          if (!cPick) break; // بذر در انبار نیست → ماشین می‌ایستد
+          const before = s.inv[cPick.id];
+          if (plant(s, nx, ny, cPick.id, ev, true)) s.inv[cPick.id] = Math.max(0, before - 1); // یک بذر مصرف شد
         }
       }
       if (t.b === "auto_fertilizer") {
@@ -817,8 +875,14 @@ export function tick(s: State, dt: number, ev: Events) {
       if (w.kind === "farmhand") {
         for (let a = 0; a < 3; a++) {
           const i = s.tiles.findIndex((t, j) => t.crop && (t.g||0) >= 1 && !locked(s, j % N, Math.floor(j / N)));
-          if (i >= 0) { const crop = s.tiles[i].crop!; const x = i % N, y = Math.floor(i / N); if (harvest(s, x, y, ev, true)) plant(s, x, y, crop, ev, true); }
-          const d = s.tiles.find((t) => t.crop && !t.wet); if (d) d.wet = true;
+          if (i >= 0) {
+            const crop = s.tiles[i].crop!; const x = i % N, y = Math.floor(i / N);
+            // P5.5: کاشتِ دوباره‌ی کارگر هم بذر می‌خواهد (یک عدد از همان محصول در انبار)
+            if (harvest(s, x, y, ev, true) && (s.inv[crop] || 0) >= 1) {
+              if (plant(s, x, y, crop, ev, true)) s.inv[crop] -= 1;
+            }
+          }
+          const d = s.tiles.find((t) => t.crop && !t.wet); if (d) { d.wet = true; d.dry = Math.max(d.dry ?? 0, SPRINKLER_SECONDS); }
         }
       } else if (w.kind === "operator") {
         s.tiles.forEach((t, i) => {
@@ -846,5 +910,6 @@ export function migrate(d: unknown): State | null {
   if (!s.eventAcc) s.eventAcc = 0;
   if (!s.story) s.story = newStoryState();
   if (!Array.isArray(s.story.completed)) s.story.completed = [];
+  if (typeof s.xpAcc !== "number" || !Number.isFinite(s.xpAcc)) s.xpAcc = 0;
   return s;
 }
