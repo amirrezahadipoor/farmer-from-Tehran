@@ -1020,14 +1020,16 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     ctx.globalCompositeOperation = "source-over";
   }
   // Weather particles in screen space
+  // تعداد ذره‌ها با مساحت صفحه مقیاس می‌گیرد تا موبایل ضعیف هم ۵۵+ FPS بدهد
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const pk = Math.max(0.28, Math.min(1, (w * h) / (390 * 844)));
   if (s.weather === "rain") {
     ctx.strokeStyle = "rgba(190,225,255,0.5)"; ctx.lineWidth = 1.3; ctx.beginPath();
-    for (let i = 0; i < 340; i++) { const rx = (hash(i, 7) * w + now * 80) % w, ry = (hash(7, i) * h + now * 780 * (0.8 + hash(i, i) * 0.4)) % h; ctx.moveTo(rx, ry); ctx.lineTo(rx - 5, ry + 16); }
+    for (let i = 0; i < Math.round(300 * pk) + 40; i++) { const rx = (hash(i, 7) * w + now * 80) % w, ry = (hash(7, i) * h + now * 780 * (0.8 + hash(i, i) * 0.4)) % h; ctx.moveTo(rx, ry); ctx.lineTo(rx - 5, ry + 16); }
     ctx.stroke();
   } else if (s.weather === "snow") {
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    for (let i = 0; i < 220; i++) { const sx = (hash(i, 11) * w + Math.sin(now + i) * 20) % w, sy = (hash(13, i) * h + now * 70) % h; ellipse(ctx, sx, sy, 2.8, 2.8, "rgba(255,255,255,0.8)"); }
+    for (let i = 0; i < Math.round(200 * pk) + 32; i++) { const sx = (hash(i, 11) * w + Math.sin(now + i) * 20) % w, sy = (hash(13, i) * h + now * 70) % h; ellipse(ctx, sx, sy, 2.8, 2.8, "rgba(255,255,255,0.8)"); }
   } else if (s.weather === "fog") {
     const fg = ctx.createLinearGradient(0, 0, 0, h); fg.addColorStop(0, "rgba(240,245,255,0.35)"); fg.addColorStop(1, "rgba(230,235,245,0.05)"); ctx.fillStyle = fg; ctx.fillRect(0, 0, w, h);
   } else if (s.weather === "heatwave") {
@@ -1036,9 +1038,20 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   }
   if (L.dusk > 0) { ctx.fillStyle = `rgba(255,140,60,${0.14 * L.dusk})`; ctx.fillRect(0, 0, w, h); }
   if (L.dark > 0) { ctx.fillStyle = `rgba(10,20,60,${L.dark})`; ctx.fillRect(0, 0, w, h); }
-  const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.8);
-  vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.42)");
-  ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = vignette(ctx, w, h); ctx.fillRect(0, 0, w, h);
+}
+
+/** گرادیان وینیت که هر فریم دوباره ساخته می‌شد؛ حالا بر اساس اندازه‌ی صفحه کش می‌شود. */
+let vignetteCache: { key: string; grad: CanvasGradient | null } = { key: "", grad: null };
+function vignette(ctx: CanvasRenderingContext2D, w: number, h: number): string | CanvasGradient {
+  const key = `${Math.round(w)}x${Math.round(h)}`;
+  if (vignetteCache.key !== key || !vignetteCache.grad) {
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.8);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(0,0,0,0.42)");
+    vignetteCache = { key, grad: g };
+  }
+  return vignetteCache.grad!;
 }
 
 
