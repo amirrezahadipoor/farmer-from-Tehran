@@ -62,6 +62,18 @@ import StoryModal from "./Story";
 import { Icon, ItemIcon, Portrait, npcSvg, workerSvg, techIcon, skillIcon, achIcon, stripEmoji, EMOJI_RE } from "./icons";
 import { drawBuildingThumb } from "./render";
 import { CHAPTERS, currentChapter, goalProgress, updateStory, advanceStory, isStoryFinished } from "./story";
+import {
+  haptic,
+  isFullscreen,
+  setHaptics,
+  hapticsEnabled,
+  useAppViewportVar,
+  useFullscreenState,
+  useNativeGestureGuards,
+  useWakeLock,
+  lockOrientation,
+  unlockOrientation,
+} from "./mobile";
 
 type Panel =
   | null
@@ -249,15 +261,27 @@ export default function Game() {
   const [seed, setSeed] = useState("wheat");
   const [bsel, setBsel] = useState("");
   const [panel, setPanel] = useState<Panel>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [saveState, setSaveState] = useState("");
   const [sfx, setSfx] = useState(true);
+  const [hapticsState, setHapticsState] = useState(true);
+  useWakeLock(started);
   const pid = useRef("");
   const toastMemo = useRef<{ text: string; at: number }>({ text: "", at: 0 });
+
+  // ── لایه‌ی موبایل: تمام‌صفحه، بیداری صفحه، بستن ژست‌های مرورگر، ارتفاع درست
+  useNativeGestureGuards();
+  useAppViewportVar();
+  const fs = useFullscreenState();
+  const [vsync, setVsync] = useState(true);
 
   const toast = useCallback((raw: string, t = "info") => {
     const m = stripEmoji(raw);
     if (!m) return;
+    if (t === "err") haptic("error");
+    else if (t === "lvl" || t === "prestige") haptic("level");
+    else if (t === "ok") haptic("success");
     const now = Date.now();
     if (toastMemo.current.text === m && now - toastMemo.current.at < 1400) return;
     toastMemo.current = { text: m, at: now };
@@ -317,6 +341,14 @@ export default function Game() {
       view: () => viewRef.current,
     };
   }, [toast]);
+
+  // بازیابی تنظیم لرزش لمسی
+  useEffect(() => {
+    const h = localStorage.getItem("farm_haptics");
+    const on = h !== "0";
+    setHaptics(on);
+    setHapticsState(on);
+  }, []);
 
   // Load game state
   useEffect(() => {
@@ -505,6 +537,7 @@ export default function Game() {
       setPanel("build");
       return;
     }
+    haptic("tap");
     const r = toolAction(s, tx, ty, tool, arg, ev);
     if (r === "open") {
       setPanel({ bx: tx, by: ty });
@@ -515,6 +548,30 @@ export default function Game() {
       setBsel("");
     }
     setTick((n) => n + 1);
+  };
+
+  // ── کشیدنِ پنل به پایین برای بستن (الگوی شیتِ موبایل)
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const sheetDrag = useRef({ y: 0, dy: 0, active: false });
+  const onSheetDown = (e: React.PointerEvent) => {
+    sheetDrag.current = { y: e.clientY, dy: 0, active: true };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onSheetMove = (e: React.PointerEvent) => {
+    const d = sheetDrag.current;
+    if (!d.active) return;
+    d.dy = Math.max(0, e.clientY - d.y);
+    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${d.dy}px)`;
+  };
+  const onSheetUp = () => {
+    const d = sheetDrag.current;
+    if (!d.active) return;
+    d.active = false;
+    if (sheetRef.current) sheetRef.current.style.transform = "";
+    if (d.dy > 90) {
+      haptic("tap");
+      setPanel(null);
+    }
   };
 
   const hoverClear = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -633,11 +690,18 @@ export default function Game() {
     { id: "clear", icon: "P", name: UI.clear, tip: "قطع درخت، استخراج سنگ، یا برچیدن سازه" },
   ];
 
+  /** شروع بازی: اول تجربه‌ی تمام‌صفحه، بعد داستان */
+  const enterFsAndLock = async () => {
+    if (!isFullscreen()) await fs.toggle();
+  };
+
+  const MENU_ITEMS = ["story", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "settings"] as const;
+
   const bp = panel && typeof panel === "object" ? panel : null;
   const bt = bp ? s.tiles[idx(bp.bx, bp.by)] : null;
 
   return (
-    <div className="relative h-screen w-screen select-none overflow-hidden" dir="rtl">
+    <div className="relative select-none overflow-hidden" dir="rtl" style={{ height: "var(--app-h, 100dvh)", width: "100vw" }}>
       {/* 2.5D Canvas Viewport */}
       <canvas
         ref={canvasRef}
@@ -650,7 +714,7 @@ export default function Game() {
       />
 
       {/* Camera controls — touch only */}
-      <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-1.5 md:right-3 md:gap-2">
+      <div className="absolute top-1/2 z-30 flex -translate-y-1/2 flex-col gap-1.5 md:gap-2" style={{ right: "max(8px, env(safe-area-inset-right))" }}>
         {([["zoomIn", () => zoomBy(1.25)], ["zoomOut", () => zoomBy(0.8)], ["center", recenter]] as const).map(([ic, fn]) => (
           <button
             key={ic}
@@ -665,7 +729,7 @@ export default function Game() {
       </div>
 
       {/* Top HUD — icon first, compact on phones */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-1.5 p-2 md:p-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-1.5" style={{ padding: "max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left))" }}>
         <div className="pointer-events-auto flex min-w-0 flex-wrap items-center gap-1.5 md:gap-2">
           <button
             type="button"
@@ -695,6 +759,18 @@ export default function Game() {
               {fmt(s.stats.skillPoints)}
             </Pill>
           )}
+
+          <button
+            type="button"
+            aria-label="منو"
+            onClick={() => { setMenuOpen(true); sound("click"); }}
+            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-amber-900/10 active:scale-95"
+          >
+            <Icon name="menu" size={26} />
+            {(readyOrders > 0 || s.stats.skillPoints > 0 || claimableContracts > 0) && (
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-600 ring-2 ring-white" />
+            )}
+          </button>
 
           <button
             type="button"
@@ -738,35 +814,9 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Side menu — round SVG buttons */}
-      <nav className="absolute left-2 top-1/2 z-20 flex max-h-[calc(100dvh-190px)] -translate-y-1/2 flex-col gap-1.5 overflow-y-auto overscroll-contain p-0.5 md:left-3 md:gap-2">
-        {(["story", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "settings"] as const).map((p) => {
-          const badge = p === "orders" ? readyOrders : p === "skills" ? s.stats.skillPoints : p === "contracts" ? claimableContracts : 0;
-          const active = panel === p;
-          return (
-            <button
-              key={p}
-              type="button"
-              aria-label={PANEL_META[p].title}
-              onClick={() => { setPanel(active ? null : p); sound("click"); }}
-              className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg ring-1 transition active:scale-90 md:h-[52px] md:w-[52px] ${
-                active ? "bg-emerald-500 ring-white" : "bg-white/95 ring-amber-900/10"
-              }`}
-            >
-              <Icon name={PANEL_META[p].icon} size={28} />
-              {badge > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white ring-2 ring-white">
-                  {fmt(badge)}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
       {/* Seed tray */}
       {tool === "seed" && (
-        <div className="absolute bottom-[76px] left-1/2 z-20 flex max-w-[96vw] -translate-x-1/2 gap-1.5 overflow-x-auto rounded-2xl bg-amber-50/95 p-1.5 shadow-2xl ring-1 ring-amber-900/15 backdrop-blur-md md:bottom-[104px]">
+        <div className="absolute bottom-[86px] left-1/2 z-30 flex max-w-[96vw] -translate-x-1/2 gap-1.5 overflow-x-auto overscroll-contain rounded-2xl bg-amber-50/95 p-1.5 shadow-2xl ring-1 ring-amber-900/15 backdrop-blur-md">
           {CROPS.map((c) => {
             const lock = c.lvl > s.level;
             return (
@@ -794,19 +844,22 @@ export default function Game() {
       )}
 
       {/* Toolbar */}
-      <div className="absolute bottom-[max(8px,env(safe-area-inset-bottom))] left-1/2 z-20 flex max-w-[98vw] -translate-x-1/2 gap-1 rounded-[22px] bg-gradient-to-b from-amber-100 to-amber-200 p-1.5 shadow-2xl ring-1 ring-amber-900/20 md:gap-1.5 md:p-2">
+      <div
+        className="absolute left-1/2 z-30 flex w-[calc(100vw-8px)] max-w-[520px] -translate-x-1/2 gap-1 rounded-[22px] bg-gradient-to-b from-amber-100 to-amber-200 p-1.5 shadow-2xl ring-1 ring-amber-900/20"
+        style={{ bottom: "max(8px, env(safe-area-inset-bottom))", paddingLeft: "max(6px, env(safe-area-inset-left))", paddingRight: "max(6px, env(safe-area-inset-right))" }}
+      >
         {tools.map((t) => (
           <button
             key={t.id}
             type="button"
             aria-label={t.name}
             onClick={() => { setTool(t.id); if (t.id === "build") setPanel("build"); sound("click"); }}
-            className={`relative flex h-12 w-12 flex-col items-center justify-center rounded-2xl transition md:h-[68px] md:w-[68px] ${
+            className={`relative flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center rounded-2xl transition ${
               tool === t.id ? "-translate-y-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-xl ring-2 ring-white" : "bg-white/90 shadow active:scale-90"
             }`}
           >
-            {t.id === "seed" ? <ItemIcon id={seed} size={30} /> : <Icon name={t.id} size={30} />}
-            <span className={`mt-0.5 hidden text-[10px] font-black md:block ${tool === t.id ? "text-white" : "text-amber-950"}`}>{t.name}</span>
+            {t.id === "seed" ? <ItemIcon id={seed} size={26} /> : <Icon name={t.id} size={26} />}
+            <span className={`mt-0.5 text-[10px] font-black leading-none ${tool === t.id ? "text-white" : "text-amber-950"}`}>{t.name}</span>
           </button>
         ))}
       </div>
@@ -828,10 +881,67 @@ export default function Game() {
         ))}
       </div>
 
+      {/* منوی اصلی موبایل — گرید لمسی با برچسب، به‌جای ستون آیکون‌های دسکتاپی */}
+      {menuOpen && (
+        <div className="absolute inset-0 z-50 flex items-end bg-slate-950/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
+          <div
+            className="mx-auto w-full max-w-[560px] rounded-t-3xl bg-gradient-to-b from-amber-50 to-orange-100 p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.4)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-amber-900/30" />
+            <div className="grid grid-cols-4 gap-2">
+              {MENU_ITEMS.map((p) => {
+                const badge = p === "orders" ? readyOrders : p === "skills" ? s.stats.skillPoints : p === "contracts" ? claimableContracts : 0;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-label={PANEL_META[p].title}
+                    onClick={() => {
+                      haptic("tap");
+                      setMenuOpen(false);
+                      setPanel(p);
+                    }}
+                    className="relative flex flex-col items-center justify-center gap-1 rounded-2xl bg-white/95 px-1 py-2.5 shadow-md ring-1 ring-amber-900/10 active:scale-95"
+                  >
+                    <Icon name={PANEL_META[p].icon} size={30} />
+                    <span className="text-[11px] font-black leading-none text-amber-950">{PANEL_META[p].title}</span>
+                    {badge > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white ring-2 ring-white">
+                        {fmt(badge)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={() => { haptic("tap"); setMenuOpen(false); }}
+              className="mt-3 w-full rounded-2xl bg-amber-800 py-3 text-base font-black text-white shadow-lg active:scale-[.98]"
+            >
+              بستن
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Flyout Panel Windows */}
       {panel && (
-        <div className="absolute inset-x-0 bottom-0 top-[18%] z-30 flex flex-col overflow-hidden rounded-t-3xl bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 shadow-[0_-10px_40px_rgba(0,0,0,0.35)] md:inset-x-auto md:bottom-24 md:right-3 md:top-20 md:w-[min(480px,calc(100vw-100px))] md:rounded-3xl md:ring-2 md:ring-amber-800/40">
-          <div className="mx-auto mt-1.5 h-1.5 w-12 shrink-0 rounded-full bg-amber-900/25 md:hidden" />
+        <div
+          ref={sheetRef}
+          className="absolute inset-x-0 bottom-0 top-[10%] z-40 mx-auto flex flex-col overflow-hidden rounded-t-3xl bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 shadow-[0_-10px_40px_rgba(0,0,0,0.35)] sm:bottom-[max(12px,env(safe-area-inset-bottom))] sm:max-w-[620px] sm:rounded-3xl sm:ring-2 sm:ring-amber-800/40"
+        >
+          {/* منطقه‌ی کشیدن: کشیدن به پایین پنل را می‌بندد */}
+          <div
+            className="shrink-0 touch-none select-none"
+            onPointerDown={onSheetDown}
+            onPointerMove={onSheetMove}
+            onPointerUp={onSheetUp}
+            onPointerCancel={onSheetUp}
+          >
+            <div className="mx-auto mt-1.5 mb-1 h-1.5 w-14 rounded-full bg-amber-900/30" />
+          </div>
           {/* Panel Header */}
           <div className="flex items-center justify-between bg-gradient-to-l from-amber-700 to-orange-600 px-3 py-2.5 text-white shadow md:px-4 md:py-3">
             <h2 className="flex min-w-0 items-center gap-2 text-base font-black md:text-lg">
@@ -1416,6 +1526,65 @@ export default function Game() {
                   </button>
                 </div>
 
+                <div className="flex items-center justify-between rounded-2xl bg-white p-3 shadow">
+                  <span className="flex items-center gap-2 text-sm font-black text-slate-800">
+                    <Icon name="target" size={26} />
+                    لرزش لمسی (هپتیک)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = !hapticsState;
+                      setHapticsState(v);
+                      setHaptics(v);
+                      if (v) haptic("success");
+                    }}
+                    className={`relative h-8 w-16 rounded-full transition ${hapticsState ? "bg-emerald-500" : "bg-slate-300"}`}
+                    aria-label="روشن/خاموش کردن لرزش لمسی"
+                  >
+                    <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${hapticsState ? "right-1" : "right-9"}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl bg-white p-3 shadow">
+                  <span className="flex flex-col text-sm font-black text-slate-800">
+                    <span className="flex items-center gap-2"><Icon name="center" size={26} /> تمام‌صفحه‌ی موبایل</span>
+                    <span className="mt-0.5 text-[11px] font-bold text-slate-500">
+                      {fs.supported ? (fs.isFullscreen ? "روشن — صفحه بدون نوار مرورگر" : "خاموش — نوار مرورگر دیده می‌شود") : "مرورگر شما پشتیبانی نمی‌کند (iOS: از دکمه‌ی اشتراک‌گذاری → افزودن به صفحه‌ی خانه)"}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={!fs.supported}
+                    onClick={() => { void fs.toggle(); haptic("tap"); }}
+                    className={`relative h-8 w-16 shrink-0 rounded-full transition ${fs.isFullscreen ? "bg-emerald-500" : "bg-slate-300"} ${fs.supported ? "" : "opacity-40"}`}
+                    aria-label="روشن/خاموش کردن تمام‌صفحه"
+                  >
+                    <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${fs.isFullscreen ? "right-1" : "right-9"}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl bg-white p-3 shadow">
+                  <span className="flex flex-col text-sm font-black text-slate-800">
+                    <span className="flex items-center gap-2"><Icon name="sun" size={26} /> قفل جهت عمودی</span>
+                    <span className="mt-0.5 text-[11px] font-bold text-slate-500">برای بازی با یک دست، صفحه را عمودی نگه می‌دارد</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = !vsync;
+                      setVsync(v);
+                      if (v) void lockOrientation("portrait");
+                      else unlockOrientation();
+                      haptic("tap");
+                    }}
+                    className={`relative h-8 w-16 shrink-0 rounded-full transition ${vsync ? "bg-emerald-500" : "bg-slate-300"}`}
+                    aria-label="قفل جهت صفحه"
+                  >
+                    <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${vsync ? "right-1" : "right-9"}`} />
+                  </button>
+                </div>
+
                 <button className={`${btn} w-full bg-sky-600 text-white`} onClick={() => { save(); toast("بازی ذخیره شد", "ok"); }}>
                   <Icon name="save" size={18} /> ذخیره دستی
                 </button>
@@ -1428,6 +1597,8 @@ export default function Game() {
                   <div className="mb-1 flex items-center gap-1.5 text-sm font-black text-slate-800"><Icon name="info" size={20} />وضعیت بازی</div>
                   روز {fmt(s.day)} · نسل {fmt(s.prestige)} · {fmt(s.bought)} قطعه زمین خریداری‌شده
                   <br />ذخیره‌سازی: {saveState === "cloud" ? "ابری و محلی" : saveState === "saving" ? "در حال ذخیره" : "محلی"} — هر ۱۲ ثانیه خودکار
+                  <br />نصب‌شدنی: {typeof navigator !== "undefined" && "serviceWorker" in navigator ? "آفلاین آماده (PWA)" : "بدون پشتیبانی مرورگر"}
+                  <br />اندازه‌ی صفحه: {typeof window !== "undefined" ? `${fmt(window.innerWidth)}×${fmt(window.innerHeight)}` : "—"}
                 </div>
 
                 <button
@@ -1624,6 +1795,9 @@ export default function Game() {
 
             <button
               onClick={() => {
+                haptic("big");
+                void enterFsAndLock();
+                if (vsync) void lockOrientation("portrait");
                 setStarted(true);
                 s.story.shown = true;
                 setTick((x) => x + 1);

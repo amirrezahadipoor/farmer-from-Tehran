@@ -1,0 +1,196 @@
+{
+  "base": "http://127.0.0.1:3000",
+  "devices": [
+    {
+      "name": "320-small",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "splash": {
+        "sw": 320,
+        "cw": 320,
+        "sh": 568,
+        "ch": 568
+      },
+      "state": {
+        "hasHook": true,
+        "level": 1,
+        "coins": 400,
+        "day": 1,
+        "scrollW": 320,
+        "clientW": 320,
+        "smallButtons": []
+      },
+      "render": {
+        "ok": true,
+        "colored": 2264,
+        "w": 640,
+        "h": 1136,
+        "fonts": [
+          "Vazirmatn:400:loaded",
+          "Vazirmatn:500:unloaded",
+          "Vazirmatn:700:loaded",
+          "Vazirmatn:900:loaded"
+        ]
+      },
+      "openedMarket": true,
+      "named": true,
+      "storyTaps": 8,
+      "problems": []
+    },
+    {
+      "name": "390-iphone13",
+      "viewport": {
+        "width": 390,
+        "height": 664
+      },
+      "splash": {
+        "sw": 390,
+        "cw": 390,
+        "sh": 664,
+        "ch": 664
+      },
+      "state": {
+        "hasHook": true,
+        "level": 1,
+        "coins": 400,
+        "day": 1,
+        "scrollW": 390,
+        "clientW": 390,
+        "smallButtons": []
+      },
+      "render": {
+        "ok": true,
+        "colored": 2865,
+        "w": 780,
+        "h": 1328,
+        "fonts": [
+          "Vazirmatn:400:loaded",
+          "Vazirmatn:500:unloaded",
+          "Vazirmatn:700:loaded",
+          "Vazirmatn:900:loaded"
+        ]
+      },
+      "openedMarket": true,
+      "named": true,
+      "storyTaps": 8,
+      "problems": []
+    },
+    {
+      "name": "412-pixel7",
+      "viewport": {
+        "width": 412,
+        "height": 839
+      },
+      "splash": {
+        "sw": 412,
+        "cw": 412,
+        "sh": 839,
+        "ch": 839
+      },
+      "state": {
+        "hasHook": true,
+        "level": 1,
+        "coins": 400,
+        "day": 1,
+        "scrollW": 412,
+        "clientW": 412,
+        "smallButtons": []
+      },
+      "render": {
+        "ok": true,
+        "colored": 3024,
+        "w": 824,
+        "h": 1678,
+        "fonts": [
+          "Vazirmatn:400:loaded",
+          "Vazirmatn:500:unloaded",
+          "Vazirmatn:700:loaded",
+          "Vazirmatn:900:loaded"
+        ]
+      },
+      "openedMarket": true,
+      "named": true,
+      "storyTaps": 8,
+      "problems": []
+    },
+    {
+      "name": "430-promax",
+      "viewport": {
+        "width": 430,
+        "height": 740
+      },
+      "splash": {
+        "sw": 430,
+        "cw": 430,
+        "sh": 740,
+        "ch": 740
+      },
+      "state": {
+        "hasHook": true,
+        "level": 1,
+        "coins": 400,
+        "day": 1,
+        "scrollW": 430,
+        "clientW": 430,
+        "smallButtons": []
+      },
+      "render": {
+        "ok": true,
+        "colored": 3146,
+        "w": 860,
+        "h": 1480,
+        "fonts": [
+          "Vazirmatn:400:loaded",
+          "Vazirmatn:500:unloaded",
+          "Vazirmatn:700:loaded",
+          "Vazirmatn:900:loaded"
+        ]
+      },
+      "openedMarket": true,
+      "named": true,
+      "storyTaps": 8,
+      "problems": []
+    },
+    {
+      "name": "768-tablet",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "splash": {
+        "sw": 768,
+        "cw": 768,
+        "sh": 1024,
+        "ch": 1024
+      },
+      "state": {
+        "hasHook": true,
+        "level": 1,
+        "coins": 400,
+        "day": 1,
+        "scrollW": 768,
+        "clientW": 768,
+        "smallButtons": []
+      },
+      "render": {
+        "ok": true,
+        "colored": 6317,
+        "w": 1536,
+        "h": 2048,
+        "fonts": [
+          "Vazirmatn:400:loaded",
+          "Vazirmatn:500:unloaded",
+          "Vazirmatn:700:loaded",
+          "Vazirmatn:900:loaded"
+        ]
+      },
+      "openedMarket": true,
+      "named": true,
+      "storyTaps": 8,
+      "problems": []
+    }
+  ],
+  "issues": []
+}
