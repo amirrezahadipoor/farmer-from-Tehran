@@ -1,0 +1,13 @@
+# P5.13 — POST/GET /api/save through the real Next.js server (next start) on Postgres 17
+# DATABASE_URL=postgresql://…/farm_test, empty database (table created automatically on first request)
+# token A = 64 x "a", token B = 64 x "b"; payload = newState() of the game
+save payload bytes: 58912
+health:                 {"ok":true,"database":"connected"}
+POST no token:          401 {"ok":false,"mode":"cloud","error":"token"}
+POST token A (claims):  200 {"ok":true,"mode":"cloud"}
+POST token B:           403 {"ok":false,"mode":"cloud","error":"forbidden"}
+GET token B:            403 {"data":null,"mode":"cloud","error":"forbidden"}
+GET token A:            200 {"data":{"v":5,"xp":0,"day":1,...},"mode":"cloud"}
+POST 600KB:             413 {"ok":false,"mode":"cloud","error":"too_large"}
+burst (id|ip) statuses: 200 200 200 200 200 200 429 429 429 429   (8 writes per id+IP, then 1 per 4 s)
+stored hash vs token:   token_hash = sha256(token): true / token stored in plain: false

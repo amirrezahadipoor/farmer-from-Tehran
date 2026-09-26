@@ -1,43 +1,27 @@
-import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { saves } from "@/db/schema";
+import { defaultLimits, handleGet, handlePost, type SaveDeps } from "@/server/save/handler";
+import { PgSaveStore } from "@/server/save/store";
 
 export const dynamic = "force-dynamic";
 
-/** گرفتن سیو از ابر. اگر دیتابیس نباشد، بازی آفلاین ادامه می‌دهد. */
-export async function GET(req: Request) {
-  const id = new URL(req.url).searchParams.get("id");
-  if (!id || id.length > 64) return NextResponse.json({ data: null, mode: "offline" });
+/**
+ * /api/save — همگام‌سازیِ ابریِ اختیاری (P5.13: توکنِ هر دستگاه، سقفِ حجم و نرخ).
+ * بدون DATABASE_URL هر دو مسیر «آفلاین» جواب می‌دهند و بازی روی دستگاه ادامه می‌دهد.
+ * منطق در src/server/save/handler.ts است تا بدون Next تست شود.
+ */
+const limits = defaultLimits();
 
+function deps(): SaveDeps {
   const db = getDb();
-  if (!db) return NextResponse.json({ data: null, mode: "offline" });
-
-  try {
-    const rows = await db.select().from(saves).where(eq(saves.id, id)).limit(1);
-    return NextResponse.json({ data: rows[0]?.data ?? null, mode: "cloud" });
-  } catch {
-    return NextResponse.json({ data: null, mode: "offline" });
-  }
+  return { store: db ? new PgSaveStore(db) : null, ...limits };
 }
 
-/** ذخیره در ابر. بدون دیتابیس، موفق برمی‌گردد ولی حالت را offline اعلام می‌کند. */
+/** گرفتن سیو از ابر — فقط با توکنِ همان دستگاه */
+export async function GET(req: Request) {
+  return handleGet(req, deps());
+}
+
+/** ذخیره در ابر — اولین نوشتن مالکیت را ثبت می‌کند؛ بعد از آن فقط همان توکن */
 export async function POST(req: Request) {
-  const db = getDb();
-  if (!db) return NextResponse.json({ ok: false, mode: "offline" });
-
-  try {
-    const body = (await req.json()) as { id?: string; data?: unknown };
-    if (!body.id || typeof body.id !== "string" || body.id.length > 64 || !body.data)
-      return NextResponse.json({ ok: false, mode: "cloud" }, { status: 400 });
-
-    await db
-      .insert(saves)
-      .values({ id: body.id, data: body.data, updatedAt: new Date() })
-      .onConflictDoUpdate({ target: saves.id, set: { data: body.data, updatedAt: new Date() } });
-
-    return NextResponse.json({ ok: true, mode: "cloud" });
-  } catch {
-    return NextResponse.json({ ok: false, mode: "offline" }, { status: 200 });
-  }
+  return handlePost(req, deps());
 }

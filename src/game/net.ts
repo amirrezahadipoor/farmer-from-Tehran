@@ -12,7 +12,7 @@
  */
 
 import { useSyncExternalStore } from "react";
-import { writeLocalSave } from "./persist";
+import { TOKEN_HEADER, ensureFarmToken, writeLocalSave } from "./persist";
 
 const OUTBOX_KEY = "farm_outbox";
 const SAVE_URL = "/api/save";
@@ -76,9 +76,11 @@ export function hasPendingSave() {
 }
 
 /**
- * یک درخواست POST با مهلت زمانی؛ در صورت خطای شبکه/HTTP پرتاب می‌کند.
+ * یک درخواست POST با مهلت زمانی و توکنِ این دستگاه (P5.13).
  * خروجی صادق است: `cloud` فقط وقتی سرور واقعاً نوشت (`ok: true`)؛ اگر سرور
  * پایگاه‌داده ندارد (`mode: "offline"`)، یعنی «فقط محلی» — نه ابری و نه قابل صف.
+ * رد شدنِ قطعی (۴۰۰/۴۰۱/۴۰۳/۴۱۳/۴۲۲) هم «فقط محلی» است: تکرارش فایده‌ای ندارد و در صف
+ * نمی‌ماند؛ اما ۴۲۹، ۵xx و خطای شبکه پرتاب می‌شوند تا سیو در صف بماند و بعداً برود.
  */
 async function postSave(id: string, data: unknown): Promise<"cloud" | "local"> {
   const controller = new AbortController();
@@ -86,12 +88,13 @@ async function postSave(id: string, data: unknown): Promise<"cloud" | "local"> {
   try {
     const res = await fetch(SAVE_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", [TOKEN_HEADER]: ensureFarmToken() },
       body: JSON.stringify({ id, data }),
       signal: controller.signal,
       keepalive: true,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (res.status === 429 || res.status >= 500) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) return "local"; // سرور قطعاً نپذیرفت؛ سیو روی دستگاه امن است
     const body = (await res.json().catch(() => null)) as { ok?: boolean; mode?: string } | null;
     if (body?.ok === true) return "cloud";
     if (body?.mode === "offline") return "local"; // سرور بدون پایگاه‌داده: ذخیره فقط روی دستگاه
