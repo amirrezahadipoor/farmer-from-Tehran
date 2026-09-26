@@ -20,6 +20,8 @@ const NCH = Math.ceil(N / CH);
 
 export const SAVE_KEY = "farm_save";
 export const BROKEN_KEY = "farm_save_broken";
+/** پشتیبانِ خودکار: آخرین سیوِ سالمِ قبل از سیوِ فعلی (یک نوبت عقب‌تر) */
+export const BACKUP_KEY = "farm_save_bak";
 export const PID_KEY = "farm_pid";
 
 export interface LoadOutcome {
@@ -27,8 +29,8 @@ export interface LoadOutcome {
   state: State | null;
   /** سیوِ خراب پیدا و قرنطینه شد */
   corrupt: boolean;
-  /** منبع سیوی که برنده شد: محلی یا ابری */
-  source: "local" | "cloud" | null;
+  /** منبع سیوی که برنده شد: محلی، پشتیبانِ خودکار یا ابری */
+  source: "local" | "backup" | "cloud" | null;
   /** توضیح خوانا برای UI/لاگ */
   note: string;
 }
@@ -229,15 +231,73 @@ export function readLocalSave(): LoadOutcome {
     parsed = JSON.parse(raw);
   } catch {
     quarantine(raw);
-    return { state: null, corrupt: true, source: null, note: "JSON سیوِ محلی خراب بود" };
+    return { state: null, corrupt: true, source: null, note: "سیوِ محلی نیمه‌کاره نوشته شده بود" };
   }
 
   const state = sanitizeSave(parsed);
   if (!state) {
     quarantine(raw);
-    return { state: null, corrupt: true, source: null, note: "شکل سیوِ محلی نامعتبر بود" };
+    return { state: null, corrupt: true, source: null, note: "ساختار سیوِ محلی نامعتبر بود" };
   }
   return { state, corrupt: false, source: "local", note: "سیوِ محلی سالم" };
+}
+
+/* ------------------------ پشتیبانِ خودکار (چرخشی) ------------------------ */
+
+/** بررسی ارزان: آیا این متن یک سیوِ کامل و قابل‌بارگذاری است؟ */
+function looksLikeSave(raw: string): boolean {
+  try {
+    const o = JSON.parse(raw) as { v?: unknown; tiles?: unknown };
+    return isObj(o) && o.v === 5 && Array.isArray(o.tiles) && o.tiles.length === N * N;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * نوشتن سیوِ محلی با «پشتیبانِ چرخشی»: پیش از بازنویسی، نسخه‌ی سالمِ قبلی به
+ * `farm_save_bak` منتقل می‌شود. اگر سیوِ اصلی بعداً خراب شود (خاموشیِ ناگهانی وسط
+ * نوشتن، باگ، دستکاری)، پیشرفتِ بازیکن حداکثر یک نوبتِ ذخیره (≈۱۲ ثانیه) عقب می‌رود.
+ * هرگز پرتاب نمی‌کند.
+ */
+export function writeLocalSave(json: string): boolean {
+  try {
+    const prev = localStorage.getItem(SAVE_KEY);
+    if (prev && prev !== json && looksLikeSave(prev)) localStorage.setItem(BACKUP_KEY, prev);
+  } catch {
+    /* حافظه پر — پشتیبان این نوبت رد می‌شود، سیوِ اصلی مهم‌تر است */
+  }
+  try {
+    localStorage.setItem(SAVE_KEY, json);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** پشتیبانِ خودکار را می‌خواند (اگر سالم باشد). */
+export function readBackupSave(): LoadOutcome {
+  const raw = readLS(BACKUP_KEY);
+  if (!raw) return { state: null, corrupt: false, source: null, note: "پشتیبانی موجود نیست" };
+  try {
+    const state = sanitizeSave(JSON.parse(raw));
+    if (state) return { state, corrupt: false, source: "backup", note: "از پشتیبانِ خودکار بازیابی شد" };
+  } catch {
+    /* پایین */
+  }
+  return { state: null, corrupt: false, source: null, note: "پشتیبان هم سالم نبود" };
+}
+
+/**
+ * سیوِ محلی را می‌خواند و اگر خراب بود، خودکار سراغ پشتیبانِ چرخشی می‌رود.
+ * پرچم `corrupt` حفظ می‌شود تا UI صادقانه به بازیکن بگوید چه شد.
+ */
+export function readLocalWithBackup(): LoadOutcome {
+  const local = readLocalSave();
+  if (!local.corrupt) return local;
+  const bak = readBackupSave();
+  if (bak.state) return { ...bak, corrupt: true, note: `${local.note}؛ پیشرفتت از پشتیبانِ خودکار برگشت` };
+  return local;
 }
 
 /** آخرین نسخه‌ی قرنطینه‌شده (برای دکمه‌ی «بازیابی» در تنظیمات). */

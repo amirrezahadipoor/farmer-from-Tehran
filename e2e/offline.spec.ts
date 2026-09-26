@@ -17,7 +17,6 @@ const SW_READY_TIMEOUT = 45_000;
  * («reload/navigation») خطای داخلی می‌دهد. پوششِ آفلاین روی کروم اندروید اجرا
  * می‌شود و روی iOS نصب و کنترل Service Worker (تست اول همین فایل) بررسی می‌شود.
  */
-const skipOfflineReload = ({ browserName }: { browserName: string }) => browserName === "webkit";
 const SKIP_REASON = "Playwright WebKit با ناوبری در حالت آفلاین خطای داخلی می‌دهد (محدودیت ابزار تست)";
 
 async function bootGame(page: Page) {
@@ -74,8 +73,9 @@ test.describe("آفلاین — مزرعه طلایی", () => {
     expect(total).toBeGreaterThan(8);
   });
 
-  test("قطع اینترنت → بازی همان‌طور بالا می‌آید و لمس پاسخ می‌دهد", async ({ page, context }) => {
-    test.skip(skipOfflineReload, SKIP_REASON);
+  test("قطع اینترنت → بازی همان‌طور بالا می‌آید و لمس پاسخ می‌دهد", async ({ page, context, browserName }) => {
+    // test.skip() با تابع فقط در سطح describe مجاز است؛ داخل تست باید شرطِ بولی داد
+    test.skip(browserName === "webkit", SKIP_REASON);
     await bootGame(page);
     await waitForSwControl(page);
 
@@ -128,8 +128,8 @@ test.describe("آفلاین — مزرعه طلایی", () => {
       .toBeNull();
   });
 
-  test("بعد از پاک‌کردن داده‌های ابری، بازی از سیو آفلاین ادامه می‌دهد", async ({ page, context }) => {
-    test.skip(skipOfflineReload, SKIP_REASON);
+  test("بعد از پاک‌کردن داده‌های ابری، بازی از سیو آفلاین ادامه می‌دهد", async ({ page, context, browserName }) => {
+    test.skip(browserName === "webkit", SKIP_REASON);
     // ۱) یک سیو بساز و بازی را ببند
     await bootGame(page);
     await page.evaluate(async () => {

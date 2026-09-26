@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { writeLocalSave } from "./persist";
 
 const OUTBOX_KEY = "farm_outbox";
 const SAVE_URL = "/api/save";
@@ -75,8 +76,12 @@ export function hasPendingSave() {
   return readOutbox() !== null;
 }
 
-/** یک درخواست POST با مهلت زمانی؛ در صورت خطا throw می‌کند. */
-async function postSave(id: string, data: unknown) {
+/**
+ * یک درخواست POST با مهلت زمانی؛ در صورت خطای شبکه/HTTP پرتاب می‌کند.
+ * خروجی صادق است: `cloud` فقط وقتی سرور واقعاً نوشت (`ok: true`)؛ اگر سرور
+ * پایگاه‌داده ندارد (`mode: "offline"`)، یعنی «فقط محلی» — نه ابری و نه قابل صف.
+ */
+async function postSave(id: string, data: unknown): Promise<"cloud" | "local"> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -88,7 +93,10 @@ async function postSave(id: string, data: unknown) {
       keepalive: true,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return true;
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; mode?: string } | null;
+    if (body?.ok === true) return "cloud";
+    if (body?.mode === "offline") return "local"; // سرور بدون پایگاه‌داده: ذخیره فقط روی دستگاه
+    throw new Error("save rejected");
   } finally {
     clearTimeout(timer);
   }
@@ -101,7 +109,7 @@ async function postSave(id: string, data: unknown) {
 export async function saveGame(id: string, data: unknown): Promise<SaveState> {
   // ۱) محلی: هیچ‌وقت شکست نمی‌خورد (سقوط نرم)
   try {
-    localStorage.setItem("farm_save", JSON.stringify(data));
+    writeLocalSave(JSON.stringify(data)); // + پشتیبانِ چرخشیِ نسخه‌ی سالمِ قبلی
   } catch {
     /* حافظه پر */
   }
@@ -113,23 +121,23 @@ export async function saveGame(id: string, data: unknown): Promise<SaveState> {
   }
 
   try {
-    await postSave(id, data);
+    const mode = await postSave(id, data);
     writeOutbox(null); // هر چیزی در صف بود، با نسخه‌ی تازه‌تر بی‌اعتبار شد
-    return "cloud";
+    return mode;
   } catch {
     writeOutbox({ id, data, at: Date.now() });
     return "queued";
   }
 }
 
-/** تخلیه‌ی صف: اگر اینترنت برگشت، آخرین سیو را به سرور می‌فرستد. */
-export async function flushOutbox(): Promise<boolean> {
+/** تخلیه‌ی صف: اگر اینترنت برگشت، آخرین سیو را به سرور می‌فرستد؛ خروجی = حالت واقعیِ ذخیره یا `false`. */
+export async function flushOutbox(): Promise<"cloud" | "local" | false> {
   const pending = readOutbox();
   if (!pending || !isOnline()) return false;
   try {
-    await postSave(pending.id, pending.data);
+    const mode = await postSave(pending.id, pending.data);
     writeOutbox(null);
-    return true;
+    return mode;
   } catch {
     return false;
   }
