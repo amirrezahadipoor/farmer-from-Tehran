@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { newState, tick, type State } from "./logic";
+import { fmt } from "./data";
 import { readLocalWithBackup, fetchCloudSave, ensurePlayerId, pickNewer, restoreQuarantined } from "./persist";
 import { saveGame, flushOutbox, useOnline, hasPendingSave, type SaveState } from "./net";
 import { SILENT, type ToastFn } from "./events";
@@ -93,7 +94,7 @@ export function usePersistence(toast: ToastFn) {
       if (rep) {
         setAway(rep);
         const minutes = rep.minutes;
-        setTimeout(() => toast(`👋 خوش آمدید! ${minutes} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"), 800);
+        setTimeout(() => toast(`👋 خوش آمدی! ${fmt(minutes)} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"), 800);
       }
     })();
     return () => {

@@ -85,6 +85,7 @@ export default function Game() {
       toast,
       view: () => rt.view,
       save: () => save(),
+      openPanel: (p: Panel) => setPanel(p),
     };
   }, [toast, ev, save]);
 

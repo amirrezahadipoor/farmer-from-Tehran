@@ -6,6 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
+    "lint:text": "node tools/lint-text.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -13,7 +14,7 @@
     "roadmap": "node tools/gen-roadmap.mjs",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "verify": "npm run typecheck && npm run lint && npm run check-assets && npm run test && npm run build",
+    "verify": "npm run typecheck && npm run lint && npm run lint:text && npm run check-assets && npm run test && npm run build",
     "story-map": "node tools/story-map.mjs"
   },
   "dependencies": {

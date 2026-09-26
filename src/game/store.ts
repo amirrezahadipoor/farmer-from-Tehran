@@ -58,7 +58,7 @@ export function useGameVersion(): number {
 export function useGame(): State {
   useGameVersion();
   const s = game.get();
-  if (!s) throw new Error("useGame() پیش از بارگذاری وضعیت صدا زده شد");
+  if (!s) throw new Error("useGame() was called before the game state was loaded");
   return s;
 }
 

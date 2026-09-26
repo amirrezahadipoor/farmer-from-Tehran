@@ -2,7 +2,7 @@ import {
   BMAP, CMAP, CROPS, BUILDINGS, ITEMS, N, CH, DAY_LEN, NPCS, WORKERS, WorkerKind,
   xpFor, FERT_COST, HOE_COST, CLEAR_COST, TECH_TREE, ACHIEVEMENTS, CONTRACTS,
   SEASONS, WEATHER_TYPES, WeatherType, Season, EVENT_TYPES, EventType,
-  SKILLS, SkillItem,
+  SKILLS, SkillItem, fmt,
 } from "./data";
 
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
@@ -255,7 +255,7 @@ export function genOrder(s: State): Order {
   const items = picked.map((id) => ({ id, n: Math.max(1, Math.round(rnd(1, (ITEMS[id]?.base || 10) < 30 ? 6 : 3) + s.level / 2)) }));
   const val = items.reduce((a, it) => a + (ITEMS[it.id]?.base || 10) * it.n, 0);
   let m = 1.3 + s.rep * 0.012 + Math.random() * 0.2;
-  if (hasTech(s, "order_bonus")) m += 0.25;
+  if (hasTech(s, "order_bonus")) m *= 1.25;
   if (hasSkill(s, "zen_master")) m *= 1.05;
   return {
     id: s.nextId++, npc: Math.floor(Math.random() * NPCS.length), items,
@@ -282,14 +282,14 @@ export function addXp(s: State, n: number, ev: Events) {
       ...CROPS.filter((c) => c.lvl === s.level).map((c) => c.icon + " " + c.name),
       ...BUILDINGS.filter((b) => b.lvl === s.level).map((b) => b.icon + " " + b.name),
     ];
-    ev.toast(`🎉 سطح ${s.level}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
+    ev.toast(`🎉 سطح ${fmt(s.level)}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
     ev.sound("lvl");
     const bonus = s.level * 45;
     s.coins += bonus;
     ev.toast(`🎁 پاداش پیشرفت: +${bonus.toLocaleString("fa-IR")} 🪙`, "ok");
   }
   if (lvlGained > 0 && s.stats.skillPoints > 0) {
-    ev.toast(`🧠 امتیاز مهارت جدید: ${s.stats.skillPoints} امتیاز در انتظار توست — از دکمه‌ی «مهارت» پایین صفحه خرجش کن`, "lvl");
+    ev.toast(`🧠 ${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
   }
   checkAchievements(s, ev);
 }
@@ -398,7 +398,7 @@ export function sell(s: State, id: string, n: number, ev: Events) {
   const whole = Math.floor(s.xpAcc);
   if (whole > 0) { s.xpAcc -= whole; addXp(s, whole, ev); }
   updateContract(s, "coins", pv.coins, ev);
-  ev.toast(`فروش ${pv.n} ${ITEMS[id]?.name || id}: +${pv.coins.toLocaleString("fa-IR")} 🪙`, "ok");
+  ev.toast(`فروش ${fmt(pv.n)} ${ITEMS[id]?.name || "کالا"}: +${fmt(pv.coins)} 🪙`, "ok");
   ev.sound("coin");
 }
 
@@ -464,7 +464,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
         harvest(s, x, y, ev);
       } else {
         const pct = Math.floor((t.g || 0) * 100);
-        ev.toast(`🌱 ${CMAP[t.crop]?.name || "گیاه"}: ${pct}% رشد کرده است ${t.wet ? "💧 آبیاری شده" : "⚠️ تشنه آبیاری"}`);
+        ev.toast(`🌱 ${CMAP[t.crop]?.name || "گیاه"}: ${fmt(pct)}٪ رشد کرده — ${t.wet ? "💧 آبیاری شده" : "⚠️ تشنه‌ی آب"}`);
       }
       return;
     }
@@ -520,12 +520,12 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       return;
     }
     if (t.wet) {
-      ev.toast(`این خاک هنوز ${Math.ceil(t.dry ?? WATER_SECONDS)} ثانیه رطوبت دارد.`);
+      ev.toast(`این خاک هنوز ${fmt(Math.ceil(t.dry ?? WATER_SECONDS))} ثانیه رطوبت دارد.`);
       return;
     }
     t.wet = true;
     t.dry = WATER_SECONDS;
-    ev.fx(x, y, `💧 ${WATER_SECONDS}ث`, "#b3e5fc", "#4fc3f7"); ev.sound("water");
+    ev.fx(x, y, `💧 ${fmt(WATER_SECONDS)}ث`, "#b3e5fc", "#4fc3f7"); ev.sound("water");
     return;
   }
 
@@ -575,7 +575,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
         ev.toast(`دکور ${b.name} جمع‌آوری شد (+${ref.toLocaleString("fa-IR")})`);
       } else {
         const ref = Math.round((b?.cost || 100) * 0.5);
-        s.coins += ref; ev.toast(`${b?.name || "ساختمان"} برچیده شد (+${ref} 🪙)`);
+        s.coins += ref; ev.toast(`${b?.name || "ساختمان"} برچیده شد (+${fmt(ref)} 🪙)`);
         s.tiles[idx(x, y)] = { k: "grass", v: t.v };
       }
       ev.sound("dig");
@@ -676,7 +676,7 @@ export function learnSkill(s: State, id: string, ev: Events) {
   const sk = SKILLS.find((x) => x.id === id);
   if (!sk || s.skills.includes(id)) return;
   if (sk.req && !s.skills.includes(sk.req)) { ev.toast("ابتدا مهارت پیش‌نیاز را بیاموزید", "err"); return; }
-  if (s.stats.skillPoints < sk.cost) { ev.toast(`امتیاز مهارت کافی ندارید (نیاز: ${sk.cost}، موجود: ${s.stats.skillPoints})`, "err"); return; }
+  if (s.stats.skillPoints < sk.cost) { ev.toast(`امتیاز مهارت کافی نداری (نیاز: ${fmt(sk.cost)}، موجود: ${fmt(s.stats.skillPoints)})`, "err"); return; }
   s.stats.skillPoints -= sk.cost;
   s.skills.push(id);
   if (id === "storage_master") ev.toast("📦 ظرفیت انبار +۱۵۰ واحد افزایش یافت", "ok");
@@ -713,14 +713,15 @@ function checkAchievements(s: State, ev: Events) {
     if (ach.id === "rich2" && s.coins >= 10000) ok = true;
     if (ach.id === "rich3" && s.coins >= 100000) ok = true;
     if (ach.id === "level10" && s.level >= 10) ok = true;
-    if (ach.id === "level20" && s.level >= 25) ok = true;
+    if (ach.id === "level20" && s.level >= 20) ok = true;
+    if (ach.id === "level25" && s.level >= 25) ok = true;
     if (ach.id === "factory_master" && s.stats.produced >= 60) ok = true;
     if (ach.id === "land_baron" && s.bought >= 10) ok = true;
     if (ach.id === "automation_king" && countB(s, "harvester") + countB(s, "auto_planter") + countB(s, "auto_fertilizer") >= 5) ok = true;
     if (ach.id === "zoo" && countB(s, "coop")>0 && countB(s, "barn")>0 && countB(s, "sheep")>0 && countB(s, "pigpen")>0 && countB(s, "beehive")>0) ok = true;
     if (ach.id === "decorator" && s.stats.decorations >= 10) ok = true;
     if (ach.id === "skill_master" && s.skills.length >= 10) ok = true;
-    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`🏆 دستاورد جدید: ${ach.title} (+${ach.reward}🪙)`, "lvl"); ev.sound("lvl"); }
+    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`🏆 دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} 🪙)`, "lvl"); ev.sound("lvl"); }
   }
 }
 
@@ -744,7 +745,20 @@ export function doPrestige(s: State, ev: Events) {
   fresh.story = s.story;
   fresh.rep = s.rep;
   Object.assign(s, fresh);
-  ev.toast(`👑 تناسخ مزرعه سطح ${prev+1}! ۳ امتیاز مهارت و ضرایب دائمی دریافت شد.`, "prestige"); ev.sound("lvl");
+  ev.toast(`👑 نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("lvl");
+}
+
+/** کارگاه‌های دامی (مرغداری، گاوداری، …) — هدفِ دامپزشک، دامپروری پیشرفته و دامدار مهربان */
+const ANIMAL_OUT = new Set(["egg", "milk", "wool", "pork", "honey"]);
+export const isAnimalBuilding = (b: { recipes: { out: string }[] }) => b.recipes.some((r) => ANIMAL_OUT.has(r.out));
+
+/** ضریب زمانِ تولید دامی: دامپزشک ۱۵٪، «دامپروری پیشرفته» ۲۵٪ و «دامدار مهربان» ۱۵٪ سریع‌تر */
+export function animalTimeFactor(s: State): number {
+  let f = 1;
+  if (s.workers.some((w) => w.kind === "vet")) f *= 0.85;
+  if (hasTech(s, "animal_husbandry")) f /= 1.25;
+  if (hasSkill(s, "animal_tamer")) f /= 1.15;
+  return f;
 }
 
 export function tick(s: State, dt: number, ev: Events) {
@@ -798,6 +812,8 @@ export function tick(s: State, dt: number, ev: Events) {
 
   let autoR = 0;
   if (hasTech(s, "precision_agri")) autoR = 1;
+  // مهندسی آبیاری (تحقیق) و «میراب» (مهارت) هر کدام شعاع آبیاری را ۱ خانه بیشتر می‌کنند
+  const waterBonus = (hasTech(s, "irrigation_engineering") ? 1 : 0) + (hasSkill(s, "water_wise") ? 1 : 0);
 
   for (let i = 0; i < s.tiles.length; i++) {
     const t = s.tiles[i]; const x = i % N, y = Math.floor(i / N);
@@ -827,10 +843,12 @@ export function tick(s: State, dt: number, ev: Events) {
       const b = BMAP[t.b]; if (!b) continue;
       const r = (b.radius || 0) + autoR;
       if (t.b === "sprinkler" || t.b === "mega_sprinkler" || t.b === "well") {
-        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        // چاه = چهار زمینِ مجاور (بعلاوه‌ای)؛ آب‌پاش‌ها = مربعِ کامل (۸ و ۲۴ زمین)
+        const wr = r + waterBonus;
+        for (let dy = -wr; dy <= wr; dy++) for (let dx = -wr; dx <= wr; dx++) {
           const nx = x+dx, ny = y+dy;
           if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
-          if (Math.abs(dx)+Math.abs(dy) > r && t.b !== "mega_sprinkler") continue;
+          if (t.b === "well" && Math.abs(dx)+Math.abs(dy) > wr) continue;
           const n = s.tiles[idx(nx, ny)];
           if (n.k === "soil") { n.wet = true; n.dry = Math.max(n.dry ?? 0, SPRINKLER_SECONDS); }
         }
@@ -882,7 +900,7 @@ export function tick(s: State, dt: number, ev: Events) {
         let timeR = r.time;
         if (hasTech(s, "speed_ovens")) timeR *= 0.75;
         if (hasSkill(s, "artisan")) timeR *= 0.85;
-        if (s.workers.some((w) => w.kind === "vet") && b.recipes.some((rr) => ["egg","milk","wool","pork","honey","butter","cheese","sausage","sweater","feed"].includes(rr.out))) timeR *= 0.85;
+        if (isAnimalBuilding(b)) timeR *= animalTimeFactor(s);
         timeR *= (1 + s.prestige * 0.05);
         t.p = (t.p||0) + dt / timeR;
         if (t.p >= 1) {
