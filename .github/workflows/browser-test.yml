@@ -1,0 +1,35 @@
+name: browser-test
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-playtest:
+    name: اجرای بازی در مرورگر موبایل (۳۹۰×۸۴۴)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: نصب مرورگر Playwright
+        run: npx playwright install --with-deps chromium
+      - name: اجرای تست‌های موبایل
+        run: npx playwright test
+      - name: آپلود اسکرین‌شات‌ها
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-shots
+          path: docs/shots/
+          if-no-files-found: ignore
+          retention-days: 14

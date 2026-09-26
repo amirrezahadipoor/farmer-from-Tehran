@@ -14,7 +14,7 @@ export interface View {
 export interface Walker { x: number; y: number; tx: number; ty: number; kind: string; face: number; wait: number }
 
 let bgImg: HTMLImageElement | null = null;
-if (typeof window !== "undefined") { bgImg = new Image(); bgImg.src = "/images/bg_sky.jpg"; }
+if (typeof window !== "undefined") { bgImg = new Image(); bgImg.src = "/images/bg_sky.webp"; }
 
 export const tileCenter = (gx: number, gy: number) => ({ x: (gx - gy) * A, y: (gx + gy + 1) * B - N * B });
 

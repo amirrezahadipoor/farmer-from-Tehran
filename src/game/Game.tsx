@@ -31,6 +31,7 @@ import {
   Fx,
   Events,
   newState,
+  addXp,
   tick,
   toolAction,
   capacity,
@@ -294,6 +295,28 @@ export default function Game() {
   };
   const evRef = useRef(ev);
   evRef.current = ev;
+
+  // ── قلاب تست خودکار (E2E): وضعیت بازی را برای Playwright قابل‌خواندن می‌کند
+  useEffect(() => {
+    (window as unknown as { __game?: unknown }).__game = {
+      version: 1,
+      getState: () => sRef.current,
+      setState: (next: State) => {
+        sRef.current = next;
+        setTick((n) => n + 1);
+      },
+      give: (coins: number, xp = 0) => {
+        const st = sRef.current;
+        if (!st) return null;
+        st.coins += coins;
+        if (xp) addXp(st, xp, evRef.current);
+        setTick((n) => n + 1);
+        return { coins: st.coins, level: st.level, xp: st.xp };
+      },
+      toast,
+      view: () => viewRef.current,
+    };
+  }, [toast]);
 
   // Load game state
   useEffect(() => {

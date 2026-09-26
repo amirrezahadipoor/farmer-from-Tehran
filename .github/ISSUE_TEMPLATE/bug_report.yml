@@ -1,0 +1,49 @@
+name: گزارش اشکال (Bug)
+description: یک رفتار غلط در بازی یا کد
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        سپاس از گزارش. لطفاً هر چه دقیق‌تر، تا سریع‌تر بسته شود.
+  - type: input
+    id: version
+    attributes:
+      label: نسخه
+      description: از فایل VERSION یا خروجی `npm pkg get version`
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: دستگاه
+      options:
+        - iPhone (Safari / PWA)
+        - Android (Chrome / PWA)
+        - تبلت
+        - دسکتاپ (فقط برای دیباگ)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: مراحل بازتولید
+      placeholder: |
+        ۱. بازی را باز کن
+        ۲. روی …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: انتظار / واقعیت
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: شاهد (اسکرین‌شات، لاگ کنسول، شماره‌ی فصل و آیتم رودمپ)
+    validations:
+      required: false

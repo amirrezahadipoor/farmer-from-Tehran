@@ -1,0 +1,58 @@
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── بلاک‌کننده‌ها: اگر این‌ها سبز نباشند، پوش پذیرفته نمی‌شود
+  verify:
+    name: typecheck · build · test · assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Assets (تصاویر و فونت‌های گم‌شده)
+        run: npm run check-assets
+      - name: Unit tests
+        run: npm run test
+      - name: Build (بدون هیچ متغیر محیطی)
+        run: npm run build
+      - name: راه‌اندازی و تست سلامت سرور
+        run: |
+          npm run start &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000/api/health > /dev/null; then echo "server up"; break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:3000/ | head -c 200
+          curl -sf http://127.0.0.1:3000/api/health
+
+  # ── غیربلاک‌کننده تا فاز ۵.۱۰ (شکستن Game.tsx و صفر کردن خطاهای ری‌اکت)
+  lint-baseline:
+    name: lint (baseline — غیربلاک‌کننده تا P5.10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
