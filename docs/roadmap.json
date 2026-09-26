@@ -35,7 +35,7 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۷۸ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
+    "current": "۱۳۶ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
     "met": true
    },
    {
@@ -440,8 +440,9 @@
      "id": "5.9",
      "title": "پاک‌سازی متن‌ها: تایپوها، توضیح‌های عددی غلط، دستاورد level20/25",
      "dod": "اسکریپت lint متن: صفر مورد غیرفارسی",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 15,
+     "evidence": "tools/lint-text.mjs (کامپایلر TypeScript + TypeChecker): ۸۵۴ متن فارسی در ۳۷ فایل → ۰ مورد غیرفارسی (خط بیگانه، ك/ي، رقم لاتین، عددِ بی‌قالب در قالب/JSX) و بلاک‌کننده در quality.yml — ۲۰+ نام/توضیح خراب بازنویسی شد؛ دستاورد level20 حالا در سطح ۲۰ و level25 تازه؛ ۵۸ تست tests/text.test.ts عددِ هر توضیح را با اثر واقعی می‌سنجد (پوشش آب‌پاش ۸/۲۴، چاه ۴، کمپوست‌سازِ از کار افتاده، گلخانه ۲۵٪، مهارت/تحقیق‌های توخالی water_wise، animal_tamer، animal_husbandry، irrigation_engineering پیاده شد) + README/manifest با داده هم‌خوان؛ docs/shots/panel-p5-9-*.png"
     },
     {
      "id": "5.10",

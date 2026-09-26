@@ -27,6 +27,8 @@ jobs:
         run: npm run typecheck
       - name: ESLint (بلاک‌کننده از P5.10 — صفر خطا، صفر هشدار)
         run: npm run lint
+      - name: lint متن فارسی (P5.9 — صفر مورد غیرفارسی)
+        run: npm run lint:text
       - name: Assets (تصاویر و فونت‌های گم‌شده)
         run: npm run check-assets
       - name: Unit tests

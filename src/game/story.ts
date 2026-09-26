@@ -1,4 +1,5 @@
 import { State, addXp, Events } from "./logic";
+import { fmt } from "./data";
 
 export type Mood = "sad" | "warm" | "tense" | "hope" | "epic" | "night";
 export interface StoryScene { sp: string; role: string; av: string; bg: string; text: string; mood: Mood }
@@ -258,7 +259,7 @@ function finishChapter(s: State, ch: StoryChapter, ev: Events) {
     if (ch.reward.sp) s.stats.skillPoints += ch.reward.sp;
     if (ch.reward.xp) addXp(s, ch.reward.xp, ev);
     if (ch.reward.coins > 0 || ch.reward.sp > 0) {
-      ev.toast(`📖 فصل ${ch.num} «${ch.title}» تمام شد! +${ch.reward.coins.toLocaleString("fa-IR")} سکه و ${ch.reward.sp} امتیاز مهارت`, "lvl");
+      ev.toast(`📖 فصل ${fmt(ch.num)} «${ch.title}» تمام شد! +${fmt(ch.reward.coins)} سکه و ${fmt(ch.reward.sp)} امتیاز مهارت`, "lvl");
       ev.sound("lvl");
     }
   }

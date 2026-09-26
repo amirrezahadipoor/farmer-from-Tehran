@@ -15,6 +15,9 @@ import { game } from "../store";
 import type { SaveState } from "../net";
 import { LevelRing, Pill, type Panel } from "./common";
 
+/** ساعت با ارقام فارسی و دو رقمی (۰۷:۲۲) */
+const two = (n: number) => n.toLocaleString("fa-IR", { minimumIntegerDigits: 2 });
+
 /** شمارش نشان‌های منو: سفارش آماده، امتیاز مهارت، قرارداد قابل‌دریافت */
 export function menuBadges(s: State) {
   const readyOrders = s.orders.filter((o) => o.items.every((it) => (s.inv[it.id] || 0) >= it.n)).length;
@@ -178,8 +181,8 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
         <Icon name={weatherIcon} size={30} />
         <span className="text-right leading-tight">
           <span className="block text-[12px] font-black min-[430px]:text-[13px]">روز {fmt(s.day)}</span>
-          <span className="block font-mono text-[11px] opacity-85 min-[430px]:text-[12px]">
-            {String(hh).padStart(2, "0")}:{String(mm).padStart(2, "0")}
+          <span className="block text-[11px] font-bold tabular-nums opacity-85 min-[430px]:text-[12px]">
+            {two(hh)}:{two(mm)}
           </span>
         </span>
         <Icon name={SEASONS[s.seasonIndex].id} size={22} />
