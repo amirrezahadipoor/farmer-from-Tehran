@@ -42,6 +42,15 @@ async function readState(page: Page) {
 
 /** مسیر واقعی بازیکن: شروع → نامِ بازیکن → رد کردن داستان → بازی */
 async function enterGame(page: Page) {
+  // آموزش تعاملی اولین‌بار (P4.7) فقط یک‌بار برای بازیکن تازه می‌آید و روی نقشه شیت می‌گذارد.
+  // این تست‌ها به بازی می‌رسند، پس مثل بازیکن باتجربه پرچم آموزش را از قبل ست می‌کنیم.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("farm_onboard", "1");
+    } catch {
+      /* ignore */
+    }
+  });
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: /آغاز|شروع|بازی/ }).first().tap();

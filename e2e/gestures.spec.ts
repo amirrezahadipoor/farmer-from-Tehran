@@ -27,6 +27,14 @@ async function ageSaveOnNextLoad(page: Page, minutesAgo: number) {
 }
 
 async function enterGame(page: Page) {
+  // آموزش تعاملی اولین‌بار (P4.7) روی نقشه شیت می‌گذارد؛ تست‌های ژست به بازی رسیده نیاز دارند.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("farm_onboard", "1");
+    } catch {
+      /* ignore */
+    }
+  });
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
   // صفحه‌ی شروع (اسپلش) → دکمه‌ی ورود
@@ -52,8 +60,10 @@ async function enterGame(page: Page) {
     }
   });
   await page.waitForTimeout(700);
-  // مطمئن شو هیچ لایه‌ی تمام‌صفحه‌ای روی نقشه نیست
-  await expect(page.locator("div.absolute.inset-0.z-50")).toHaveCount(0, { timeout: 10_000 }).catch(() => undefined);
+  // مطمئن شو هیچ لایه‌ی تمام‌صفحه‌ای روی نقشه نیست (داستان، اسپلش، آموزش اولین‌بار)
+  await expect(page.locator("div.absolute.inset-0.z-50, div.absolute.inset-0.z-\\[60\\]"))
+    .toHaveCount(0, { timeout: 10_000 })
+    .catch(() => undefined);
 }
 
 const toolCount = (page: Page, kind: string) =>
@@ -118,8 +128,9 @@ test.describe("فول‌تاچ و آفلاین‌تایم", () => {
 
     await ageSaveOnNextLoad(page, 120); // دو ساعت
 
-    // اینترنت قطع است تا سیوِ محلی (۲ ساعت پیش) مرجع باشد، نه نسخه‌ی تازه‌ی سرور
-    await context.setOffline(true);
+    // ابر در دسترس نیست تا سیوِ محلی (۲ ساعت پیش) مرجع باشد، نه نسخه‌ی تازه‌ی سرور.
+    // (قطع‌کردن کامل مرورگر در WebKit با reload خطای داخلی می‌دهد؛ این روش در هر دو مرورگر کار می‌کند.)
+    await context.route("**/api/save*", (route) => route.fulfill({ status: 200, json: { data: null, mode: "offline" } }));
     await page.reload({ waitUntil: "load" });
     await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
     const splash = page.getByRole("button", { name: /آغاز|شروع|بازی/ }).first();
@@ -133,6 +144,6 @@ test.describe("فول‌تاچ و آفلاین‌تایم", () => {
     // بستن کارت با لمس
     await page.getByRole("button", { name: "بستن گزارش غیاب" }).tap();
     await expect(page.getByText("در غیاب شما")).toBeHidden();
-    await context.setOffline(false);
+    await context.unroute("**/api/save*");
   });
 });

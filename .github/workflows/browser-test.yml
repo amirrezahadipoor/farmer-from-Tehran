@@ -23,8 +23,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - name: نصب مرورگر Playwright
-        run: npx playwright install --with-deps chromium
+      - name: نصب مرورگر Playwright (کروم + وِب‌کیت برای پروفایل iOS)
+        run: npx playwright install --with-deps chromium webkit
       - name: اجرای تست‌های موبایل
         run: npx playwright test
       - name: آپلود اسکرین‌شات‌ها
