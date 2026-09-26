@@ -14,6 +14,7 @@
 import { NCH } from "./state";
 import type { Events, State } from "./state";
 import { newState } from "./economy";
+import { beginLineage } from "./lineage";
 import { fmt } from "../data";
 
 export const PRESTIGE_LEVEL = 20;
@@ -37,6 +38,9 @@ export interface GenerationRecord {
   earned: number;
   harvested: number;
   orders: number;
+  /** P6.4: برای سبکِ نسل (کشاورز/بازرگان/صنعتگر/آبادگر) */
+  produced?: number;
+  decorations?: number;
   coins: number;
   inherited: number;
 }
@@ -107,8 +111,21 @@ export function doPrestige(s: State, ev: Events) {
     earned: s.stats.earned,
     harvested: s.stats.harvested,
     orders: s.stats.orders,
+    produced: s.stats.produced,
+    decorations: s.stats.decorations,
     coins: s.coins,
     inherited: inherit,
+  };
+  // P6.4: کارنامه‌ی همین نسل (تفاضل با نسلِ قبل) برای داستانِ وارث
+  const last = s.generations?.[s.generations.length - 1];
+  const deltas = {
+    days: s.day,
+    harvested: Math.max(0, s.stats.harvested - (last?.harvested ?? 0)),
+    orders: Math.max(0, s.stats.orders - (last?.orders ?? 0)),
+    // رکوردهای پیش از P6.4 این دو را ندارند: نامعلوم = صفر (نه کلِ عمرِ مزرعه)
+    produced: last && last.produced == null ? 0 : Math.max(0, s.stats.produced - (last?.produced ?? 0)),
+    decorations: last && last.decorations == null ? 0 : Math.max(0, s.stats.decorations - (last?.decorations ?? 0)),
+    earned: Math.max(0, s.stats.earned - (last?.earned ?? 0)),
   };
   const fresh = newState();
   fresh.prestige = gen;
@@ -128,6 +145,7 @@ export function doPrestige(s: State, ev: Events) {
   fresh.generations = [...(s.generations ?? []), record].slice(-MAX_GENERATIONS_LOG);
   const land = grantInheritedLand(fresh, inheritedChunks(gen));
   Object.assign(s, fresh);
+  beginLineage(s, deltas);
   ev.toast(
     `نسل ${fmt(gen)} آغاز شد! ارثیه ${fmt(inherit)} سکه، ${fmt(land.length)} قطعه زمینِ موروثی، ۳ امتیاز مهارت و دستورِ «حلوای مادربزرگ».`,
     "prestige",
@@ -150,7 +168,7 @@ export function normalizeGenerations(raw: unknown): GenerationRecord[] | undefin
   const n = (x: unknown, max = 1e15) => (Number.isFinite(Number(x)) ? Math.min(max, Math.max(0, Math.round(Number(x)))) : 0);
   const out = raw
     .filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null && !Array.isArray(r))
-    .map((r) => ({ gen: n(r.gen, 999), day: n(r.day, 1e6), level: n(r.level, 1000), earned: n(r.earned), harvested: n(r.harvested), orders: n(r.orders), coins: n(r.coins), inherited: n(r.inherited) }))
+    .map((r) => ({ gen: n(r.gen, 999), day: n(r.day, 1e6), level: n(r.level, 1000), earned: n(r.earned), harvested: n(r.harvested), orders: n(r.orders), ...(r.produced != null ? { produced: n(r.produced) } : {}), ...(r.decorations != null ? { decorations: n(r.decorations, 1e6) } : {}), coins: n(r.coins), inherited: n(r.inherited) }))
     .slice(-MAX_GENERATIONS_LOG);
   return out;
 }

@@ -9,14 +9,15 @@
  *   usePersistence.ts ... بارگذاری/ذخیره‌ی آفلاین‌فِرست، پشتیبان، گزارش غیاب
  *   useCanvasInput.ts ... ضربه/کشیدن/زوم/نگه‌داشتن روی نقشه
  *   events.ts, audio.ts . پیام/افکت/صدا
+ *   StoryOverlays.tsx ... پرده‌های داستان و فصل‌های نسل (P6.4)
  *   ui/* ................ HUD، نوار ابزار، لایه‌ها، شیت پنل‌ها و ۱۲ پنل
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { addXp, setPlayerName, setStoryShown, type State } from "./logic";
-import StoryModal from "./Story";
+import { addXp, setStoryShown, type State } from "./logic";
+import StoryOverlays from "./StoryOverlays";
+import { lineageVisible } from "./lineageStory";
 import { ItemIcon } from "./icons";
-import { advanceStory } from "./story";
 import { readLS, writeLS, dropLS } from "./persist";
 import { registerServiceWorker, prefetchStoryArt, STORY_ART_URLS } from "./net";
 import { haptic, isFullscreen, useAppViewportVar, useFullscreenState, useNativeGestureGuards, useWakeLock, lockOrientation } from "./mobile";
@@ -142,7 +143,8 @@ export default function Game() {
     setStarted(false);
   };
 
-  const inGame = started && !s.story.shown;
+  const showLineage = started && lineageVisible(s);
+  const inGame = started && !s.story.shown && !showLineage;
 
   return (
     <div className="relative select-none overflow-hidden" dir="rtl" style={{ height: "var(--app-h, 100dvh)", width: "100vw" }}>
@@ -174,19 +176,8 @@ export default function Game() {
 
       {!started && <Splash s={s} onStart={onStart} />}
 
-      {/* پرده‌ی سینمایی داستان */}
-      {started && s.story.shown && (
-        <StoryModal
-          s={s}
-          onAdvance={() => advanceStory(s, ev)}
-          onName={(n) => setPlayerName(s, n)}
-          onClose={() => {
-            setStoryShown(s, false);
-            game.bump();
-          }}
-          refresh={() => game.bump()}
-        />
-      )}
+      {/* پرده‌های داستان: داستانِ اصلی، و پس از هر تناسخ فصلِ نسل (P6.4) */}
+      {started && <StoryOverlays s={s} ev={ev} />}
     </div>
   );
 }

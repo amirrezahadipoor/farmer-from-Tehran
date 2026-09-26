@@ -13,6 +13,7 @@ import { DAY_LEN, N, SEASONS } from "./data";
 import { tick, locked, idx, ensureQuests, type Events, type State } from "./logic";
 import { render } from "./render";
 import { updateStory } from "./story";
+import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
 
 const MIN_DPR = 0.6;
@@ -144,6 +145,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       stepWalkers(s, dt);
       render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values()]);
       updateStory(s, ev); // بررسی هدف فصلِ داستان
+      updateLineage(s, ev); // قولِ وارثِ نسلِ جاری (P6.4)
       audioAcc += dt;
       if (audioAcc >= 1) {
         audioAcc = 0;

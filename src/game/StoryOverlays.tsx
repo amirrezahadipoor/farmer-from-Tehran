@@ -1,0 +1,47 @@
+"use client";
+
+/**
+ * src/game/StoryOverlays.tsx — پرده‌های داستان روی بازی
+ * داستانِ اصلی اولویت دارد؛ فصلِ نسل (P6.4) پشتِ آن صبر می‌کند تا همان ثانیه‌ای که تناسخ
+ * هدفِ فصلِ ۱۰ را کامل می‌کند، اول صحنه‌ی پایانیِ داستانِ اصلی دیده شود (lineageVisible).
+ */
+
+import { setPlayerName, setStoryShown, type Events, type State } from "./logic";
+import { advanceStory } from "./story";
+import { advanceLineage, lineageVisible, nameHeir, setLineageShown } from "./lineageStory";
+import { game } from "./store";
+import StoryModal from "./Story";
+import LineageModal from "./LineageStory";
+
+export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
+  const refresh = () => game.bump();
+  if (s.story.shown) {
+    return (
+      <StoryModal
+        s={s}
+        onAdvance={() => advanceStory(s, ev)}
+        onName={(n) => setPlayerName(s, n)}
+        onClose={() => {
+          setStoryShown(s, false);
+          refresh();
+        }}
+        refresh={refresh}
+      />
+    );
+  }
+  if (lineageVisible(s)) {
+    return (
+      <LineageModal
+        s={s}
+        onAdvance={() => advanceLineage(s, ev)}
+        onName={(n) => nameHeir(s, n)}
+        onClose={() => {
+          setLineageShown(s, false);
+          refresh();
+        }}
+        refresh={refresh}
+      />
+    );
+  }
+  return null;
+}

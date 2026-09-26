@@ -85,6 +85,8 @@ const STORY_IMAGES = [
   "/images/story_factory.webp",
   "/images/story_expo.webp",
   "/images/story_sunset.webp",
+  "/images/story_heir.webp",
+  "/images/story_lineage.webp",
 ];
 
 const STATIC_RE = /\/(?:_next\/static|fonts)\//;

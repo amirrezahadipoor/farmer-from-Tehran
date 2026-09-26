@@ -34,6 +34,8 @@ export interface State {
   quests?: import("./quests").QuestState;
   /** شجره‌نامه: کارنامه‌ی نسل‌های گذشته (P6.3) */
   generations?: import("./legacy").GenerationRecord[];
+  /** داستانِ نسل‌ها: بنیان‌گذار، وارث‌ها و فصلِ نسلِ جاری (P6.4) */
+  lineage?: import("./lineage").LineageState;
 }
 
 export function newStoryState() {

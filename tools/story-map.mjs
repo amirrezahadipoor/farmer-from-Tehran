@@ -44,9 +44,25 @@ for (const ch of chapters) {
   collect(endPart, "پایان فصل");
 }
 
+/* ---------- ۲ب) فصل‌های نسل (P6.4): قالب‌های src/game/lineageStory.ts ---------- */
+const LIN_SRC = join(ROOT, "src/game/lineageStory.ts");
+const GROUP_FA = { OPENING: "آغاز", ELDER: "نسلِ پیش", RECIPE: "دفترچه‌ی حلوا", PROMISE: "قولِ وارث", ENDING: "پایان" };
+const linRows = [];
+if (existsSync(LIN_SRC)) {
+  const lin = readFileSync(LIN_SRC, "utf8");
+  for (const m of lin.matchAll(/const\s+([A-Z]+)\s*=\s*"([^"]+)"/g)) consts[m[1]] = m[2];
+  let group = "";
+  for (const line of lin.split("\n")) {
+    const g = line.match(/^const\s+([A-Z]+)\s*:/);
+    if (g) group = g[1];
+    const sc = line.match(/^\s*(?:(\w+):\s*)?\{\s*sp:\s*"([^"]*)"[\s\S]*?bg:\s*([A-Z]+)[\s\S]*?\btext:\s*"((?:[^"\\]|\\.)*)"/);
+    if (sc && GROUP_FA[group]) linRows.push({ group: GROUP_FA[group], key: sc[1] || "", sp: sc[2], bg: sc[3], text: sc[4] });
+  }
+}
+
 /* ---------- ۳) استفاده‌ی هر تصویر ---------- */
 const usage = {};
-for (const r of rows) usage[r.bg] = (usage[r.bg] || 0) + 1;
+for (const r of [...rows, ...linRows]) usage[r.bg] = (usage[r.bg] || 0) + 1;
 
 const missingFiles = Object.entries(consts).filter(
   ([, p]) => !existsSync(join(ROOT, "public", p))
@@ -60,6 +76,7 @@ L.push("> این فایل **خودکار** از `src/game/story.ts` ساخته �
 L.push("");
 L.push(`- فصل‌ها: **${chapters.length}**`);
 L.push(`- کل صحنه‌های داستان: **${rows.length}**`);
+L.push(`- قالب‌های فصل‌های نسل (متغیر، P6.4): **${linRows.length}**`);
 L.push(`- تصاویر استفاده‌شده: **${Object.keys(usage).length}** از ${Object.keys(consts).length}`);
 L.push(`- همه‌ی فایل‌ها موجود: **${missingFiles.length === 0 ? "بله" : "نه"}**`);
 L.push("");
@@ -88,6 +105,18 @@ for (const r of rows) {
   L.push(`| ${r.n} | ${r.sp} | ${r.kind} | \`${consts[r.bg]}\` | ${short}… |`);
 }
 L.push("");
+L.push("## فصل‌های نسل (بعد از هر تناسخ)");
+L.push("");
+L.push("> هر تناسخ یک فصلِ تازه از این قالب‌ها می‌سازد (`src/game/lineageStory.ts`): آغاز بسته به شماره‌ی نسل، سخنِ نسلِ پیش بسته به سبکِ واقعی‌اش، دفترچه‌ی حلوا، قولِ وارث (= هدفِ فصل) و پایان روی تنه‌ی گردو.");
+L.push("");
+L.push("| بخش | کلید | گوینده | تصویر | متن (بریده) |");
+L.push("| --- | --- | --- | --- | --- |");
+const LIN_FA = { name: "نام وارث", prev: "نسل پیش", founder: "بنیان‌گذار", gen: "شماره‌ی نسل", line: "نام‌های قبلی", count: "تعداد" };
+for (const r of linRows) {
+  const short = r.text.replace(/\{(\w+)\}/g, (m, k) => LIN_FA[k] || "عدد").replace(/"/g, "»").slice(0, 58);
+  L.push(`| ${r.group} | ${r.key || "—"} | ${r.sp.replace(/\{(\w+)\}/g, (m, k) => LIN_FA[k] || k)} | \`${consts[r.bg]}\` | ${short}… |`);
+}
+L.push("");
 L.push("---");
 L.push("");
 L.push("## قاعده‌های هنری");
@@ -100,7 +129,7 @@ L.push("");
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, L.join("\n"), "utf8");
-console.log(`${OUT} نوشته شد — ${chapters.length} فصل، ${rows.length} صحنه، ${Object.keys(consts).length} تصویر`);
+console.log(`${OUT} نوشته شد — ${chapters.length} فصل، ${rows.length} صحنه، ${linRows.length} قالبِ نسل، ${Object.keys(consts).length} تصویر`);
 if (missingFiles.length) {
   console.error("[خطا] فایل‌های گم‌شده:", missingFiles.map(([t, p]) => `${t} → ${p}`).join(", "));
   process.exit(1);
