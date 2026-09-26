@@ -10,7 +10,7 @@
 
 import { ambience, type AmbientEnv } from "./audio";
 import { DAY_LEN, N, SEASONS } from "./data";
-import { tick, locked, idx, type Events, type State } from "./logic";
+import { tick, locked, idx, ensureQuests, type Events, type State } from "./logic";
 import { render } from "./render";
 import { updateStory } from "./story";
 import { game, rt } from "./store";
@@ -148,6 +148,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       if (audioAcc >= 1) {
         audioAcc = 0;
         ambience(soundEnv(s));
+        ensureQuests(s, new Date()); // P6.2: روز/هفته‌ی تازه = اهدافِ تازه
       }
       uiAcc += dt;
       if (uiAcc > 0.25) {

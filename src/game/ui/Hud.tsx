@@ -5,7 +5,7 @@
  */
 
 import { CONTRACTS, SEASONS, fmt, xpFor } from "../data";
-import { capacity, invCount, type State } from "../logic";
+import { capacity, claimableQuests, invCount, type State } from "../logic";
 import { lightInfo } from "../render";
 import { currentChapter, goalProgress } from "../story";
 import { Icon, stripEmoji } from "../icons";
@@ -18,14 +18,14 @@ import { LevelRing, Pill, type Panel } from "./common";
 /** ساعت با ارقام فارسی و دو رقمی (۰۷:۲۲) */
 const two = (n: number) => n.toLocaleString("fa-IR", { minimumIntegerDigits: 2 });
 
-/** شمارش نشان‌های منو: سفارش آماده، امتیاز مهارت، قرارداد قابل‌دریافت */
+/** شمارش نشان‌های منو: سفارش آماده، امتیاز مهارت، قرارداد و هدفِ روزانه‌ی قابل‌دریافت */
 export function menuBadges(s: State) {
   const readyOrders = s.orders.filter((o) => o.items.every((it) => (s.inv[it.id] || 0) >= it.n)).length;
   const claimableContracts = s.contracts.filter((cs) => {
     const def = CONTRACTS.find((c) => c.id === cs.id);
     return def && !cs.claimed && cs.progress >= def.target;
   }).length;
-  return { readyOrders, claimableContracts, skillPoints: s.stats.skillPoints };
+  return { readyOrders, claimableContracts, skillPoints: s.stats.skillPoints, readyQuests: claimableQuests(s) };
 }
 
 export function CameraControls() {
@@ -73,7 +73,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
   const need = xpFor(s.level);
   const storyCh = currentChapter(s);
   const storyP = goalProgress(s, storyCh);
-  const { readyOrders, claimableContracts, skillPoints } = menuBadges(s);
+  const { readyOrders, claimableContracts, skillPoints, readyQuests } = menuBadges(s);
   const weatherIcon =
     s.weather === "rain" ? "rain" : s.weather === "snow" ? "snow" : s.weather === "fog" ? "fog" : s.weather === "heatwave" ? "heat" : L.dark > 0.3 ? "moon" : L.dusk > 0.3 ? "sunset" : "sun";
   const storyPct = storyCh.goal && !s.story.done ? Math.min(1, storyP.cur / storyP.target) : 1;
@@ -121,6 +121,12 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
           </span>
         </Pill>
 
+        {readyQuests > 0 && (
+          <Pill icon="calendar" label={`${fmt(readyQuests)} هدف روزانه آماده‌ی دریافت`} onClick={() => setPanel("quests")} className="!bg-orange-100 !text-orange-900 ring-orange-300">
+            {fmt(readyQuests)}
+          </Pill>
+        )}
+
         {skillPoints > 0 && (
           <Pill icon="skills" label={`${fmt(skillPoints)} امتیاز مهارت`} onClick={() => setPanel("skills")} className="!bg-purple-100 !text-purple-900 ring-purple-300">
             {fmt(skillPoints)}
@@ -137,7 +143,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
           className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-amber-900/10 active:scale-95"
         >
           <Icon name="menu" size={26} />
-          {(readyOrders > 0 || skillPoints > 0 || claimableContracts > 0) && (
+          {(readyOrders > 0 || skillPoints > 0 || claimableContracts > 0 || readyQuests > 0) && (
             <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-600 ring-2 ring-white" />
           )}
         </button>

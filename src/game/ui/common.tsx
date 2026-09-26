@@ -19,6 +19,7 @@ export type PanelId =
   | "biz"
   | "tech"
   | "contracts"
+  | "quests"
   | "achievements"
   | "help"
   | "settings";
@@ -61,6 +62,7 @@ export const PANEL_META: Record<PanelId, { icon: string; title: string }> = {
   biz: { icon: "biz", title: "مدیریت کسب‌وکار" },
   tech: { icon: "tech", title: "تحقیقات" },
   contracts: { icon: "contracts", title: "قراردادها" },
+  quests: { icon: "calendar", title: "اهداف روزانه" },
   achievements: { icon: "trophy", title: "دستاوردها" },
   help: { icon: "help", title: "راهنما" },
   settings: { icon: "settings", title: "تنظیمات" },

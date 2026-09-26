@@ -32,6 +32,18 @@ function starPath(cx: number, cy: number, r1: number, r2: number, n = 5) {
 const cloud = (fill: string, y = 0) =>
   `<path d="M6.5 ${16 + y}a3.5 3.5 0 0 1-.4-7 5 5 0 0 1 9.6-1.2A3.8 3.8 0 0 1 18 ${16 + y}z" fill="${fill}" ${S}/>`;
 
+/** نشانِ زنجیره: روبان + مدال با رنگِ رده و ۱ تا ۴ ستاره (P6.2) */
+function medal(fill: string, rim: string, stars: number) {
+  const at: Record<number, [number, number, number][]> = {
+    1: [[12, 15.2, 2.9]],
+    2: [[9.9, 15.2, 1.9], [14.1, 15.2, 1.9]],
+    3: [[12, 12.9, 1.7], [9.6, 16.6, 1.7], [14.4, 16.6, 1.7]],
+    4: [[9.8, 13, 1.6], [14.2, 13, 1.6], [9.8, 17.2, 1.6], [14.2, 17.2, 1.6]],
+  };
+  const st = at[stars].map(([x, y, r]) => `<path d="${starPath(x, y, r, r * 0.45)}" fill="#fff" stroke="${rim}" stroke-width=".6" stroke-linejoin="round"/>`).join("");
+  return `<path d="M7.2 2.5h3.4l2.2 6.2-2.6 1.3zM16.8 2.5h-3.4l-2.2 6.2 2.6 1.3z" fill="#5b6ee1" ${S}/><circle cx="12" cy="15" r="6.9" fill="${fill}" ${S}/><circle cx="12" cy="15" r="5.2" fill="none" stroke="${rim}" stroke-width="1.1"/>${st}`;
+}
+
 /* ---------------------------------------------------------------- UI icons */
 const UI_ICONS: Record<string, string> = {
   hand: `<path d="M8 20c-2-1-3.5-3.2-4.2-5.4-.3-1 .9-1.7 1.6-.9L7 15.5V6.3c0-.9.6-1.5 1.4-1.5s1.4.6 1.4 1.5V11h.4V4.5c0-.9.6-1.5 1.4-1.5s1.4.6 1.4 1.5V11h.4V5.3c0-.9.6-1.5 1.4-1.5s1.4.6 1.4 1.5V11.5h.4V7.8c0-.9.6-1.5 1.4-1.5s1.4.6 1.4 1.5V14c0 3.8-2.6 6.8-6.3 6.8-1.6 0-2.9-.3-3.8-.8z" fill="#f6c89a" ${S}/><path d="M8.4 6v5" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`,
@@ -101,6 +113,12 @@ const UI_ICONS: Record<string, string> = {
   center: `<circle cx="12" cy="12" r="7.4" fill="none" stroke="${OL}" stroke-width="1.6"/><circle cx="12" cy="12" r="2.6" fill="#e2574c" ${S}/><path d="M12 1.6v3.4M12 19v3.4M1.6 12h3.4M19 12h3.4" stroke="${OL}" stroke-width="2" stroke-linecap="round"/>`,
   sound: `<path d="M4 9.5h3.6L12 5.4v13.2L7.6 14.5H4z" fill="#546e7a" ${S}/><path d="M15 9a4.2 4.2 0 0 1 0 6M17.6 6.4a7.8 7.8 0 0 1 0 11.2" fill="none" stroke="#43a047" stroke-width="2" stroke-linecap="round"/>`,
   mute: `<path d="M4 9.5h3.6L12 5.4v13.2L7.6 14.5H4z" fill="#90a4ae" ${S}/><path d="M15.6 9.6l5 4.8M20.6 9.6l-5 4.8" stroke="#c62828" stroke-width="2.2" stroke-linecap="round"/>`,
+  // P6.2: شعله‌ی زنجیره و نشان‌های ۳/۷/۱۴/۳۰ روزه (برنز، نقره، طلا، فیروزه)
+  flame: `<path d="M12 2.5c.6 3.2 3 4.6 4.6 6.9 1.5 2.2 1.9 4.9.7 7.3-1.2 2.5-3.8 4.3-6.6 4.3-3.4 0-6.2-2.6-6.2-6 0-2.2 1-3.8 2.5-5.1.2 1.5.8 2.6 2 3.1-.4-3.8 1.2-7 3-10.5z" fill="#ff7043" ${S}/><path d="M12 12.2c1.6 1.5 2.9 2.9 2.9 4.6a2.9 2.9 0 0 1-5.8 0c0-1.3.8-2.4 1.8-3.2.2.8.6 1.3 1.1 1.5z" fill="#ffd54a"/>`,
+  badge3: medal("#e0a064", "#8d5524", 1),
+  badge7: medal("#dfe6ea", "#78909c", 2),
+  badge14: medal("#ffd54a", "#c98a12", 3),
+  badge30: medal("#6fdde8", "#00838f", 4),
   // P5.12: دو نت (موسیقی) و پرنده‌ی آوازخوان (صدای محیط)
   music: `<path d="M9 17.5V6l10-2.5v11.5" fill="none" stroke="${OL}" stroke-width="2" stroke-linejoin="round"/><path d="M9 6l10-2.5v3L9 9z" fill="#7e57c2" ${S}/><ellipse cx="6.6" cy="17.6" rx="3" ry="2.4" fill="#7e57c2" ${S}/><ellipse cx="16.6" cy="15.1" rx="3" ry="2.4" fill="#7e57c2" ${S}/>`,
   bird: `<path d="M3.5 13.5c1.2-4.6 5-7.2 9.3-6.6 1.3-2 3.3-2.8 5.3-2.3l2.4 1.6-2.2.9c.4 3.9-1.2 7.6-4.8 9.3-3.3 1.6-7.3.9-10-2.9z" fill="#ffb74d" ${S}/><path d="M8 12.2c1.8.3 3.8-.4 5.2-2 .1 2.8-1.6 5-4.6 5.5z" fill="#fb8c00" ${S}/><circle cx="16.2" cy="6.9" r=".95" fill="${OL}"/><path d="M9.5 17.5l-1 3.2M12.3 17.2l-.3 3.3" stroke="${OL}" stroke-width="1.5" stroke-linecap="round"/>`,

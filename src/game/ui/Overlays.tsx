@@ -243,11 +243,11 @@ export function AwayCard({ away, onClose }: { away: AwayReport; onClose: () => v
   );
 }
 
-export const MENU_ITEMS: PanelId[] = ["story", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "settings"];
+export const MENU_ITEMS: PanelId[] = ["story", "quests", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "settings"];
 
 /** منوی اصلی موبایل — گرید لمسی با برچسب. */
 export function MainMenu({ s, onPick, onClose }: { s: State; onPick: (p: PanelId) => void; onClose: () => void }) {
-  const { readyOrders, claimableContracts, skillPoints } = menuBadges(s);
+  const { readyOrders, claimableContracts, skillPoints, readyQuests } = menuBadges(s);
   return (
     <div className="absolute inset-0 z-50 flex items-end bg-slate-950/60 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -257,7 +257,7 @@ export function MainMenu({ s, onPick, onClose }: { s: State; onPick: (p: PanelId
         <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-amber-900/30" />
         <div className="grid grid-cols-4 gap-2">
           {MENU_ITEMS.map((p) => {
-            const badge = p === "orders" ? readyOrders : p === "skills" ? skillPoints : p === "contracts" ? claimableContracts : 0;
+            const badge = p === "orders" ? readyOrders : p === "skills" ? skillPoints : p === "contracts" ? claimableContracts : p === "quests" ? readyQuests : 0;
             return (
               <button
                 key={p}

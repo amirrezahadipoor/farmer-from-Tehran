@@ -16,6 +16,7 @@ import { BuildPanel, DecorPanel } from "./panels/Build";
 import { SkillsPanel, TechPanel } from "./panels/Progress";
 import { BizPanel } from "./panels/Biz";
 import { ContractsPanel, AchievementsPanel } from "./panels/Goals";
+import { QuestsPanel } from "./panels/Quests";
 import { StoryPanel } from "./panels/StoryJournal";
 import { SettingsPanel, type SettingsProps } from "./panels/Settings";
 import { HelpPanel } from "./panels/Help";
@@ -99,6 +100,7 @@ export default function Sheet({ s, panel, ui, settings }: SheetProps) {
         {panel === "tech" && <TechPanel {...p} />}
         {panel === "biz" && <BizPanel {...p} />}
         {panel === "contracts" && <ContractsPanel {...p} />}
+        {panel === "quests" && <QuestsPanel {...p} />}
         {panel === "achievements" && <AchievementsPanel {...p} />}
         {panel === "story" && <StoryPanel {...p} />}
         {panel === "settings" && <SettingsPanel {...p} {...settings} />}

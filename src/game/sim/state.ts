@@ -30,6 +30,8 @@ export interface State {
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
   /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
   xpAcc?: number;
+  /** اهداف روزانه/هفتگی، زنجیره و نشان‌ها (P6.2) — با اولین تیکِ روز ساخته می‌شود */
+  quests?: import("./quests").QuestState;
 }
 
 export function newStoryState() {
