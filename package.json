@@ -9,12 +9,13 @@
     "lint:text": "node tools/lint-text.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "check-assets": "node tools/check-assets.mjs",
     "roadmap": "node tools/gen-roadmap.mjs",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "verify": "npm run typecheck && npm run lint && npm run lint:text && npm run check-assets && npm run test && npm run build",
+    "verify": "npm run typecheck && npm run lint && npm run lint:text && npm run check-assets && npm run test:coverage && npm run build",
     "story-map": "node tools/story-map.mjs"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "@types/pg": "8.18.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@vitest/coverage-v8": "3.2.7",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",

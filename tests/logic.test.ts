@@ -18,6 +18,7 @@ import {
   idx,
   canExpand,
   chunkOf,
+  tick,
   type State,
   type Events,
 } from "../src/game/logic";
@@ -210,10 +211,56 @@ describe("migrate — پایداری سیو", () => {
   });
 });
 
-describe("کارهای شناخته‌شده‌ی باقی‌مانده (تا فاز ۵)", () => {
-  it.todo("بذرپاش خودکار باید بذر را از انبار بردارد (نه فقط سکه)");
-  it.todo("خاک مرطوب باید با گذر زمان خشک شود");
-  it.todo("XP فروش باید تابع ارزش باشد نه تعداد کلیک");
-  it.todo("برداشت وقتی انبار جا ندارد نباید محصول را بسوزاند");
-  it.todo("خرید همه‌ی نقشه باید با ضریب منطقی ممکن باشد");
+describe("کارهای شناخته‌شده‌ی فاز ۵ — حالا با تستِ واقعی (قبلاً it.todo)", () => {
+  const q: Events = { toast: () => {}, fx: () => {}, sound: () => {} };
+
+  it("بذرپاش خودکار بذر را از انبار برمی‌دارد (نه فقط سکه)", () => {
+    const st = newState();
+    st.inv = { carrot: 1 };
+    for (let y = 9; y <= 11; y++) for (let x = 9; x <= 11; x++) st.tiles[idx(x, y)] = { k: "soil", v: 0.5 };
+    st.tiles[idx(10, 10)] = { k: "bld", v: 0.5, b: "auto_planter", q: [], p: 0, out: [] };
+    tick(st, 0.1, q);
+    let planted = 0;
+    for (let y = 9; y <= 11; y++) for (let x = 9; x <= 11; x++) if (st.tiles[idx(x, y)].crop === "carrot") planted++;
+    expect(planted).toBe(1); // فقط یک بذر داشت
+    expect(st.inv.carrot).toBe(0);
+  });
+
+  it("خاک مرطوب با گذر زمان خشک می‌شود", () => {
+    const st = newState();
+    st.weather = "sun";
+    st.tiles[idx(5, 5)] = { k: "soil", v: 0.5, wet: true, dry: 3 };
+    tick(st, 4, q);
+    expect(st.tiles[idx(5, 5)].wet).toBe(false);
+  });
+
+  it("XP فروش تابع ارزش است نه تعداد کلیک", () => {
+    const a = newState();
+    const b = newState();
+    b.market = JSON.parse(JSON.stringify(a.market));
+    a.inv = { wheat: 20 };
+    b.inv = { wheat: 20 };
+    const xa0 = a.xp,
+      xb0 = b.xp;
+    sell(a, "wheat", 20, q);
+    for (let i = 0; i < 20; i++) sell(b, "wheat", 1, q);
+    expect(Math.abs(b.xp - xb0 - (a.xp - xa0))).toBeLessThanOrEqual(1);
+  });
+
+  it("برداشت وقتی انبار جا ندارد محصول را نمی‌سوزاند", () => {
+    const st = newState();
+    st.inv = { wheat: capacity(st) }; // انبار پر
+    st.tiles[idx(5, 5)] = { k: "soil", v: 0.5, crop: "wheat", g: 1 };
+    expect(harvest(st, 5, 5, q)).toBe(false);
+    expect(st.tiles[idx(5, 5)].crop).toBe("wheat"); // محصول سر جایش ماند
+  });
+
+  it("خرید همه‌ی نقشه با ضریب منطقی ممکن است (قیمتِ آخرین قطعه < یک میلیون)", () => {
+    const chunks = 81 - 9; // ۹ قطعه‌ی اولیه باز است
+    const last = Math.round(500 * Math.pow(1.085, chunks - 1));
+    expect(last).toBeLessThan(1_000_000);
+    const st = newState();
+    st.bought = chunks - 1;
+    expect(expandCost(st)).toBe(last);
+  });
 });
