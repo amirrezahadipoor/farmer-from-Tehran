@@ -24,6 +24,7 @@ import { haptic, isFullscreen, useAppViewportVar, useFullscreenState, useNativeG
 import { armAudio, audioDebug, sound } from "./audio";
 import { makeEvents } from "./events";
 import { startGameLoop } from "./loop";
+import { renderStats } from "./render";
 import { game, rt, useGameVersion } from "./store";
 import { usePersistence } from "./usePersistence";
 import { useCanvasInput } from "./useCanvasInput";
@@ -33,6 +34,7 @@ import Toolbar, { SeedTray } from "./ui/Toolbar";
 import { Toasts, useToasts, SaveIssueBanner, Onboarding, AwayCard, MainMenu } from "./ui/Overlays";
 import Sheet from "./ui/Sheet";
 import Splash from "./ui/Splash";
+import { SkyLayers, TintLayers } from "./ui/ScreenLayers";
 import { portraitLockPref } from "./ui/panels/Settings";
 
 function Loading() {
@@ -85,6 +87,10 @@ export default function Game() {
       },
       toast,
       view: () => rt.view,
+      perf: () => ({ ...rt.stats, ...renderStats(), dpr: rt.view.dpr }),
+      lockDpr: (d: number | null) => {
+        rt.dprLock = d;
+      },
       save: () => save(),
       openPanel: (p: Panel) => setPanel(p),
       audio: audioDebug,
@@ -120,6 +126,11 @@ export default function Game() {
   const { canvasHandlers } = useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBsel });
 
   const s = game.get();
+  // پرده‌ی تمام‌صفحه‌ی داستان روی نقشه است: رندر لازم نیست (P6.6)
+  const covered = !!s && started && (s.story.shown || lineageVisible(s));
+  useEffect(() => {
+    rt.view.covered = covered;
+  }, [covered]);
   if (!ready || !s) return <Loading />;
 
   const ui: UiApi = { ev, toast, setPanel, setTool, setBsel, bsel, save };
@@ -146,10 +157,13 @@ export default function Game() {
   const showLineage = started && lineageVisible(s);
   const inGame = started && !s.story.shown && !showLineage;
 
+
   return (
     <div className="relative select-none overflow-hidden" dir="rtl" style={{ height: "var(--app-h, 100dvh)", width: "100vw" }}>
-      {/* نقشه‌ی ۲.۵بعدی */}
+      {/* نقشه‌ی ۲.۵بعدی: آسمان زیرِ بوم و رنگ‌های صفحه‌ای رویش لایه‌ی CSS هستند (P6.6) */}
+      <SkyLayers />
       <canvas ref={canvasRef} className="absolute inset-0 touch-none select-none" aria-label="نقشه‌ی مزرعه" role="img" {...canvasHandlers} />
+      <TintLayers />
 
       <CameraControls />
       <Hud s={s} panel={panel} setPanel={setPanel} openMenu={() => setMenuOpen(true)} saveState={saveState} online={online} />
