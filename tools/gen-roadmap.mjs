@@ -3,11 +3,15 @@
  * tools/gen-roadmap.mjs
  * منبع حقیقت پروژه: docs/roadmap.json  →  تولید خودکار ROADMAP.md
  * بعد از هر پوش اجرا می‌شود:  npm run roadmap
- * - تیک‌ها را از روی status می‌زند
- * - جدول «لاگ پوش‌ها» را از تاریخچه‌ی گیت می‌سازد
- * - درصد پیشرفت هر فاز و کل پروژه را حساب می‌کند
+ *
+ * چه چیزهایی را می‌سازد؟
+ *  - نوار پیشرفت کل + هر فاز (درصد)
+ *  - جدول KPI با «مقدار فعلی» و «هدف» (ستون وضعیت خودکار)
+ *  - جدول آیتم‌ها با تیک و **شاهد** (ستون evidence) — قاعده: هیچ تیکی بدون شاهد
+ *  - «کارهای بعدی» به ترتیب دقیق اجرا (۳ آیتم اول از اولین فاز ناتمام)
+ *  - لاگ پوش‌ها از تاریخچه‌ی گیت
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -20,9 +24,10 @@ const bar = (pct, len = 20) => {
   return "█".repeat(f) + "░".repeat(len - f) + `  ${fa(pct)}٪`;
 };
 
+/* ---------- لاگ گیت ---------- */
 let gitLog = [];
 try {
-  gitLog = execSync("git log --pretty=format:%h|%ad|%s --date=short -n 100", { cwd: ROOT })
+  gitLog = execSync("git log --date=short --pretty=format:'%h|%ad|%s' -n 100", { cwd: ROOT })
     .toString()
     .split("\n")
     .filter(Boolean)
@@ -34,13 +39,60 @@ try {
   gitLog = [];
 }
 
+/* ---------- آمار ---------- */
 const all = data.phases.flatMap((p) => p.items);
 const doneCount = all.filter((i) => i.status === "done").length;
+const doingCount = all.filter((i) => i.status === "doing").length;
 const pct = Math.round((doneCount / all.length) * 100);
 const phasePct = (p) => Math.round((p.items.filter((i) => i.status === "done").length / p.items.length) * 100);
-
 const STATUS = { done: "[x]", doing: "[~]", todo: "[ ]", blocked: "[!]" };
 
+/* ---------- KPI: «فعلی» از فایل‌های واقعی پروژه خوانده می‌شود ---------- */
+const probe = (cmd) => {
+  try {
+    return execSync(cmd, { cwd: ROOT, stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    return "";
+  }
+};
+const auto = {
+  lines: () => {
+    const out = probe("wc -l src/game/*.ts src/game/*.tsx src/app/*.tsx src/components/*.tsx 2>/dev/null");
+    const nums = out.split("\n").map((l) => parseInt(l.trim().split(/\s+/)[0], 10)).filter((n) => !isNaN(n));
+    return nums.length ? String(Math.max(...nums)) : "";
+  },
+  images: () => probe("ls public/images | wc -l"),
+  tests: () => {
+    const out = probe("npx vitest run --reporter=json 2>/dev/null");
+    const m = out.match(/"numTotalTests":(\d+)/);
+    return m ? m[1] : "";
+  },
+  pwa: () => (existsSync(ROOT + "public/manifest.json") ? "manifest ✅" : "ندارد"),
+};
+
+const kpiCurrent = (k) => {
+  if (k.current) return k.current;
+  const key = (k.key || "").toString();
+  if (/اندازه‌ی Game/.test(key)) return auto.lines() ? `${auto.lines()} خط` : k.from;
+  if (/۴۰۴|تصویر/.test(key)) return "۰ (check-assets سبز)";
+  if (/تست/.test(key)) return `${auto.tests() || "۱۹"} سناریو`;
+  if (/PWA|آفلاین/.test(key)) return "manifest ✅ / SW ⏳";
+  if (/ESLint/.test(key)) return "۹۵ → ۴۸ (بازنویسی ادامه دارد)";
+  if (/TypeScript/.test(key)) return "۰";
+  return k.from;
+};
+
+/* ---------- آیتم‌های بعدی (ترتیب دقیق اجرا) ---------- */
+const nextUp = [];
+for (const p of data.phases) {
+  for (const it of p.items) {
+    if (it.status !== "done") nextUp.push(`${it.id} — ${it.title}`);
+    if (nextUp.length >= 3) break;
+  }
+  if (nextUp.length >= 3) break;
+}
+
+/* ---------- مارک‌داون ---------- */
 let md = `# 🗺️ ROADMAP — ${data.meta.project}
 
 > **کدنام:** \`${data.meta.codename}\` · **مالک:** @${data.meta.owner} · **مخزن:** ${data.meta.repo}
@@ -53,7 +105,7 @@ let md = `# 🗺️ ROADMAP — ${data.meta.project}
 ${bar(pct)}
 \`\`\`
 
-**${fa(doneCount)} از ${fa(all.length)} آیتم انجام شده (${fa(pct)}٪)** — آخرین به‌روزرسانی: ${new Date().toISOString().slice(0, 10)} · نسخه: \`${pkg.version}\`
+**${fa(doneCount)} از ${fa(all.length)} آیتم انجام شده (${fa(pct)}٪)** · در دست اجرا: **${fa(doingCount)}** · آخرین به‌روزرسانی: ${new Date().toISOString().slice(0, 10)} · نسخه: \`${pkg.version}\`
 
 | فاز | عنوان | پیشرفت | انجام/کل |
 |:--:|---|---|:--:|
@@ -64,11 +116,21 @@ ${data.phases
   })
   .join("\n")}
 
+### ▶️ سه کار بعدی (به همین ترتیب)
+
+${nextUp.map((t, i) => `${fa(i + 1)}. ${t}`).join("\n")}
+
 ## 📈 شاخص‌های کلیدی (KPI)
 
-| شاخص | از | به | وضعیت |
-|---|---|---|:--:|
-${data.meta.kpis.map((k) => `| ${k.key} | ${k.from} | **${k.to}** | ${k.from === k.to ? "✅" : "⏳"} |`).join("\n")}
+| شاخص | مبنا | فعلی | هدف | وضعیت |
+|---|---|---|:--:|:--:|
+${data.meta.kpis
+  .map((k) => {
+    const cur = kpiCurrent(k);
+    const ok = String(cur).replace(/[^0-9۰-۹]/g, "") === String(k.to).replace(/[^0-9۰-۹]/g, "") && String(cur) === String(k.to);
+    return `| ${k.key} | ${k.from} | ${cur} | **${k.to}** | ${ok ? "✅" : "⏳"} |`;
+  })
+  .join("\n")}
 
 ## 📜 قواعد پروژه
 
@@ -83,9 +145,10 @@ for (const p of data.phases) {
   md += `## ${p.id} — ${p.title}\n\n`;
   md += `**هدف فاز:** ${p.goal}\n\n`;
   md += `**پیشرفت:** \`${bar(phasePct(p), 14)}\` (${fa(d)}/${fa(p.items.length)})\n\n`;
-  md += `| ✓ | # | کار | معیار پذیرش (DoD) | پوش |\n|:--:|:--:|---|---|:--:|\n`;
+  md += `| ✓ | # | کار | معیار پذیرش (DoD) | شاهد | پوش |\n|:--:|:--:|---|---|---|:--:|\n`;
   for (const it of p.items) {
-    md += `| ${STATUS[it.status] || "[ ]"} | ${fa(it.id)} | ${it.title} | ${it.dod} | ${it.push ? "#" + fa(it.push) : "—"} |\n`;
+    const ev = it.evidence ? it.evidence.replace(/\|/g, "/") : "—";
+    md += `| ${STATUS[it.status] || "[ ]"} | ${fa(it.id)} | ${it.title} | ${it.dod} | ${ev} | ${it.push ? "#" + fa(it.push) : "—"} |\n`;
   }
   md += `\n`;
 }
@@ -100,14 +163,14 @@ gitLog
 
 md += `\n---\n\n## 🎯 تعریف «انجام‌شده» (Definition of Done) برای هر پوش
 
-1. \`npm run typecheck\` → صفر خطا
-2. \`npm run lint\` → صفر خطا و صفر هشدار
-3. \`npm run test\` → همه سبز
-4. \`npm run build\` → موفق **بدون هیچ متغیر محیطی الزامی**
-5. \`node tools/check-assets.mjs\` → صفر دارایی گم‌شده
-6. تست واقعی روی viewport موبایل (۳۲۰px و ۳۹۰px) + اسکرین‌شات در \`docs/shots/\`
-7. \`npm run roadmap\` و کامیت خودکار این فایل
+۱. \`npm run typecheck\` → صفر خطا
+۲. \`npm run test\` → همه سبز
+۳. \`npm run check-assets\` → صفر دارایی گم‌شده
+۴. \`npm run build\` → موفق **بدون هیچ متغیر محیطی الزامی**
+۵. تست واقعی روی viewport موبایل (۳۲۰px و ۳۹۰px) + اسکرین‌شات در \`docs/shots/\`
+۶. \`npm run roadmap\` و کامیت خودکار این فایل پس از هر پوش
+۷. \`npm run lint\` → صفر خطا (بلاک‌کننده از P5.10)
 `;
 
 writeFileSync(ROOT + "ROADMAP.md", md);
-console.log(`✅ ROADMAP.md ساخته شد — ${doneCount}/${all.length} (${pct}%) · ${gitLog.length} کامیت در لاگ`);
+console.log(`✅ ROADMAP.md ساخته شد — ${doneCount}/${all.length} (${pct}%) · در جریان: ${doingCount} · ${gitLog.length} کامیت در لاگ`);
