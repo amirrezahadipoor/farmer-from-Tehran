@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "مزرعه طلایی | Golden Valley Farm",
   description:
-    "بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی با اقتصاد عمیق، داستان ۱۱ فصلی، ۳۰ ساختمان و بازار زنده — آفلاین و تمام‌لمسی",
+    "بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی با اقتصاد عمیق، داستان ۱۱ فصلی، ۳۳ ساختمان و بازار زنده — آفلاین و تمام‌لمسی",
   applicationName: "مزرعه طلایی",
   manifest: "/manifest.json",
   appleWebApp: {

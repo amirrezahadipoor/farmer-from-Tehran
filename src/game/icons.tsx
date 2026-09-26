@@ -186,6 +186,21 @@ const shp = {
     `<path d="M4 16c-1.6-1.6-1-4 1.3-4.6 3-.7 5.6 1.4 8.7 1 2.7-.3 4.4-2.6 6.4-1.6 1.8.9 1.7 3.6-.4 4.8-3.4 2-7.5 1.2-10.5 1.4-2.2.2-4 .6-5.5-1z" fill="#c1614b" ${S}/><path d="M6.5 13.5c1 .2 1.8.6 2.6 1M14.5 13.6c1-.1 2-.4 2.8-.9" stroke="#fff" stroke-opacity=".55" stroke-width="1.1" stroke-linecap="round" fill="none"/><path d="M5 9.5c2-1.8 4.6-1.9 7-1s4.8.8 6.6-.6" fill="none" stroke="#f5c542" stroke-width="1.6" stroke-linecap="round"/>`,
   sweater: () =>
     `<path d="M8.5 3.5 3 6.5l1.8 5.5 2.4-1V20.5h9.6V11l2.4 1L21 6.5l-5.5-3c-.6 1.6-2 2.5-3.5 2.5s-2.9-.9-3.5-2.5z" fill="#5b6ee1" ${S}/><path d="M7.2 13.5h9.6M7.2 16.5h9.6" stroke="#ffd54a" stroke-width="1.4"/><path d="M9.5 15l1-1.2 1 1.2 1-1.2 1 1.2 1-1.2" fill="none" stroke="#fff" stroke-width="1"/>`,
+  poplar: () =>
+    `<path d="M12 22v-5" stroke="#6d4424" stroke-width="2" stroke-linecap="round"/><path d="M12 1.8c3 3.2 4.4 7.4 4.4 10.6 0 3.2-2 5.2-4.4 5.2s-4.4-2-4.4-5.2c0-3.2 1.4-7.4 4.4-10.6z" fill="#7cb342" ${S}/><path d="M12 5v11M12 8.5l2-1.6M12 11.5l-2.2-1.6M12 14l2.2-1.5" stroke="#558b2f" stroke-width="1" stroke-linecap="round" fill="none"/><ellipse cx="10.3" cy="8" rx="1" ry="2.4" ${HL}/>`,
+  planks: () =>
+    [15.5, 11.5, 7.5].map((y, i) => `<path d="M3 ${y}h18v3.4H3z" transform="rotate(${-6 + i * 3} 12 ${y + 1.7})" fill="${["#d7a86e", "#c8955a", "#e0b57e"][i]}" ${S}/>`).join("") +
+    `<path d="M6 17.2h4M13 13.2h5M5 9.2h6" stroke="#8d5a2b" stroke-width=".9" stroke-linecap="round"/>`,
+  crate: () =>
+    `<path d="M3.5 7.5 12 4l8.5 3.5v9.5L12 20.5 3.5 17z" fill="#c8955a" ${S}/><path d="M3.5 7.5 12 11l8.5-3.5M12 11v9.5" fill="none" ${S}/><path d="M12 11l8.5-3.5V17L12 20.5z" fill="#000" fill-opacity=".1"/><path d="M5 10.8l5.6 2.3M5 14l5.6 2.3M13.4 13.1 19 10.8M13.4 16.3 19 14" stroke="#8d5a2b" stroke-width="1" stroke-linecap="round"/>`,
+  cutStone: () =>
+    `<path d="M3 9.5 12 5l9 4.5v6.5L12 20.5 3 16z" fill="#b0bec5" ${S}/><path d="M3 9.5 12 14l9-4.5M12 14v6.5" fill="none" ${S}/><path d="M12 14l9-4.5V16L12 20.5z" fill="#000" fill-opacity=".12"/><path d="M6.2 8.6 12 11.4" stroke="#fff" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/>`,
+  millstone: () =>
+    `<ellipse cx="12" cy="15" rx="9" ry="4.2" fill="#78909c" ${S}/><path d="M3 12.2v2.8c0 2.3 4 4.2 9 4.2s9-1.9 9-4.2v-2.8" fill="#90a4ae" ${S}/><ellipse cx="12" cy="12.2" rx="9" ry="4.2" fill="#b0bec5" ${S}/><ellipse cx="12" cy="12.2" rx="2.2" ry="1.1" fill="#546e7a" ${S}/><path d="M12 12.2 6 10M12 12.2l6.4-1.6M12 12.2l-4.6 3M12 12.2l4.8 2.7" stroke="#78909c" stroke-width=".8"/><path d="M11 3.5h2v7h-2z" fill="#a1683a" ${S}/>`,
+  sangak: () =>
+    `<path d="M3.2 14.5C3 9 7 5.2 12.4 5.4c5.2.2 8.6 3.6 8.4 8.4-.2 4.4-3.8 6.8-8.8 6.8-5 0-8.6-2-8.8-6.1z" fill="#d9a15a" ${S}/>` +
+    [[8, 10], [12, 9], [16, 10.5], [9.5, 14], [13.5, 13.4], [17, 14.6], [11.2, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.3" ry=".9" fill="#8d5a2b"/>`).join("") +
+    `<path d="M6 12c1.6-3 4-4.4 7-4.4" stroke="#f5d29a" stroke-width="1.2" stroke-linecap="round" fill="none"/>`,
   feedBowl: () =>
     `<path d="M3 13h18l-1.8 5.4c-.3.9-1.1 1.4-2 1.4H6.8c-.9 0-1.7-.5-2-1.4z" fill="#8d6e63" ${S}/>` +
     [[7, 11.6], [10, 10.6], [13, 11], [16, 10.4], [9, 12.4], [15, 12.4], [12, 9.6]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.8" ry="1.1" fill="#d7a64a" ${S}/>`).join(""),
@@ -208,6 +223,12 @@ const ITEM_SVG: Record<string, string> = {
   lavender: shp.lavender("#8e7cc3"),
   wood: shp.log(),
   stone: shp.stone(),
+  poplar: shp.poplar(),
+  planks: shp.planks(),
+  crate: shp.crate(),
+  cut_stone: shp.cutStone(),
+  millstone: shp.millstone(),
+  sangak: shp.sangak(),
   flour: shp.sack("#f5ecd7", "#90caf9"),
   popcorn: shp.popcorn(),
   egg: shp.egg(),

@@ -102,7 +102,9 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
                   </span>
                 ))}
               </div>
-              <div className="mt-1 text-[11px] font-bold text-emerald-700">ارزش افزوده: +{fmt((ITEMS[r.out]?.base || 0) - cost)}</div>
+              <div className="mt-1 text-[11px] font-bold text-emerald-700">
+                {(r.n || 1) > 1 && <>خروجی: {fmt(r.n)} عدد · </>}ارزش افزوده: +{fmt((ITEMS[r.out]?.base || 0) * (r.n || 1) - cost)}
+              </div>
             </div>
             <button
               type="button"

@@ -217,6 +217,8 @@ export function priceAt(s: State, id: string, sat: number): number {
     const dItems = ["egg","milk","wool","pork","honey","butter","cheese","sausage","sweater"];
     if (dItems.includes(id)) bonus *= 1.5;
   }
+  // خشکسالی: محصولِ کشاورزی کمیاب می‌شود → قیمت محصول‌ها +۲۰٪
+  if (s.currentEvent?.type === "drought" && CROP_ITEMS.has(id)) bonus *= 1 + DROUGHT.price;
   const pm = 1 + s.prestige * 0.15;
   return Math.max(1, Math.round(base * wave * Math.max(0.35, 1 - sat) * bonus * pm));
 }
@@ -224,26 +226,11 @@ export function priceAt(s: State, id: string, sat: number): number {
 export function price(s: State, id: string): number {
   const m = s.market[id];
   if (!m) return 10;
-  const base = ITEMS[id]?.base || 10;
-  const wave = 1 + 0.22 * Math.sin(s.time / 90 + m.ph) + 0.08 * Math.sin(s.time / 23 + m.ph * 2);
-  let bonus = 1;
-  if (s.workers.some((w) => w.kind === "trader")) bonus += 0.12 * s.workers.filter((w) => w.kind === "trader").length;
-  if (hasTech(s, "market1")) bonus += 0.08;
-  if (hasTech(s, "export_license")) bonus += 0.20;
-  if (hasSkill(s, "price_mind")) bonus += 0.10;
-  if (hasSkill(s, "economist")) bonus += 0.15;
-  if (s.currentEvent?.type === "market_boom") bonus *= 1.35;
-  if (s.currentEvent?.type === "fair") bonus *= 1.25;
-  if (s.currentEvent?.type === "livestock_show") {
-    const dItems = ["egg","milk","wool","pork","honey","butter","cheese","sausage","sweater"];
-    if (dItems.includes(id)) bonus *= 1.5;
-  }
-  const pm = 1 + s.prestige * 0.15;
-  return Math.max(1, Math.round(base * wave * Math.max(0.35, 1 - m.sat) * bonus * pm));
+  return priceAt(s, id, m.sat);
 }
 
 export function unlockedItems(s: State): string[] {
-  const out: string[] = CROPS.filter((c) => c.lvl <= s.level).map((c) => c.id);
+  const out: string[] = CROPS.filter((c) => c.lvl <= s.level).map((c) => c.out ?? c.id);
   BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => out.push(r.out)); });
   return Array.from(new Set(out));
 }
@@ -310,10 +297,11 @@ export function harvest(s: State, x: number, y: number, ev: Events, silent = fal
   if (hasSkill(s, "harvest_god")) extra += 1;
   if (Math.random() < 0.2) extra += 1;
   const n = c.yield + extra;
-  const got = addInv(s, c.id, n);
+  const outId = c.out ?? c.id; // صنوبر ← الوار
+  const got = addInv(s, outId, n);
   if (got === 0) { if (!silent) ev.toast("انبار پر است! محصولات را بفروشید یا سیلو بسازید", "err"); return false; }
   s.stats.harvested += got;
-  ev.fx(x, y, `+${got} ${c.icon}`, "#fff", c.color);
+  ev.fx(x, y, `+${fmt(got)} ${ITEMS[outId]?.icon ?? c.icon}`, "#fff", c.color);
   addXp(s, c.xp, ev);
   updateContract(s, "harvest", got, ev);
   t.crop = undefined; t.g = 0; t.wet = false; t.fert = false;
@@ -416,6 +404,12 @@ export function fulfill(s: State, oi: number, ev: Events) {
 }
 
 /** مدت رطوبت خاک پس از هر آبیاری (ثانیه) — P5.6 */
+/** درخت/سنگِ پاکسازی‌شده چند الوار/سنگ می‌دهد (+۱ با شانس ۳۰٪) */
+export const CLEAR_YIELD = 2;
+/** خشکسالی (رویداد تابستان): خشک‌شدن ۲ برابر، بی‌باران، رشدِ خاکِ خشک ×۰.۶، قیمت محصول +۲۰٪ */
+export const DROUGHT = { dry: 2, dryGrowth: 0.6, price: 0.2 } as const;
+/** کالاهایی که «محصول کشاورزی» حساب می‌شوند (برای قیمتِ خشکسالی) */
+const CROP_ITEMS = new Set(CROPS.map((c) => c.out ?? c.id));
 export const WATER_SECONDS = 90;
 /** رطوبتی که باران به خاک می‌دهد (کوتاه‌تر از آبیاری دستی) */
 export const RAIN_SECONDS = 45;
@@ -554,7 +548,10 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       s.coins -= c; s.stats.spent += c;
       ev.fx(x, y, "", "#fff", t.k === "tree" ? "#66bb6a" : "#9e9e9e");
       s.tiles[idx(x, y)] = { k: "grass", v: t.v }; addXp(s, 3, ev); ev.sound("dig");
-      if (Math.random() < 0.35) addInv(s, t.k === "tree" ? "wood" : "stone", 1);
+      // P5.8: درخت = ۲ الوار و سنگ = ۲ سنگ (+۱ با شانس ۳۰٪) — مواد اولیه‌ی نجاری/معدن/سنگ‌تراشی
+      const mat = t.k === "tree" ? "wood" : "stone";
+      const got = addInv(s, mat, CLEAR_YIELD + (Math.random() < 0.3 ? 1 : 0));
+      if (got) ev.fx(x, y, `+${fmt(got)} ${ITEMS[mat].icon}`, "#fff");
       return;
     }
     if (t.k === "soil") {
@@ -779,6 +776,7 @@ export function tick(s: State, dt: number, ev: Events) {
     if (sea.id === "winter") s.weather = rand < 0.5 ? "snow" : rand < 0.75 ? "fog" : "sun";
     else if (sea.id === "autumn") s.weather = rand < 0.45 ? "rain" : rand < 0.7 ? "fog" : "sun";
     else s.weather = rand < 0.3 ? "rain" : rand < 0.4 ? "heatwave" : "sun";
+    if (s.currentEvent?.type === "drought" && (s.weather === "rain" || s.weather === "snow")) s.weather = rand < 0.5 ? "heatwave" : "sun"; // خشکسالی: بی‌باران
     s.weatherLeft = rnd(70, 160);
     if (s.weather !== "sun") {
       const n: Record<WeatherType, string> = { sun: "آفتابی", rain: "🌧️ باران ملایم", snow: "❄️ بارش برف", fog: "🌫️ مه صبحگاهی", heatwave: "🥵 موج گرما" };
@@ -789,20 +787,25 @@ export function tick(s: State, dt: number, ev: Events) {
   s.eventAcc += dt;
   if (s.eventAcc > 120 && !s.currentEvent && Math.random() < 0.5) {
     s.eventAcc = 0;
+    // خشکسالی فقط در تابستان وارد چرخه‌ی رویدادها می‌شود (P5.8)
     const ets: EventType[] = ["fair","market_boom","bountiful_harvest","livestock_show"];
+    if (SEASONS[s.seasonIndex].id === "summer") ets.push("drought");
     const pick = ets[Math.floor(Math.random() * ets.length)];
     const texts: Record<EventType, string> = {
       fair: "🎪 نمایشگاه بهاره دهکده! +۲۵٪ تقاضای محصولات",
       market_boom: "📈 رونق بزرگ بورس کالا! +۳۵٪ قیمت فروش",
-      drought: "☀️ خشکسالی موقت در منطقه",
+      drought: "☀️ خشکسالی! خاک ۲ برابر زودتر خشک می‌شود، باران نمی‌بارد و قیمت محصولات ۲۰٪ بالا رفته",
       bountiful_harvest: "🌾 جشن برکت زمین! +۱ محصول در درو",
       livestock_show: "🐎 نمایشگاه سالانه دام! +۵۰٪ قیمت کالاهای دامی",
     };
     s.currentEvent = { type: pick, endsAt: s.time + 120, text: texts[pick] };
+    if (pick === "drought" && s.weather === "rain") s.weather = "sun";
     ev.toast(s.currentEvent.text, "lvl");
   }
   if (s.currentEvent && s.time >= s.currentEvent.endsAt) { s.currentEvent = null; ev.toast("رویداد فصلی دهکده به پایان رسید"); }
   const season = SEASONS[s.seasonIndex];
+  const drought = s.currentEvent?.type === "drought";
+  const dryRate = drought ? DROUGHT.dry : 1;
   let gMult = season.growthRate;
   if (s.currentEvent?.type === "bountiful_harvest") gMult *= 1.2;
   if (s.weather === "heatwave") gMult *= 0.9;
@@ -820,7 +823,7 @@ export function tick(s: State, dt: number, ev: Events) {
     // ── رطوبتِ زمان‌دار: خاک بعد از مدت محدود خشک می‌شود (P5.6)
     if (t.k === "soil" && t.wet) {
       if (t.dry === undefined) t.dry = WATER_SECONDS;
-      t.dry -= dt;
+      t.dry -= dt * dryRate;
       if (t.dry <= 0) { t.dry = 0; t.wet = false; }
     }
     if (s.weather === "rain" && t.k === "soil") { t.wet = true; t.dry = Math.max(t.dry ?? 0, RAIN_SECONDS); }
@@ -828,6 +831,7 @@ export function tick(s: State, dt: number, ev: Events) {
       const c = CMAP[t.crop]; if (!c) continue;
       let sp = (dt / c.time) * gMult;
       if (t.wet) sp *= 1.8;
+      else if (drought) sp *= DROUGHT.dryGrowth; // خاکِ تشنه در خشکسالی کند رشد می‌کند
       if (t.fert) sp *= 1.2;
       if (hasTech(s, "greenhouse_tech")) sp *= 1.2;
       if (s.workers.some((w) => w.kind === "scientist")) sp *= 1.2;
@@ -904,7 +908,7 @@ export function tick(s: State, dt: number, ev: Events) {
         timeR *= (1 + s.prestige * 0.05);
         t.p = (t.p||0) + dt / timeR;
         if (t.p >= 1) {
-          t.out = [...(t.out||[]), r.out];
+          t.out = [...(t.out||[]), ...Array<string>(Math.max(1, r.n || 1)).fill(r.out)];
           t.q = t.q.slice(1); t.p = 0;
           addXp(s, r.xp, ev);
           if (t.autoMode && t.lr !== undefined && has(s, b.recipes[t.lr].inp)) queueRecipe(s, t, t.lr, ev, true);
