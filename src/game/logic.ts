@@ -12,3 +12,4 @@ export * from "./sim/economy";
 export * from "./sim/actions";
 export * from "./sim/tick";
 export * from "./sim/quests";
+export * from "./sim/legacy";

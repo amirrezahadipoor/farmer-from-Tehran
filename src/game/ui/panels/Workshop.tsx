@@ -5,7 +5,7 @@
  */
 
 import { BMAP, ITEMS, fmt } from "../../data";
-import { collect, has, queueMax, queueRecipe, toggleAutoMode, type Tile } from "../../logic";
+import { collect, has, queueMax, queueRecipe, recipeLock, toggleAutoMode, type Tile } from "../../logic";
 import { Icon, ItemIcon } from "../../icons";
 import { game } from "../../store";
 import { btn, type PanelProps } from "../common";
@@ -79,8 +79,10 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
       </div>
 
       {def.recipes.map((r, ri) => {
-        const lvlOk = (r.lvl ?? 0) <= s.level;
+        const lock = recipeLock(s, r);
+        const lvlOk = !lock;
         const ok = lvlOk && has(s, r.inp);
+        const family = (r.gen ?? 0) > 0;
         const cost = Object.entries(r.inp).reduce((a, [k, n]) => a + (ITEMS[k]?.base || 0) * n, 0);
         return (
           <div key={ri} className={`flex items-center gap-2.5 rounded-2xl bg-white p-3 shadow-md ${lvlOk ? "" : "opacity-60"}`}>
@@ -88,6 +90,11 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
             <div className="flex-1">
               <div className="text-sm font-black text-slate-800">
                 {ITEMS[r.out]?.name}{" "}
+                {family && (
+                  <span className="mx-0.5 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 align-middle text-[10px] font-black text-amber-900">
+                    <Icon name="crown" size={11} /> دستورِ خانوادگی
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-0.5 text-xs font-bold text-slate-500">
                   <Icon name="clock" size={12} />
                   {fmt(r.time)}ث
@@ -117,7 +124,7 @@ export function WorkshopPanel({ s, ui, tile: bt, x, y }: PanelProps & { tile: Ti
                 game.bump();
               }}
             >
-              {lvlOk ? "تولید" : `سطح ${fmt(r.lvl ?? 0)}`}
+              {lvlOk ? "تولید" : lock}
             </button>
           </div>
         );

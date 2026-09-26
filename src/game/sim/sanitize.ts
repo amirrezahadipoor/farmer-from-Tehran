@@ -9,13 +9,14 @@
 import { migrate, newStoryState, type State, type Tile } from "./state";
 import { newState } from "./economy";
 import { normalizeQuests } from "./quests";
+import { normalizeGenerations } from "./legacy";
 import { ITEMS, N, CH, WEATHER_TYPES } from "../data";
 
 const NCH = Math.ceil(N / CH);
 
 /** کلیدهای مجازِ ریشه‌ی سیو: هرچه newState دارد + فیلدهای اختیاری (تنبل: ساختِ نقشه فقط یک بار) */
 let stateKeys: Set<string> | null = null;
-const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), "xpAcc", "quests"]));
+const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), "xpAcc", "quests", "generations"]));
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -150,6 +151,10 @@ export function sanitizeSave(raw: unknown): State | null {
   const quests = normalizeQuests((s as { quests?: unknown }).quests);
   if (quests) s.quests = quests;
   else delete s.quests;
+  // ── P6.3: شجره‌نامه
+  const gens = normalizeGenerations((s as { generations?: unknown }).generations);
+  if (gens) s.generations = gens;
+  else delete s.generations;
 
   // ── P5.13: فقط کلیدهای شناخته‌شده‌ی State می‌مانند؛ سرور نمی‌تواند انبارِ دادهِ دلخواه شود
   const allowed = allowedKeys();

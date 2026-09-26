@@ -7,7 +7,8 @@ import {
   type State, type Tile, type Events, idx, chunkOf, locked, has, countB, hasTech, hasSkill,
   WATER_SECONDS, CLEAR_YIELD, NCH,
 } from "./state";
-import { addInv, addXp, updateContract } from "./economy";
+import { addInv, addXp, recipeLock, updateContract } from "./economy";
+import { seedDiscount } from "./legacy";
 
 export function harvest(s: State, x: number, y: number, ev: Events, silent = false): boolean {
   const t = s.tiles[idx(x, y)];
@@ -36,6 +37,7 @@ export function plant(s: State, x: number, y: number, crop: string, ev: Events, 
   let seedCost = c.seed;
   if (hasTech(s, "seeds1")) seedCost = Math.max(1, Math.floor(seedCost * 0.8));
   if (hasSkill(s, "master_planter")) seedCost = Math.max(1, Math.floor(seedCost * 0.9));
+  if (s.prestige > 0) seedCost = Math.max(1, Math.floor(seedCost * (1 - seedDiscount(s.prestige)))); // P6.3: بذرِ موروثی
   if (s.coins < seedCost) { if (!silent) ev.toast("سکه کافی برای خرید بذر ندارید", "err"); return false; }
   s.coins -= seedCost; s.stats.spent += seedCost;
   t.crop = crop; t.g = 0;
@@ -68,7 +70,8 @@ export const queueMax = (s: State) => 3 + Math.floor(s.level / 4) + (hasTech(s, 
 export function queueRecipe(s: State, t: Tile, ri: number, ev: Events, silent = false): boolean {
   const b = BMAP[t.b!]; if (!b) return false;
   const r = b.recipes[ri]; if (!r) return false;
-  if ((r.lvl ?? 0) > s.level) { if (!silent) ev.toast(`این دستور از سطح ${fmt(r.lvl ?? 0)} باز می‌شود`, "err"); return false; }
+  const lock = recipeLock(s, r);
+  if (lock) { if (!silent) ev.toast(`این دستور ${lock.startsWith("از") ? lock : `از ${lock}`} باز می‌شود`, "err"); return false; }
   const maxQ = queueMax(s);
   if ((t.q?.length || 0) >= maxQ) { if (!silent) ev.toast("صف تولید این کارگاه پر است", "err"); return false; }
   if (!has(s, r.inp)) { if (!silent) ev.toast("مواد اولیه کافی در انبار نیست", "err"); return false; }

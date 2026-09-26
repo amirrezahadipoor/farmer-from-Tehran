@@ -8,6 +8,7 @@ import {
   WATER_SECONDS, RAIN_SECONDS, SPRINKLER_SECONDS, DROUGHT,
 } from "./state";
 import { genOrder, price, addXp } from "./economy";
+import { workshopTimeFactor } from "./legacy";
 import { harvest, plant, collect, queueRecipe } from "./actions";
 
 /** کارگاه‌های دامی (مرغداری، گاوداری، …) — هدفِ دامپزشک، دامپروری پیشرفته و دامدار مهربان */
@@ -173,7 +174,7 @@ export function tick(s: State, dt: number, ev: Events) {
         if (hasTech(s, "speed_ovens")) timeR *= 0.75;
         if (hasSkill(s, "artisan")) timeR *= 0.85;
         if (isAnimalBuilding(b)) timeR *= animalTimeFactor(s);
-        timeR *= (1 + s.prestige * 0.05);
+        timeR *= workshopTimeFactor(s.prestige); // P6.3: نسل‌های بعد تندترند (پیش از این کُندتر می‌شدند)
         t.p = (t.p||0) + dt / timeR;
         if (t.p >= 1) {
           t.out = [...(t.out||[]), ...Array<string>(Math.max(1, r.n || 1)).fill(r.out)];

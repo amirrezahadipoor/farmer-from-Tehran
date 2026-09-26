@@ -308,6 +308,12 @@ const ITEM_SVG: Record<string, string> = {
   nut_mix: shp.bowlOf(["#c8955a", "#8bc34a", "#8d5524", "#c9a27e"]),
   noghl: shp.bowlOf(["#fffde7", "#fff8e1", "#fce4ec"]),
   shirberenj: shp.plateOf("#fffaf0", "#8d6e63"),
+  // P6.3: حلوای مادربزرگ — قرصِ قهوه‌ایِ نقش‌دار با خلالِ پسته و زعفران
+  grandma_halva:
+    `<ellipse cx="12" cy="16.6" rx="9.8" ry="3.9" fill="#eceff1" ${S}/><path d="M4.4 13.6v1.6c0 2 3.4 3.6 7.6 3.6s7.6-1.6 7.6-3.6v-1.6" fill="#7b3f1d" ${S}/><ellipse cx="12" cy="13.6" rx="7.6" ry="3.6" fill="#a8582a" ${S}/>` +
+    [0, 30, 60, 90, 120, 150].map((a) => `<path d="M${12 + 6.2 * Math.cos((a * Math.PI) / 180)} ${13.6 + 2.9 * Math.sin((a * Math.PI) / 180)}L${12 - 6.2 * Math.cos((a * Math.PI) / 180)} ${13.6 - 2.9 * Math.sin((a * Math.PI) / 180)}" stroke="#7b3f1d" stroke-width=".7" stroke-linecap="round"/>`).join("") +
+    `<ellipse cx="12" cy="13.6" rx="2.1" ry="1" fill="#f4b400" stroke="#7b3f1d" stroke-width=".6"/>` +
+    [[8.3, 12.6, 25], [15.8, 12.9, -20], [10.4, 15.4, -35], [14.2, 15.2, 30]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="1.1" ry=".45" transform="rotate(${r} ${x} ${y})" fill="#7cb342"/>`).join(""),
   zereshk_polo: shp.plateOf("#fff3c4", "#e53935"),
   fabric: shp.fabricRoll("#90caf9"),
   carpet: shp.carpetRug(),

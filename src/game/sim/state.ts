@@ -32,6 +32,8 @@ export interface State {
   xpAcc?: number;
   /** اهداف روزانه/هفتگی، زنجیره و نشان‌ها (P6.2) — با اولین تیکِ روز ساخته می‌شود */
   quests?: import("./quests").QuestState;
+  /** شجره‌نامه: کارنامه‌ی نسل‌های گذشته (P6.3) */
+  generations?: import("./legacy").GenerationRecord[];
 }
 
 export function newStoryState() {

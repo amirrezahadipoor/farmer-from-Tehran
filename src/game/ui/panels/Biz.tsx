@@ -6,14 +6,14 @@
 
 import { useState } from "react";
 import { WORKERS, fmt, type WorkerKind } from "../../data";
-import { hire, fireWorker, canPrestige, doPrestige } from "../../logic";
+import { hire, fireWorker } from "../../logic";
 import { Icon, Portrait, workerSvg } from "../../icons";
 import { haptic } from "../../mobile";
 import { game } from "../../store";
 import { Coin, btn, type PanelProps } from "../common";
+import { LegacySection } from "./Legacy";
 
 export function BizPanel({ s, ui }: PanelProps) {
-  const [armPrestige, setArmPrestige] = useState(false);
   const stats: [string, string, number][] = [
     ["bag", "کل درآمد", s.stats.earned],
     ["trendDown", "کل مخارج", s.stats.spent],
@@ -94,36 +94,7 @@ export function BizPanel({ s, ui }: PanelProps) {
         );
       })}
 
-      {/* تناسخ مزرعه — تأیید دو مرحله‌ای درون‌برنامه‌ای (نه confirm() مرورگر) */}
-      <div className="rounded-2xl border-2 border-yellow-400 bg-gradient-to-br from-amber-100 to-yellow-200 p-3.5 shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h4 className="flex items-center gap-1.5 text-sm font-black text-amber-950">
-              <Icon name="crown" size={22} />
-              تناسخ مزرعه — نسل {fmt(s.prestige)}
-            </h4>
-            <p className="mt-1 text-xs text-amber-900">با ریستِ مزرعه در سطح ۲۰+، ضریب دائمیِ سود، ظرفیت و ۳ امتیاز مهارتِ دائمی می‌گیری.</p>
-          </div>
-          <button
-            type="button"
-            disabled={!canPrestige(s)}
-            onClick={() => {
-              if (!armPrestige) {
-                setArmPrestige(true);
-                haptic("tap");
-                ui.toast("برای شروع نسل تازه دوباره بزن", "info");
-                return;
-              }
-              setArmPrestige(false);
-              doPrestige(s, ui.ev);
-              game.bump();
-            }}
-            className={`${btn} text-xs text-white ${armPrestige ? "bg-red-600" : "bg-gradient-to-r from-amber-500 to-yellow-600"}`}
-          >
-            {!canPrestige(s) ? "نیاز: سطح ۲۰ و ۱۰٬۰۰۰ سکه" : armPrestige ? "مطمئنی؟ آغاز نسل تازه" : "آغاز تناسخ"}
-          </button>
-        </div>
-      </div>
+      <LegacySection s={s} ui={ui} />
 
       <button
         type="button"
