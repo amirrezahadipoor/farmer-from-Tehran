@@ -5,11 +5,76 @@
  */
 
 import { fmt } from "../../data";
-import { setStoryShown } from "../../logic";
+import { TRAIT_NAME, currentHeir, joinFa, lineageChain, setLineageShown, setStoryShown, type State } from "../../logic";
 import { CHAPTERS, currentChapter, goalProgress } from "../../story";
+import { lineageChapter, lineageProgress, ordinalFa } from "../../lineageStory";
 import { Icon } from "../../icons";
 import { game } from "../../store";
 import { Coin, btn, type PanelProps } from "../common";
+
+const PHASE_NOTE = {
+  name: "نامِ وارث هنوز نوشته نشده",
+  scenes: "صحنه‌های آغازِ فصل نیمه‌کاره مانده",
+  goal: "",
+  end: "قول عملی شد؛ صحنه‌ی پایانی آماده است",
+  done: "این فصل تمام شد؛ فصلِ بعد با تناسخِ بعدی",
+} as const;
+
+/** فصل‌های نسل و شجره‌ی نام‌ها (P6.4) */
+function LineageCard({ s, onOpen }: { s: State; onOpen: () => void }) {
+  const L = s.lineage;
+  const ch = lineageChapter(s);
+  const h = currentHeir(s);
+  if (!L || !ch || !h) return null;
+  const p = lineageProgress(s);
+  const open = L.phase === "name" || L.phase === "scenes" || L.phase === "end";
+  return (
+    <div className="space-y-2 rounded-2xl border-2 border-amber-400 bg-gradient-to-l from-amber-50 to-orange-50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-sm font-black text-amber-950">
+            <Icon name="tree" size={20} />
+            فصل {fmt(ch.num)}: {ch.title}
+          </div>
+          <div className="text-[11px] font-bold text-amber-800">{ch.subtitle}</div>
+        </div>
+        {open && (
+          <button type="button" onClick={onOpen} className={`${btn} shrink-0 bg-amber-600 text-xs text-white`}>
+            ادامه‌ی فصلِ نسل
+          </button>
+        )}
+      </div>
+      {L.phase === "goal" ? (
+        <div>
+          <div className="h-2 overflow-hidden rounded-full bg-amber-100">
+            <div className="h-full rounded-full bg-gradient-to-l from-amber-400 to-amber-600" style={{ width: `${Math.min(100, (p.cur / p.target) * 100)}%` }} />
+          </div>
+          <div className="mt-1 flex justify-between text-[10px] font-bold text-amber-900">
+            <span className="inline-flex items-center gap-1"><Icon name="target" size={12} />{p.label}</span>
+            <span>{fmt(Math.min(p.cur, p.target))}/{fmt(p.target)}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="text-[11px] font-black text-amber-800">{PHASE_NOTE[L.phase]}</div>
+      )}
+      <div className="rounded-xl bg-white/70 p-2 text-[11px] font-bold leading-6 text-amber-950">
+        <span className="font-black">روی تنه‌ی گردو: </span>
+        {joinFa(lineageChain(s))}
+      </div>
+      <ul className="space-y-1">
+        {L.heirs.map((x) => (
+          <li key={x.gen} className="flex items-center justify-between rounded-lg bg-white/60 px-2 py-1 text-[11px] font-bold text-slate-700">
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name={L.completed.includes(x.gen) ? "check" : x.gen === h.gen ? "story" : "clock"} size={14} />
+              نسلِ {ordinalFa(x.gen + 1)}: {x.name || "بی‌نام"}
+            </span>
+            <span className="text-slate-500">میراثِ {TRAIT_NAME[x.trait]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function StoryPanel({ s, ui }: PanelProps) {
   const storyCh = currentChapter(s);
@@ -48,6 +113,14 @@ export function StoryPanel({ s, ui }: PanelProps) {
           {storyP.cur >= storyP.target && storyCh.goal ? "دیدن صحنه‌ی پایانی" : "مرور صحنه‌ها"}
         </button>
       </div>
+      <LineageCard
+        s={s}
+        onOpen={() => {
+          setLineageShown(s, true);
+          ui.setPanel(null);
+          game.bump();
+        }}
+      />
       {CHAPTERS.map((c) => {
         const done = s.story.completed.includes(c.id);
         const active = c.id === storyCh.id;
