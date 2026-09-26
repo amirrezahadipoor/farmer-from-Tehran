@@ -62,6 +62,6 @@ if logo_src.exists():
     sq(64).save(ROOT / "public" / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
     report.append(f"  logo_badge.png → logo 512 + icon 192/512/180 + maskable + favicon.ico")
 
-print("🎨 دارایی‌ها آماده شد:")
+print("دارایی‌ها آماده شد:")
 print("\n".join(report))
 print(f"\nحجم کل public/: {sum(f.stat().st_size for f in (ROOT/'public').rglob('*') if f.is_file())//1024} KB")

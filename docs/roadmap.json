@@ -35,7 +35,7 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۲۳۲ واحد (Vitest؛ پوشش منطق ۹۶٪ خط / ۸۴٪ شاخه) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
+    "current": "۲۳۸ واحد (Vitest؛ پوشش منطق ۹۶٪ خط / ۸۴٪ شاخه) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
     "met": true
    },
    {
@@ -48,7 +48,7 @@
     "key": "پوشش PWA/آفلاین",
     "from": "۰٪",
     "to": "۱۰۰٪",
-    "current": "manifest ✅ / SW ✅ / outbox ✅"
+    "current": "manifest: دارد / SW: دارد / outbox: دارد"
    },
    {
     "key": "اندازه‌ی Game.tsx",
@@ -195,7 +195,7 @@
    "items": [
     {
      "id": "2.1",
-     "title": "خواندن کامل متن داستان و استخراج نقشه‌ی صحنه↔تصویر",
+     "title": "خواندن کامل متن داستان و استخراج نقشه‌ی صحنه / تصویر",
      "dod": "docs/STORY-ART.md شامل همه‌ی صحنه‌ها و آرت لازم",
      "status": "done",
      "push": 2,
@@ -488,6 +488,14 @@
      "dod": "farm_started + کارت «در غیاب شما» (e2e سبز)",
      "status": "done",
      "evidence": "Game.tsx: farm_started + setAway؛ e2e/gestures.spec.ts «سیو دو ساعت پیش»"
+    },
+    {
+     "id": "5.16",
+     "title": "بدون ایموجی در هیچ‌جا: همه‌ی نمادهای بازی، داستان، اسناد و ابزارها SVG دست‌ساز",
+     "dod": "۰ ایموجی در کل مخزن (نگهبان tests/no-emoji.test.ts در CI)",
+     "status": "done",
+     "push": 19,
+     "evidence": "tests/no-emoji.test.ts سبز: ۰ ایموجی در ۱۰۷ فایل متنی مخزن + همه‌ی پیام/افکت‌های زمان اجرا؛ داده‌ها بدون فیلد icon، گوینده‌های داستان با شناسه‌ی متنی (SpeakerId)، افکت‌ها با کلید SVG؛ docs/icons/*.svg (۱۲ نماد برای README/ROADMAP)؛ docs/shots/p5-16-away-320/390.png و panel-p5-16-skills-320/390.png"
     }
    ]
   },

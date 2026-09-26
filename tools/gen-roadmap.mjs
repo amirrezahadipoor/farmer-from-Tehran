@@ -10,6 +10,9 @@
  *  - جدول آیتم‌ها با تیک و **شاهد** (ستون evidence) — قاعده: هیچ تیکی بدون شاهد
  *  - «کارهای بعدی» به ترتیب دقیق اجرا (۳ آیتم اول از اولین فاز ناتمام)
  *  - لاگ پوش‌ها از تاریخچه‌ی گیت
+ *
+ * قاعده‌ی P5.16: هیچ ایموجی‌ای در خروجی نیست — وضعیت‌ها نمادِ SVG از docs/icons/ هستند
+ * (npm run doc-icons) و عنوانِ کامیت‌های قدیمی هم از نمادهای تصویری پاک می‌شود.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -45,7 +48,11 @@ const doneCount = all.filter((i) => i.status === "done").length;
 const doingCount = all.filter((i) => i.status === "doing").length;
 const pct = Math.round((doneCount / all.length) * 100);
 const phasePct = (p) => Math.round((p.items.filter((i) => i.status === "done").length / p.items.length) * 100);
-const STATUS = { done: "[x]", doing: "[~]", todo: "[ ]", blocked: "[!]" };
+const img = (name, alt, px = 16) => `<img src="docs/icons/${name}.svg" width="${px}" height="${px}" alt="${alt}">`;
+const STATUS = { done: img("done", "[x]"), doing: img("doing", "[~]"), todo: img("todo", "[ ]"), blocked: img("blocked", "[!]") };
+/** نمادهای تصویری یونیکد (ایموجی) — در ROADMAP هیچ‌کدام نمی‌آید */
+const PICTO = /(\p{Extended_Pictographic}(\uFE0F|\u200D\p{Extended_Pictographic})*|[\uFE0F\u20E3])/gu;
+const clean = (s) => String(s).replace(/\u2194/g, " / ").replace(PICTO, "").replace(/\s{2,}/g, " ").trim();
 
 /* ---------- KPI: «فعلی» از فایل‌های واقعی پروژه خوانده می‌شود ---------- */
 const probe = (cmd) => {
@@ -67,7 +74,7 @@ const auto = {
     const m = out.match(/"numTotalTests":(\d+)/);
     return m ? m[1] : "";
   },
-  pwa: () => (existsSync(ROOT + "public/manifest.json") ? "manifest ✅" : "ندارد"),
+  pwa: () => (existsSync(ROOT + "public/manifest.json") ? "manifest: دارد" : "ندارد"),
 };
 
 const kpiCurrent = (k) => {
@@ -76,7 +83,7 @@ const kpiCurrent = (k) => {
   if (/اندازه‌ی Game/.test(key)) return auto.lines() ? `${auto.lines()} خط` : k.from;
   if (/۴۰۴|تصویر/.test(key)) return "۰ (check-assets سبز)";
   if (/تست/.test(key)) return `${auto.tests() || "۱۹"} سناریو`;
-  if (/PWA|آفلاین/.test(key)) return "manifest ✅ / SW ⏳";
+  if (/PWA|آفلاین/.test(key)) return "manifest: دارد / SW: در راه";
   if (/ESLint/.test(key)) {
     // شمارش واقعی (نه عدد ثابت): خطا + هشدار
     const out = probe("npx eslint . -f json");
@@ -102,13 +109,13 @@ for (const p of data.phases) {
 }
 
 /* ---------- مارک‌داون ---------- */
-let md = `# 🗺️ ROADMAP — ${data.meta.project}
+let md = `# ROADMAP — ${data.meta.project}
 
 > **کدنام:** \`${data.meta.codename}\` · **مالک:** @${data.meta.owner} · **مخزن:** ${data.meta.repo}
 > **هدف:** ${data.meta.target} · **مبنا:** ${data.meta.baseline}
 > این فایل **خودکار** ساخته می‌شود. منبع حقیقت: [\`docs/roadmap.json\`](docs/roadmap.json) — برای تغییر، همان فایل را ویرایش کن و \`npm run roadmap\` بزن.
 
-## 📊 وضعیت کلی
+## وضعیت کلی
 
 \`\`\`
 ${bar(pct)}
@@ -125,11 +132,11 @@ ${data.phases
   })
   .join("\n")}
 
-### ▶️ سه کار بعدی (به همین ترتیب)
+### سه کار بعدی (به همین ترتیب)
 
 ${nextUp.map((t, i) => `${fa(i + 1)}. ${t}`).join("\n")}
 
-## 📈 شاخص‌های کلیدی (KPI)
+## شاخص‌های کلیدی (KPI)
 
 | شاخص | مبنا | فعلی | هدف | وضعیت |
 |---|---|---|:--:|:--:|
@@ -138,11 +145,11 @@ ${data.meta.kpis
     const cur = kpiCurrent(k);
     // «met» فقط وقتی در roadmap.json گذاشته می‌شود که هدف با شاهد (CI/اندازه‌گیری) برآورده شده باشد
     const ok = k.met === true || (String(cur).replace(/[^0-9۰-۹]/g, "") === String(k.to).replace(/[^0-9۰-۹]/g, "") && String(cur) === String(k.to));
-    return `| ${k.key} | ${k.from} | ${cur} | **${k.to}** | ${ok ? "✅" : "⏳"} |`;
+    return `| ${k.key} | ${k.from} | ${clean(cur)} | **${k.to}** | ${ok ? img("done", "برآورده", 18) : img("wait", "در راه", 18)} |`;
   })
   .join("\n")}
 
-## 📜 قواعد پروژه
+## قواعد پروژه
 
 ${data.meta.rules.map((r) => `- ${r}`).join("\n")}
 
@@ -155,23 +162,23 @@ for (const p of data.phases) {
   md += `## ${p.id} — ${p.title}\n\n`;
   md += `**هدف فاز:** ${p.goal}\n\n`;
   md += `**پیشرفت:** \`${bar(phasePct(p), 14)}\` (${fa(d)}/${fa(p.items.length)})\n\n`;
-  md += `| ✓ | # | کار | معیار پذیرش (DoD) | شاهد | پوش |\n|:--:|:--:|---|---|---|:--:|\n`;
+  md += `| وضعیت | # | کار | معیار پذیرش (DoD) | شاهد | پوش |\n|:--:|:--:|---|---|---|:--:|\n`;
   for (const it of p.items) {
     const ev = it.evidence ? it.evidence.replace(/\|/g, "/") : "—";
-    md += `| ${STATUS[it.status] || "[ ]"} | ${fa(it.id)} | ${it.title} | ${it.dod} | ${ev} | ${it.push ? "#" + fa(it.push) : "—"} |\n`;
+    md += `| ${STATUS[it.status] || STATUS.todo} | ${fa(it.id)} | ${clean(it.title)} | ${clean(it.dod)} | ${clean(ev)} | ${it.push ? "#" + fa(it.push) : "—"} |\n`;
   }
   md += `\n`;
 }
 
-md += `---\n\n## 🚀 لاگ پوش‌ها (خودکار از گیت)\n\n| # | کامیت | تاریخ | شرح |\n|:--:|:--:|:--:|---|\n`;
+md += `---\n\n## لاگ پوش‌ها (خودکار از گیت)\n\n| # | کامیت | تاریخ | شرح |\n|:--:|:--:|:--:|---|\n`;
 gitLog
   .slice()
   .reverse()
   .forEach((c, i) => {
-    md += `| ${fa(i + 1)} | \`${c.hash}\` | ${c.date} | ${c.subject.replace(/\|/g, "/")} |\n`;
+    md += `| ${fa(i + 1)} | \`${c.hash}\` | ${c.date} | ${clean(c.subject.replace(/\|/g, "/"))} |\n`;
   });
 
-md += `\n---\n\n## 🎯 تعریف «انجام‌شده» (Definition of Done) برای هر پوش
+md += `\n---\n\n## تعریف «انجام‌شده» (Definition of Done) برای هر پوش
 
 ۱. \`npm run typecheck\` → صفر خطا
 ۲. \`npm run test\` → همه سبز
@@ -180,7 +187,8 @@ md += `\n---\n\n## 🎯 تعریف «انجام‌شده» (Definition of Done) 
 ۵. تست واقعی روی viewport موبایل (۳۲۰px و ۳۹۰px) + اسکرین‌شات در \`docs/shots/\`
 ۶. \`npm run roadmap\` و کامیت خودکار این فایل پس از هر پوش
 ۷. \`npm run lint\` → صفر خطا (بلاک‌کننده از P5.10)
+۸. هیچ ایموجی‌ای در کد، متنِ بازی، اسناد و ابزارها (نگهبان: \`tests/no-emoji.test.ts\`، از P5.16)
 `;
 
 writeFileSync(ROOT + "ROADMAP.md", md);
-console.log(`✅ ROADMAP.md ساخته شد — ${doneCount}/${all.length} (${pct}%) · در جریان: ${doingCount} · ${gitLog.length} کامیت در لاگ`);
+console.log(`ROADMAP.md ساخته شد — ${doneCount}/${all.length} (${pct}%) · در جریان: ${doingCount} · ${gitLog.length} کامیت در لاگ`);

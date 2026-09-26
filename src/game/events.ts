@@ -5,38 +5,24 @@
  * منطق بازی فقط این رابط را می‌شناسد و هیچ وابستگی‌ای به React ندارد.
  */
 
-import { ITEMS } from "./data";
 import type { Events } from "./logic";
 import { tileCenter } from "./render";
-import { EMOJI_RE, stripEmoji } from "./icons";
+import { stripEmoji } from "./icons";
 import { sound } from "./audio";
 import { rt } from "./store";
 
 export type ToastFn = (raw: string, t?: string) => void;
 
-/** آیکون افکت شناور را از ایموجیِ متن حدس می‌زند (آیکون کالا یا نمادهای UI). */
-function fxIcon(text: string): { clean: string; icon?: string } {
-  const emo = text.match(EMOJI_RE);
-  const clean = stripEmoji(text);
-  if (!emo) return { clean };
-  const itemId = Object.keys(ITEMS).find((k) => ITEMS[k].icon === emo[0]);
-  if (itemId) return { clean, icon: "item:" + itemId };
-  if (emo[0] === "💧") return { clean, icon: "ui:water" };
-  if (emo[0].startsWith("✨")) return { clean, icon: "ui:sparkle" };
-  if (emo[0] === "🪙") return { clean, icon: "ui:coin" };
-  return { clean };
-}
 
 export function makeEvents(toast: ToastFn): Events {
   return {
     toast,
     sound,
-    fx: (gx, gy, text, color = "#fff", burst) => {
+    fx: (gx, gy, text, color = "#fff", burst, icon) => {
       const { x, y } = tileCenter(gx, gy);
-      if (text) {
-        const { clean, icon } = fxIcon(text);
-        if (clean || icon) rt.fx.push({ kind: "text", x, y: y - 36, vx: 0, vy: -30, life: 1.4, max: 1.4, text: clean, icon, color });
-      }
+      // نماد همیشه SVG است (کلیدِ icons.tsx)؛ stripEmoji فقط نگهبانِ آخر است
+      const clean = stripEmoji(text);
+      if (clean || icon) rt.fx.push({ kind: "text", x, y: y - 36, vx: 0, vy: -30, life: 1.4, max: 1.4, text: clean, icon, color });
       if (burst)
         for (let i = 0; i < 14; i++)
           rt.fx.push({

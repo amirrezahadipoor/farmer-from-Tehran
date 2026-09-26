@@ -5,10 +5,17 @@
  */
 
 import { SKILLS, TECH_TREE, fmt } from "../../data";
-import { learnSkill, unlockTech, nextUnlock } from "../../logic";
-import { Icon, skillIcon, stripEmoji, techIcon } from "../../icons";
+import { learnSkill, unlockTech, nextUnlock, type Unlock } from "../../logic";
+import { Icon, ItemIcon, skillIcon, techIcon } from "../../icons";
 import { game } from "../../store";
-import { Coin, btn, type PanelProps } from "../common";
+import { BuildingThumb, Coin, btn, type PanelProps } from "../common";
+
+/** نمادِ SVG هر «بازکردنی» — بدون ایموجی: کالا، بندانگشتیِ ساختمان یا نمادِ تحقیق */
+function UnlockIcon({ u }: { u: Unlock }) {
+  if (u.kind === "building" || u.kind === "decor") return <BuildingThumb id={u.id} size={30} />;
+  if (u.kind === "tech") return <Icon name={techIcon(u.id)} size={22} />;
+  return <ItemIcon id={u.kind === "recipe" ? u.id.split(":")[1] : u.id} size={22} />;
+}
 
 /** «بازکردنیِ بعدی»: هدفِ روشن برای سطحِ بعد (P5.4) */
 function NextUnlockCard({ level }: { level: number }) {
@@ -20,7 +27,14 @@ function NextUnlockCard({ level }: { level: number }) {
         <Icon name="target" size={18} />
         بازکردنیِ بعدی · سطح {fmt(nx.level)}
       </div>
-      <div className="mt-1 text-[12px] font-bold leading-6 text-emerald-800">{nx.items.map((u) => stripEmoji(u.name)).join("، ")}</div>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {nx.items.map((u) => (
+          <span key={u.kind + u.id} className="flex items-center gap-1 rounded-xl bg-white/80 py-0.5 pl-2 pr-1 text-[12px] font-bold text-emerald-800 ring-1 ring-emerald-100">
+            <UnlockIcon u={u} />
+            {u.name}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

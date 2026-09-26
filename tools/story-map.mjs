@@ -61,7 +61,7 @@ L.push("");
 L.push(`- فصل‌ها: **${chapters.length}**`);
 L.push(`- کل صحنه‌های داستان: **${rows.length}**`);
 L.push(`- تصاویر استفاده‌شده: **${Object.keys(usage).length}** از ${Object.keys(consts).length}`);
-L.push(`- همه‌ی فایل‌ها موجود: **${missingFiles.length === 0 ? "بله ✅" : "نه ❌"}**`);
+L.push(`- همه‌ی فایل‌ها موجود: **${missingFiles.length === 0 ? "بله" : "نه"}**`);
 L.push("");
 L.push("## فایل‌های تصویر");
 L.push("");
@@ -100,8 +100,8 @@ L.push("");
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, L.join("\n"), "utf8");
-console.log(`✅ ${OUT} نوشته شد — ${chapters.length} فصل، ${rows.length} صحنه، ${Object.keys(consts).length} تصویر`);
+console.log(`${OUT} نوشته شد — ${chapters.length} فصل، ${rows.length} صحنه، ${Object.keys(consts).length} تصویر`);
 if (missingFiles.length) {
-  console.error("❌ فایل‌های گم‌شده:", missingFiles.map(([t, p]) => `${t} → ${p}`).join(", "));
+  console.error("[خطا] فایل‌های گم‌شده:", missingFiles.map(([t, p]) => `${t} → ${p}`).join(", "));
   process.exit(1);
 }

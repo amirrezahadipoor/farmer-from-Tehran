@@ -3,6 +3,7 @@
  * (P5.11: logic.ts به چهار ماژول ≤ ۴۰۰ خط شکسته شد؛ همه از مسیر "./logic" صادر می‌شوند)
  */
 import { ITEMS, N, CH, WorkerKind, CONTRACTS, WeatherType, EventType } from "../data";
+import { stripEmoji } from "../noEmoji";
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
 export interface Tile {
   k: TileKind; v: number; crop?: string; g?: number; wet?: boolean; fert?: boolean;
@@ -144,7 +145,15 @@ export function generateMap(): Tile[] {
   return tiles;
 }
 export interface Fx { kind: "text"|"leaf"|"spark"|"water"|"coin"; x: number; y: number; vx: number; vy: number; life: number; max: number; text?: string; icon?: string; color: string; }
-export interface Events { toast: (m: string, t?: "ok"|"err"|"lvl"|"prestige") => void; fx: (gx: number, gy: number, text: string, color?: string, burst?: string) => void; sound: (k: string) => void; }
+/**
+ * پلِ منطق → نمایش. متن‌ها هرگز ایموجی ندارند؛ نماد با کلیدِ SVG جدا فرستاده می‌شود
+ * («item:<id>» برای کالا، «ui:<name>» برای نمادهای رابط — icons.tsx).
+ */
+export interface Events {
+  toast: (m: string, t?: "ok" | "err" | "lvl" | "prestige") => void;
+  fx: (gx: number, gy: number, text: string, color?: string, burst?: string, icon?: string) => void;
+  sound: (k: string) => void;
+}
 
 export const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 export const idx = (x: number, y: number) => y * N + x;
@@ -195,5 +204,8 @@ export function migrate(d: unknown): State | null {
   if (!s.story) s.story = newStoryState();
   if (!Array.isArray(s.story.completed)) s.story.completed = [];
   if (typeof s.xpAcc !== "number" || !Number.isFinite(s.xpAcc)) s.xpAcc = 0;
+  // سیوهای پیش از P5.16 ممکن است ایموجی در نام یا متنِ رویداد داشته باشند
+  s.story.name = stripEmoji(String(s.story.name || ""));
+  if (s.currentEvent && typeof s.currentEvent.text === "string") s.currentEvent.text = stripEmoji(s.currentEvent.text);
   return s;
 }

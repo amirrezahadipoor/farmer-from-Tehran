@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CHAPTERS, currentChapter, sceneText, goalProgress, isStoryFinished } from "./story";
 import { State } from "./logic";
 import { fmt } from "./data";
-import { Icon, Portrait, speakerSvg } from "./icons";
+import { Icon, Portrait, speakerSvg, dropEmoji } from "./icons";
 
 const MOOD_GRADE: Record<string, string> = {
   sad: "from-slate-900/85 via-slate-800/70 to-blue-950/85",
@@ -63,7 +63,7 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
     return (
       <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-950/95 p-6 backdrop-blur-md" dir="rtl">
         <div className="w-full max-w-md rounded-3xl border-4 border-amber-400/70 bg-gradient-to-b from-amber-50 to-orange-100 p-7 text-center shadow-2xl">
-          <div className="flex justify-center"><Portrait html={speakerSvg("🌾")} size={84} className="ring-4 ring-amber-300" /></div>
+          <div className="flex justify-center"><Portrait html={speakerSvg("grandpa")} size={84} className="ring-4 ring-amber-300" /></div>
           <h2 className="mt-2 text-2xl font-black text-amber-950">پیش از آغاز داستان</h2>
           <p className="mt-2 text-sm font-bold leading-7 text-amber-900">
             نامت را بنویس. این نام در وصیت‌نامه‌ی بابابزرگ، روی سندِ دره زرین و در خاطره‌ی اهالی دهکده می‌ماند.
@@ -71,7 +71,7 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
           <input
             value={name}
             maxLength={16}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setName(dropEmoji(e.target.value))}
             onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onName(name.trim()); refresh(); } }}
             placeholder="مثلاً: امید"
             className="mt-4 w-full rounded-2xl border-2 border-amber-300 bg-white px-4 py-3 text-center text-lg font-black text-amber-950 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200"

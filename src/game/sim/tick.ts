@@ -33,8 +33,8 @@ export function tick(s: State, dt: number, ev: Events) {
     let wage = s.workers.reduce((a, w) => a + WORKERS[w.kind].wage, 0);
     if (hasTech(s, "automation_tech")) wage = Math.round(wage * 0.85);
     if (wage) {
-      if (s.coins >= wage) { s.coins -= wage; s.stats.spent += wage; ev.toast(`💼 حقوق روزانه کارکنان پرداخت شد: ${wage.toLocaleString("fa-IR")} 🪙`); }
-      else { const w = s.workers.pop()!; ev.toast(`😞 ${WORKERS[w.kind].name} به دلیل عدم پرداخت حقوق استعفا داد`, "err"); }
+      if (s.coins >= wage) { s.coins -= wage; s.stats.spent += wage; ev.toast(`حقوق روزانه کارکنان پرداخت شد: ${wage.toLocaleString("fa-IR")} سکه`); }
+      else { const w = s.workers.pop()!; ev.toast(`${WORKERS[w.kind].name} به دلیل عدم پرداخت حقوق استعفا داد`, "err"); }
     }
     const rand = Math.random();
     const sea = SEASONS[s.seasonIndex];
@@ -44,7 +44,7 @@ export function tick(s: State, dt: number, ev: Events) {
     if (s.currentEvent?.type === "drought" && (s.weather === "rain" || s.weather === "snow")) s.weather = rand < 0.5 ? "heatwave" : "sun"; // خشکسالی: بی‌باران
     s.weatherLeft = rnd(70, 160);
     if (s.weather !== "sun") {
-      const n: Record<WeatherType, string> = { sun: "آفتابی", rain: "🌧️ باران ملایم", snow: "❄️ بارش برف", fog: "🌫️ مه صبحگاهی", heatwave: "🥵 موج گرما" };
+      const n: Record<WeatherType, string> = { sun: "آفتابی", rain: "باران ملایم", snow: "بارش برف", fog: "مه صبحگاهی", heatwave: "موج گرما" };
       ev.toast(`تغییر هوا: ${n[s.weather]}`);
     }
   }
@@ -57,11 +57,11 @@ export function tick(s: State, dt: number, ev: Events) {
     if (SEASONS[s.seasonIndex].id === "summer") ets.push("drought");
     const pick = ets[Math.floor(Math.random() * ets.length)];
     const texts: Record<EventType, string> = {
-      fair: "🎪 نمایشگاه بهاره دهکده! +۲۵٪ تقاضای محصولات",
-      market_boom: "📈 رونق بزرگ بورس کالا! +۳۵٪ قیمت فروش",
-      drought: "☀️ خشکسالی! خاک ۲ برابر زودتر خشک می‌شود، باران نمی‌بارد و قیمت محصولات ۲۰٪ بالا رفته",
-      bountiful_harvest: "🌾 جشن برکت زمین! +۱ محصول در درو",
-      livestock_show: "🐎 نمایشگاه سالانه دام! +۵۰٪ قیمت کالاهای دامی",
+      fair: "نمایشگاه بهاره دهکده! +۲۵٪ تقاضای محصولات",
+      market_boom: "رونق بزرگ بورس کالا! +۳۵٪ قیمت فروش",
+      drought: "خشکسالی! خاک ۲ برابر زودتر خشک می‌شود، باران نمی‌بارد و قیمت محصولات ۲۰٪ بالا رفته",
+      bountiful_harvest: "جشن برکت زمین! +۱ محصول در درو",
+      livestock_show: "نمایشگاه سالانه دام! +۵۰٪ قیمت کالاهای دامی",
     };
     s.currentEvent = { type: pick, endsAt: s.time + 120, text: texts[pick] };
     if (pick === "drought" && s.weather === "rain") s.weather = "sun";

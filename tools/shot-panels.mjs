@@ -55,12 +55,12 @@ for (const w of WIDTHS) {
     await page.waitForTimeout(700);
     const name = p.replace(/:/g, "-");
     await page.screenshot({ path: `docs/shots/panel-${TAG}-${name}-${w}.png` });
-    console.log(`📸 docs/shots/panel-${TAG}-${name}-${w}.png`);
+    console.log(`docs/shots/panel-${TAG}-${name}-${w}.png`);
   }
   await ctx.close();
 }
 await browser.close();
 if (errors.length) {
-  console.error("❌ خطای مرورگر:\n" + errors.join("\n"));
+  console.error("[خطا] خطای مرورگر:\n" + errors.join("\n"));
   process.exit(1);
 }

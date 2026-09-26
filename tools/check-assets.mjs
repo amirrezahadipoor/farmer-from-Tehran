@@ -66,11 +66,11 @@ if (existsSync(manifestPath)) {
     for (const src of manifestIcons) add(src, manifestPath);
     if (!man.start_url) add("/__manifest_missing_start_url__", manifestPath);
   } catch (e) {
-    console.error(`\n❌ manifest.json قابل تجزیه نیست: ${e.message}\n`);
+    console.error(`\n[خطا] manifest.json قابل تجزیه نیست: ${e.message}\n`);
     process.exit(1);
   }
 } else {
-  console.error("\n❌ public/manifest.json پیدا نشد (PWA نصب‌شدنی نمی‌شود).\n");
+  console.error("\n[خطا] public/manifest.json پیدا نشد (PWA نصب‌شدنی نمی‌شود).\n");
   process.exit(1);
 }
 
@@ -82,17 +82,17 @@ if (existsSync(swPath)) {
   precache = [...new Set([...sw.matchAll(/["'](\/(?:images|icons|fonts)\/[A-Za-z0-9._-]+)["']/g)].map((m) => m[1]))];
   for (const p of precache) add(p, swPath);
   if (precache.length < 10) {
-    console.error(`\n❌ فهرست پیش‌کش سرویس‌ورکر خیلی کوچک است (${precache.length} مورد) — بازی آفلاین ناقص می‌شود.\n`);
+    console.error(`\n[خطا] فهرست پیش‌کش سرویس‌ورکر خیلی کوچک است (${precache.length} مورد) — بازی آفلاین ناقص می‌شود.\n`);
     process.exit(1);
   }
   for (const core of ["/", "/manifest.json", "/fonts/Vazirmatn-Regular.woff2"]) {
     if (!sw.includes(core)) {
-      console.error(`\n❌ سرویس‌ورکر «${core}» را پیش‌کش نمی‌کند.\n`);
+      console.error(`\n[خطا] سرویس‌ورکر «${core}» را پیش‌کش نمی‌کند.\n`);
       process.exit(1);
     }
   }
 } else {
-  console.error("\n❌ public/sw.js پیدا نشد — بازی آفلاین کار نمی‌کند.\n");
+  console.error("\n[خطا] public/sw.js پیدا نشد — بازی آفلاین کار نمی‌کند.\n");
   process.exit(1);
 }
 
@@ -103,13 +103,13 @@ for (const [ref, from] of [...refs].sort()) {
   else missing.push({ ref, files: [...from] });
 }
 
-console.log("\n🔎 بررسی دارایی‌ها (کل ریپو + مانیفست + پیش‌کش سرویس‌ورکر)");
+console.log("\nبررسی دارایی‌ها (کل ریپو + مانیفست + پیش‌کش سرویس‌ورکر)");
 console.log(`   فایل‌های اسکن‌شده: ${files.length} · ارجاع‌های یکتا: ${refs.size} · آیکون مانیفست: ${manifestIcons.length} · پیش‌کش SW: ${precache.length}\n`);
-for (const r of ok) console.log(`  ✅ ${r}`);
+for (const r of ok) console.log(`  [ok] ${r}`);
 if (missing.length) {
   console.log("");
-  for (const m of missing) console.log(`  ❌ ${m.ref}  ←  ${m.files.join(", ")}`);
-  console.log(`\n💥 ${missing.length} دارایی گم‌شده. بازی بدون این‌ها ناقص اجرا می‌شود.\n`);
+  for (const m of missing) console.log(`  [گم‌شده] ${m.ref}  ←  ${m.files.join(", ")}`);
+  console.log(`\n[خطا] ${missing.length} دارایی گم‌شده. بازی بدون این‌ها ناقص اجرا می‌شود.\n`);
   process.exit(1);
 }
-console.log(`\n🎉 همه‌ی ${ok.length} دارایی موجود است — ۰ مورد ۴۰۴.\n`);
+console.log(`\nهمه‌ی ${ok.length} دارایی موجود است — ۰ مورد ۴۰۴.\n`);
