@@ -38,6 +38,7 @@ import {
   invCount,
   price,
   sell,
+  sellPreview,
   fulfill,
   queueRecipe,
   collect,
@@ -62,6 +63,18 @@ import StoryModal from "./Story";
 import { Icon, ItemIcon, Portrait, npcSvg, workerSvg, techIcon, skillIcon, achIcon, stripEmoji, EMOJI_RE } from "./icons";
 import { drawBuildingThumb } from "./render";
 import { CHAPTERS, currentChapter, goalProgress, updateStory, advanceStory, isStoryFinished } from "./story";
+import {
+  readLocalSave,
+  fetchCloudSave,
+  ensurePlayerId,
+  pickNewer,
+  readQuarantined,
+  restoreQuarantined,
+  sanitizeSave,
+  readLS,
+  writeLS,
+  dropLS,
+} from "./persist";
 import {
   haptic,
   isFullscreen,
@@ -140,7 +153,7 @@ let audioCtx: AudioContext | null = null;
 let soundOn = true;
 export function setSoundOn(v: boolean) {
   soundOn = v;
-  try { localStorage.setItem("farm_sound", v ? "1" : "0"); } catch { /* ignore */ }
+  writeLS("farm_sound", v ? "1" : "0");
 }
 function sound(k: string) {
   if (!soundOn) return;
@@ -281,12 +294,16 @@ export default function Game() {
   const [bsel, setBsel] = useState("");
   const [panel, setPanel] = useState<Panel>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sellArm, setSellArm] = useState(""); // فروش ایمن: کدام محصول در حالت «تأیید فروش همه» است
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("");
   const [onboard, setOnboard] = useState(0); // ۰ = بسته، ۱..۳ = گام آموزش اولین‌بار
   const [away, setAway] = useState<null | {
     minutes: number; coins: number; xp: number; levels: number; ready: number; days: number;
   }>(null);
+  // سیوِ معیوب (P5.1): پیام بازیابی + آیا پشتیبانِ قابل بازیابی داریم؟
+  const [saveIssue, setSaveIssue] = useState("");
+  const [canRestore, setCanRestore] = useState(false);
   const [sfx, setSfx] = useState(true);
   const [hapticsState, setHapticsState] = useState(true);
   useWakeLock(started);
@@ -371,16 +388,12 @@ export default function Game() {
 
   // بازگشت به بازی: اگر قبلاً شروع کرده‌ای، اسپلش را رد کن (رفتار یک اپ نصب‌شده)
   useEffect(() => {
-    try {
-      if (localStorage.getItem("farm_started") === "1") setStarted(true);
-    } catch {
-      /* حافظه در دسترس نیست */
-    }
+    if (readLS("farm_started") === "1") setStarted(true);
   }, []);
 
   // بازیابی تنظیم لرزش لمسی
   useEffect(() => {
-    const h = localStorage.getItem("farm_haptics");
+    const h = readLS("farm_haptics");
     const on = h !== "0";
     setHaptics(on);
     setHapticsState(on);
@@ -405,58 +418,75 @@ export default function Game() {
     });
   }, [ready, online]);
 
-  // Load game state
-  useEffect(() => {
-    const pref = localStorage.getItem("farm_sound");
-    if (pref === "0") { setSoundOn(false); setSfx(false); }
-    let id = localStorage.getItem("farm_pid");
-    if (!id) {
-      id = "p_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem("farm_pid", id);
+  /** بازیابی سیوِ قرنطینه‌شده (اگر فقط JSON خراب بوده و داده سالم است). */
+  const recoverFromBackup = useCallback(() => {
+    const out = restoreQuarantined();
+    if (out.state) {
+      sRef.current = out.state;
+      setSaveIssue("");
+      setCanRestore(false);
+      setTick((n) => n + 1);
+      toast("♻️ مزرعه‌ات از نسخه‌ی پشتیبان بازیابی شد", "ok");
+      void saveRef.current?.();
+    } else {
+      toast("پشتیبان قابل بازیابی نبود؛ همین بازی ادامه می‌یابد", "err");
     }
+  }, [toast]);
+
+  // Load game state — هیچ خطایی در این مسیر نباید بازی را قفل کند (P5.1)
+  useEffect(() => {
+    const pref = readLS("farm_sound");
+    if (pref === "0") { setSoundOn(false); setSfx(false); }
+    const id = ensurePlayerId();
     pid.current = id;
-    const local = localStorage.getItem("farm_save");
     (async () => {
-      let data: unknown = null;
+      let s: State | null = null;
       try {
-        const r = await fetch(`/api/save?id=${id}`);
-        data = (await r.json()).data;
+        // خواندن سیوها با «درمان»: نه JSON خراب و نه شکل نامعتبر، بازی را قفل نمی‌کند
+        const localSave = readLocalSave();
+        const cloudSave = await fetchCloudSave(id);
+        const picked = pickNewer(localSave, cloudSave);
+        s = picked.state;
+        setSaveIssue(picked.corrupt ? picked.note : "");
+        setCanRestore(!!readQuarantined());
       } catch {
-        /* offline */
+        s = null; // حتی اگر غیرمنتظره چیزی ترکید، بازی تازه بالا می‌آید
+        setSaveIssue("سیو خوانده نشد؛ بازی تازه شروع شد");
       }
-      let s = migrate(data);
-      const ls = local ? migrate(JSON.parse(local)) : null;
-      if (ls && (!s || ls.savedAt > s.savedAt)) s = ls;
-      if (s) {
-        const elapsed = Math.min(7200, (Date.now() - s.savedAt) / 1000);
-        const silent: Events = { toast: () => {}, fx: () => {}, sound: () => {} };
-        // عکسِ لحظه‌ی قبل از جبران آفلاین‌تایم تا گزارش صادقانه ساخته شود
-        const snap = (st: State) => ({
-          coins: st.coins,
-          xp: st.xp,
-          level: st.level,
-          day: st.day,
-          ready: st.tiles.reduce((a, t) => a + (t.crop && (t.g || 0) >= 1 ? 1 : 0), 0),
-        });
-        const before = snap(s);
-        for (let t = 0; t < elapsed; t += 5) tick(s, Math.min(5, elapsed - t), silent);
-        const after = snap(s);
-        if (elapsed > 60) {
-          const rep = {
-            minutes: Math.round(elapsed / 60),
-            coins: after.coins - before.coins,
-            xp: after.xp - before.xp,
-            levels: after.level - before.level,
-            ready: after.ready - before.ready,
-            days: after.day - before.day,
-          };
-          // فقط اگر اتفاق معناداری افتاده باشد گزارش نشان بده
-          if (rep.coins || rep.xp || rep.ready || rep.levels || rep.days > 0) setAway(rep);
-          setTimeout(
-            () => toast(`👋 خوش آمدید! ${rep.minutes} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"),
-            800
-          );
+      try {
+        if (s) {
+            const elapsed = Math.min(7200, (Date.now() - s.savedAt) / 1000);
+          const silent: Events = { toast: () => {}, fx: () => {}, sound: () => {} };
+          // عکسِ لحظه‌ی قبل از جبران آفلاین‌تایم تا گزارش صادقانه ساخته شود
+          const snap = (st: State) => ({
+            coins: st.coins,
+            xp: st.xp,
+            level: st.level,
+            day: st.day,
+            ready: st.tiles.reduce((a, t) => a + (t.crop && (t.g || 0) >= 1 ? 1 : 0), 0),
+          });
+          const before = snap(s);
+          for (let t = 0; t < elapsed; t += 5) tick(s, Math.min(5, elapsed - t), silent);
+          const after = snap(s);
+          if (elapsed > 60) {
+            const rep = {
+              minutes: Math.round(elapsed / 60),
+              coins: after.coins - before.coins,
+              xp: after.xp - before.xp,
+              levels: after.level - before.level,
+              ready: after.ready - before.ready,
+              days: after.day - before.day,
+            };
+            // فقط اگر اتفاق معناداری افتاده باشد گزارش نشان بده
+            if (rep.coins || rep.xp || rep.ready || rep.levels || rep.days > 0) setAway(rep);
+            setTimeout(
+              () => toast(`👋 خوش آمدید! ${rep.minutes} دقیقه مزرعه‌ات بی‌تو کار کرد`, "ok"),
+              800
+            );
+          }
         }
+      } catch {
+        s = null;
       }
       sRef.current = s || newState();
       setReady(true);
@@ -480,11 +510,7 @@ export default function Game() {
   // آموزش تعاملی اولین‌بار (۳ گام، ~۲۰ ثانیه) — جایگزین متن‌های دسکتاپیِ حذف‌شده
   useEffect(() => {
     if (!ready || !started) return;
-    try {
-      if (localStorage.getItem("farm_onboard") !== "1") setOnboard(1);
-    } catch {
-      /* حافظه در دسترس نیست */
-    }
+    if (readLS("farm_onboard") !== "1") setOnboard(1);
   }, [ready, started]);
 
   useEffect(() => {
@@ -1024,6 +1050,44 @@ export default function Game() {
         ))}
       </div>
 
+      {/* سیوِ معیوب بازیابی شد — بنر صادق با امکان بازگرداندن پشتیبان (P5.1)
+          فقط داخل بازی نشان داده می‌شود تا روی صفحه‌ی شروع/داستان نیفتد */}
+      {saveIssue && started && !s.story.shown && (
+        <div
+          role="status"
+          className="absolute inset-x-3 top-[max(8px,env(safe-area-inset-top))] z-[65] rounded-2xl bg-amber-50 p-3 shadow-xl ring-1 ring-amber-300"
+        >
+          <div className="flex items-start gap-2">
+            <Icon name="alert" size={22} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-black text-amber-900">سیوِ قبلی سالم نبود — بازی از دست نرفت</p>
+              <p className="mt-0.5 text-[11px] font-bold leading-5 text-amber-800">
+                {saveIssue}. نسخه‌ی خراب در پشتیبان نگه داشته شد؛ می‌توانی بازی را از همان‌جا بازیابی کنی.
+              </p>
+              <div className="mt-2 flex gap-2">
+                {canRestore && (
+                  <button
+                    type="button"
+                    className="rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-black text-white active:scale-95"
+                    onClick={recoverFromBackup}
+                  >
+                    بازیابی از پشتیبان
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="بستن هشدار سیو"
+                  className="rounded-xl bg-white px-3 py-2 text-[11px] font-black text-amber-800 ring-1 ring-amber-300 active:scale-95"
+                  onClick={() => { setSaveIssue(""); haptic("tap"); }}
+                >
+                  ادامه با همین بازی
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* آموزش اولین‌بار — سه گام لمسی، یک‌بار برای همیشه */}
       {onboard > 0 && started && !s.story.shown && !!s.story.name && (
         <div className="absolute inset-0 z-[60] flex items-end justify-center bg-slate-950/70 p-3 backdrop-blur-sm">
@@ -1035,7 +1099,7 @@ export default function Game() {
                 aria-label="رد کردن آموزش"
                 className="rounded-xl bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600"
                 onClick={() => {
-                  try { localStorage.setItem("farm_onboard", "1"); } catch { /* ignore */ }
+                  writeLS("farm_onboard", "1");
                   setOnboard(0);
                   haptic("tap");
                 }}
@@ -1077,7 +1141,7 @@ export default function Game() {
                   haptic("tap");
                   if (onboard < 3) setOnboard(onboard + 1);
                   else {
-                    try { localStorage.setItem("farm_onboard", "1"); } catch { /* ignore */ }
+                    writeLS("farm_onboard", "1");
                     setOnboard(0);
                     toast("🌱 حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok");
                   }
@@ -1239,18 +1303,56 @@ export default function Game() {
                             ۱
                           </button>
                           <button
-                            className={`${btn} bg-amber-600 text-xs text-white`}
+                            className={`${btn} bg-sky-600 text-xs text-white`}
                             onClick={() => {
+                              sell(s, k, Math.min(10, s.inv[k]), ev);
+                              setTick((n) => n + 1);
+                            }}
+                          >
+                            ۱۰
+                          </button>
+                          <button
+                            className={`${btn} text-xs text-white ${sellArm === k ? "bg-red-600" : "bg-amber-600"}`}
+                            aria-label={sellArm === k ? `تأیید فروش همه‌ی ${it.name}` : `فروش همه‌ی ${it.name}`}
+                            onClick={() => {
+                              // فروش ایمن: «همه» دو ضربه می‌خواهد تا یک لمسِ اشتباهی انبار را خالی نکند
+                              if (sellArm !== k) {
+                                setSellArm(k);
+                                toast(`دوباره بزن تا همه‌ی ${it.name} فروخته شود`, "info");
+                                haptic("tap");
+                                return;
+                              }
+                              setSellArm("");
                               sell(s, k, s.inv[k], ev);
                               setTick((n) => n + 1);
                             }}
                           >
-                            همه
+                            {sellArm === k ? "مطمئنی؟" : "همه"}
                           </button>
                         </div>
                       </div>
                     );
                   })}
+
+                {/* پیش‌نمایش درآمد (P5.7): قبل از فروش بدان چقدر می‌گیری و بازار چقدر افت می‌کند */}
+                {(() => {
+                  const rows = Object.keys(ITEMS).filter((k) => (s.inv[k] || 0) > 0);
+                  if (!rows.length) return null;
+                  const totalCoins = rows.reduce((a, k) => a + sellPreview(s, k, s.inv[k]).coins, 0);
+                  const totalXp = rows.reduce((a, k) => a + sellPreview(s, k, s.inv[k]).xp, 0);
+                  const satMax = Math.max(0, ...rows.map((k) => (s.market[k]?.sat || 0) * 100));
+                  return (
+                    <div className="rounded-2xl bg-white/90 p-2.5 text-xs font-bold text-slate-700 shadow">
+                      اگر همین حالا کل انبار را بفروشی:{" "}
+                      <span className="text-emerald-700"><Coin v={totalCoins} size={13} /></span>{" "}
+                      و <span className="text-sky-700">+{fmt(totalXp)} تجربه</span>
+                      <div className="mt-1 text-[11px] leading-5 text-slate-500">
+                        فروش انبوه قیمت را موقتاً کم می‌کند (بیشترین افت فعلی: {fmt(Math.round(satMax))}٪). تجربه فقط از
+                        روی «ارزش» فروش داده می‌شود؛ پس تکه‌تکه فروختن تجربه‌ی بیشتری نمی‌دهد.
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -2036,7 +2138,7 @@ export default function Game() {
                 haptic("big");
                 void enterFsAndLock();
                 if (vsync) void lockOrientation("portrait");
-                try { localStorage.setItem("farm_started", "1"); } catch { /* حافظه در دسترس نیست */ }
+                writeLS("farm_started", "1");
                 setStarted(true);
                 s.story.shown = true;
                 setTick((x) => x + 1);
