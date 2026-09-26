@@ -20,7 +20,7 @@ import { advanceStory } from "./story";
 import { readLS, writeLS, dropLS } from "./persist";
 import { registerServiceWorker, prefetchStoryArt, STORY_ART_URLS } from "./net";
 import { haptic, isFullscreen, useAppViewportVar, useFullscreenState, useNativeGestureGuards, useWakeLock, lockOrientation } from "./mobile";
-import { sound } from "./audio";
+import { armAudio, audioDebug, sound } from "./audio";
 import { makeEvents } from "./events";
 import { startGameLoop } from "./loop";
 import { game, rt, useGameVersion } from "./store";
@@ -86,6 +86,7 @@ export default function Game() {
       view: () => rt.view,
       save: () => save(),
       openPanel: (p: Panel) => setPanel(p),
+      audio: audioDebug,
     };
   }, [toast, ev, save]);
 
@@ -100,6 +101,8 @@ export default function Game() {
   useEffect(() => {
     if (ready) prefetchStoryArt(STORY_ART_URLS);
   }, [ready]);
+  // صدا با اولین لمس بیدار می‌شود و در تبِ پنهان می‌خوابد (P5.12)
+  useEffect(() => armAudio(), []);
 
   // ── حلقه‌ی بازی
   useEffect(() => {
@@ -128,7 +131,7 @@ export default function Game() {
     setStarted(true);
     setStoryShown(s, true);
     game.bump();
-    sound("lvl");
+    sound("start");
   };
 
   const onReset = () => {

@@ -5,6 +5,7 @@ import { CHAPTERS, currentChapter, sceneText, goalProgress, isStoryFinished } fr
 import { State } from "./logic";
 import { fmt } from "./data";
 import { Icon, Portrait, speakerSvg, dropEmoji } from "./icons";
+import { sound } from "./audio";
 
 const MOOD_GRADE: Record<string, string> = {
   sad: "from-slate-900/85 via-slate-800/70 to-blue-950/85",
@@ -108,6 +109,7 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
       setTw({ text: full, n: full.length }); // لمس = نمایش کامل متن
       return;
     }
+    sound("page");
     onAdvance();
     refresh();
   };

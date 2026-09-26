@@ -145,6 +145,15 @@ export function generateMap(): Tile[] {
   return tiles;
 }
 export interface Fx { kind: "text"|"leaf"|"spark"|"water"|"coin"; x: number; y: number; vx: number; vy: number; life: number; max: number; text?: string; icon?: string; color: string; }
+/** همه‌ی جلوه‌های صوتی بازی (P5.12) — هر کلید در src/game/sound/sfx.ts دستورِ سنتزِ خودش را دارد */
+export const SFX_KEYS = [
+  "click", "tap", "err", "swoosh", "page", "start",
+  "harvest", "plant", "water", "fert", "dig", "chop", "rock", "build", "demolish", "collect",
+  "coin", "sell", "order", "contract", "expand", "hire",
+  "unlock", "skill", "lvl", "achievement", "prestige", "chapter", "goal",
+] as const;
+export type SfxKey = (typeof SFX_KEYS)[number];
+
 /**
  * پلِ منطق → نمایش. متن‌ها هرگز ایموجی ندارند؛ نماد با کلیدِ SVG جدا فرستاده می‌شود
  * («item:<id>» برای کالا، «ui:<name>» برای نمادهای رابط — icons.tsx).
@@ -152,7 +161,7 @@ export interface Fx { kind: "text"|"leaf"|"spark"|"water"|"coin"; x: number; y: 
 export interface Events {
   toast: (m: string, t?: "ok" | "err" | "lvl" | "prestige") => void;
   fx: (gx: number, gy: number, text: string, color?: string, burst?: string, icon?: string) => void;
-  sound: (k: string) => void;
+  sound: (k: SfxKey) => void;
 }
 
 export const rnd = (a: number, b: number) => a + Math.random() * (b - a);

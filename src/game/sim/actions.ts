@@ -58,7 +58,7 @@ export function collect(s: State, t: Tile, x: number, y: number, ev: Events, sil
     updateContract(s, "produce", 1, ev);
     ev.fx(x, y, "+1", "#fff", "#ffe082", ITEMS[id] ? `item:${id}` : "ui:box");
   }
-  if (any && !silent) ev.sound("coin");
+  if (any && !silent) ev.sound("collect");
   return any;
 }
 
@@ -111,7 +111,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
     if (s.coins < cost) { ev.toast(`خرید این قطعه زمین ${cost.toLocaleString("fa-IR")} سکه نیاز دارد`, "err"); return; }
     s.coins -= cost; s.stats.spent += cost; s.chunks[c] = true; s.bought++;
     addXp(s, 25, ev);
-    ev.toast("قطعه زمین جدید با موفقیت خریداری شد!", "lvl"); ev.sound("lvl"); return;
+    ev.toast("قطعه زمین جدید با موفقیت خریداری شد!", "lvl"); ev.sound("expand"); return;
   }
 
   // 1. HAND TOOL: Only for harvest ripe crops, collect outputs, or open buildings/view info
@@ -203,7 +203,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
     if (s.coins < FERT_COST) { ev.toast("سکه کافی برای خرید کود تقویتی ندارید", "err"); return; }
     s.coins -= FERT_COST; s.stats.spent += FERT_COST;
     t.fert = true;
-    ev.fx(x, y, "+۲", "#fff59d", "#aed581", "ui:sparkle"); ev.sound("plant");
+    ev.fx(x, y, "+۲", "#fff59d", "#aed581", "ui:sparkle"); ev.sound("fert");
     return;
   }
 
@@ -214,7 +214,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       if (s.coins < c) { ev.toast("سکه کافی برای دستمزد پاکسازی ندارید", "err"); return; }
       s.coins -= c; s.stats.spent += c;
       ev.fx(x, y, "", "#fff", t.k === "tree" ? "#66bb6a" : "#9e9e9e");
-      s.tiles[idx(x, y)] = { k: "grass", v: t.v }; addXp(s, 3, ev); ev.sound("dig");
+      s.tiles[idx(x, y)] = { k: "grass", v: t.v }; addXp(s, 3, ev); ev.sound(t.k === "tree" ? "chop" : "rock");
       // P5.8: درخت = ۲ الوار و سنگ = ۲ سنگ (+۱ با شانس ۳۰٪) — مواد اولیه‌ی نجاری/معدن/سنگ‌تراشی
       const mat = t.k === "tree" ? "wood" : "stone";
       const got = addInv(s, mat, CLEAR_YIELD + (Math.random() < 0.3 ? 1 : 0));
@@ -242,7 +242,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
         s.coins += ref; ev.toast(`${b?.name || "ساختمان"} برچیده شد (+${fmt(ref)} سکه)`);
         s.tiles[idx(x, y)] = { k: "grass", v: t.v };
       }
-      ev.sound("dig");
+      ev.sound("demolish");
       return;
     }
     ev.toast("روی چمن خالی چیزی برای پاکسازی وجود ندارد.");
@@ -291,7 +291,7 @@ export function hire(s: State, kind: WorkerKind, ev: Events) {
   if (s.coins < w.hire) { ev.toast("سکه کافی ندارید", "err"); return; }
   s.coins -= w.hire; s.stats.spent += w.hire;
   s.workers.push({ id: s.nextId++, kind });
-  ev.toast(`${w.name} استخدام شد`, "ok"); ev.sound("coin");
+  ev.toast(`${w.name} استخدام شد`, "ok"); ev.sound("hire");
 }
 
 /* ----------------- کنش‌های ساده‌ی UI (تغییر وضعیت فقط از مسیر منطق) ----------------- */
@@ -334,7 +334,7 @@ export function unlockTech(s: State, id: string, ev: Events) {
   if (s.coins < t.cost) { ev.toast("سکه کافی برای تحقیق ندارید", "err"); return; }
   s.coins -= t.cost; s.stats.spent += t.cost;
   s.techs.push(id);
-  ev.toast(`تحقیق کامل شد: ${t.name}`, "lvl"); ev.sound("lvl");
+  ev.toast(`تحقیق کامل شد: ${t.name}`, "lvl"); ev.sound("unlock");
 }
 
 export function learnSkill(s: State, id: string, ev: Events) {
@@ -348,5 +348,5 @@ export function learnSkill(s: State, id: string, ev: Events) {
   else if (id === "price_mind") ev.toast("قیمت فروش تمامی کالاها +۱۰٪ شد", "lvl");
   else if (id === "harvest_god") ev.toast("محصول برداشتی در تمام مزارع +۱ افزایش یافت", "lvl");
   else ev.toast(`مهارت «${sk.name}» با موفقیت فراگرفته شد!`, "lvl");
-  ev.sound("lvl");
+  ev.sound("skill");
 }

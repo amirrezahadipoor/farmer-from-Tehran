@@ -183,7 +183,7 @@ export function sell(s: State, id: string, n: number, ev: Events) {
   if (whole > 0) { s.xpAcc -= whole; addXp(s, whole, ev); }
   updateContract(s, "coins", pv.coins, ev);
   ev.toast(`فروش ${fmt(pv.n)} ${ITEMS[id]?.name || "کالا"}: +${fmt(pv.coins)} سکه`, "ok");
-  ev.sound("coin");
+  ev.sound("sell");
 }
 
 export function fulfill(s: State, oi: number, ev: Events) {
@@ -195,7 +195,7 @@ export function fulfill(s: State, oi: number, ev: Events) {
   addXp(s, o.xp, ev);
   updateContract(s, "orders", 1, ev);
   ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${o.coins.toLocaleString("fa-IR")} سکه`, "ok");
-  ev.sound("lvl");
+  ev.sound("order");
   s.orders[oi] = genOrder(s);
 }
 
@@ -205,7 +205,7 @@ export function claimContract(s: State, id: string, ev: Events) {
   if (!c || !cs || cs.claimed || cs.progress < c.target) return;
   cs.claimed = true;
   s.coins += c.rewardCoins; s.rep = Math.min(100, s.rep + c.rewardRep); addXp(s, c.rewardXp, ev);
-  ev.toast(`پاداش قرارداد دولتی وصول شد: +${c.rewardCoins.toLocaleString("fa-IR")} سکه`, "lvl"); ev.sound("lvl");
+  ev.toast(`پاداش قرارداد دولتی وصول شد: +${c.rewardCoins.toLocaleString("fa-IR")} سکه`, "lvl"); ev.sound("contract");
 }
 
 export function updateContract(s: State, type: string, amount: number, _ev: Events) {
@@ -234,7 +234,7 @@ function checkAchievements(s: State, ev: Events) {
     if (ach.id === "zoo" && countB(s, "coop")>0 && countB(s, "barn")>0 && countB(s, "sheep")>0 && countB(s, "pigpen")>0 && countB(s, "beehive")>0) ok = true;
     if (ach.id === "decorator" && s.stats.decorations >= 10) ok = true;
     if (ach.id === "skill_master" && s.skills.length >= 10) ok = true;
-    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("lvl"); }
+    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("achievement"); }
   }
 }
 
@@ -258,5 +258,5 @@ export function doPrestige(s: State, ev: Events) {
   fresh.story = s.story;
   fresh.rep = s.rep;
   Object.assign(s, fresh);
-  ev.toast(`نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("lvl");
+  ev.toast(`نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("prestige");
 }
