@@ -7,7 +7,7 @@ export interface CropDef {
   look?: "tree" | "bush" | "paddy" | "boll";
 }
 export interface ItemDef { id: string; name: string; base: number; tier?: number; }
-export interface Recipe { out: string; n: number; inp: Record<string, number>; time: number; xp: number; /** سطحِ لازم (اگر از خودِ کارگاه بالاتر باشد) */ lvl?: number; }
+export interface Recipe { out: string; n: number; inp: Record<string, number>; time: number; xp: number; /** سطحِ لازم (اگر از خودِ کارگاه بالاتر باشد) */ lvl?: number; /** P6.3: نسلِ لازم (دستورِ خانوادگی) */ gen?: number; }
 export interface BuildingDef {
   id: string; name: string; cost: number; lvl: number; desc: string;
   recipes: Recipe[]; wall: string; roof: string; limit?: number; isAuto?: boolean;
@@ -130,6 +130,8 @@ export const ITEMS: Record<string, ItemDef> = {
   mead: { id: "mead", name: "شربت عسل", base: 380, tier: 3 },
   sausage: { id: "sausage", name: "سوسیس", base: 260, tier: 3 },
   sweater: { id: "sweater", name: "پلیور بافتنی", base: 420, tier: 3 },
+  // P6.3: دستورِ خانوادگی — فقط از نسلِ دوم به بعد پخته می‌شود
+  grandma_halva: { id: "grandma_halva", name: "حلوای مادربزرگ", base: 520, tier: 2 },
 };
 
 export const BUILDINGS: BuildingDef[] = [
@@ -144,7 +146,7 @@ export const BUILDINGS: BuildingDef[] = [
   { id: "pigpen", name: "خوکداری", cost: 960, lvl: 5, desc: "پرواربندی با هویج و ذرت برای تولید گوشت.", wall: "#d7ccc8", roof: "#6d4c41", draw: "pigpen", recipes: [{ out: "pork", n: 1, inp: { carrot: 2, corn: 2 }, time: 90, xp: 6 }] },
   { id: "beehive", name: "کلنی زنبور", cost: 700, lvl: 5, desc: "زنبورها از آفتابگردان و توت‌فرنگی عسل می‌سازند.", wall: "#ffd54f", roof: "#8d6e63", draw: "beehive", recipes: [{ out: "honey", n: 1, inp: { sunflower: 1, strawberry: 1 }, time: 80, xp: 5 }] },
   { id: "feedmill", name: "کارخانه خوراک", cost: 950, lvl: 4, desc: "از شبدر و ذرت، خوراکِ مغذیِ دام می‌سازد.", wall: "#8d6e63", roof: "#5d4037", draw: "feedmill", recipes: [{ out: "feed", n: 2, inp: { clover: 2, corn: 1 }, time: 35, xp: 3 }] },
-  { id: "bakery", name: "نانوایی", cost: 1050, lvl: 4, desc: "نان، پای کدو، کیک و نان سنگک (روی سنگِ داغ).", wall: "#f5deb3", roof: "#d35400", draw: "bakery", recipes: [{ out: "bread", n: 1, inp: { flour: 2, egg: 1 }, time: 48, xp: 5 }, { out: "pie", n: 1, inp: { pumpkin: 1, flour: 1, egg: 1 }, time: 90, xp: 9 }, { out: "cake", n: 1, inp: { flour: 2, egg: 2, milk: 1, strawberry: 2 }, time: 125, xp: 15 }, { out: "sangak", n: 1, inp: { flour: 2, stone: 1 }, time: 60, xp: 6 }] },
+  { id: "bakery", name: "نانوایی", cost: 1050, lvl: 4, desc: "نان، پای کدو، کیک، نان سنگک (روی سنگِ داغ) و از نسلِ دوم حلوای مادربزرگ.", wall: "#f5deb3", roof: "#d35400", draw: "bakery", recipes: [{ out: "bread", n: 1, inp: { flour: 2, egg: 1 }, time: 48, xp: 5 }, { out: "pie", n: 1, inp: { pumpkin: 1, flour: 1, egg: 1 }, time: 90, xp: 9 }, { out: "cake", n: 1, inp: { flour: 2, egg: 2, milk: 1, strawberry: 2 }, time: 125, xp: 15 }, { out: "sangak", n: 1, inp: { flour: 2, stone: 1 }, time: 60, xp: 6 }, { out: "grandma_halva", n: 1, inp: { flour: 2, honey: 1 }, time: 120, xp: 30, gen: 1 }] },
   { id: "dairy", name: "لبنیات", cost: 1300, lvl: 5, desc: "کره، پنیر و سوسیس.", wall: "#eceff1", roof: "#1e88e5", draw: "dairy", recipes: [{ out: "butter", n: 1, inp: { milk: 1, egg: 1 }, time: 50, xp: 5 }, { out: "cheese", n: 1, inp: { milk: 2 }, time: 75, xp: 7 }, { out: "sausage", n: 1, inp: { pork: 1, flour: 1 }, time: 120, xp: 10 }] },
   { id: "press", name: "کارگاه فرآوری", cost: 1600, lvl: 6, desc: "سس گوجه، مربا، روغن، آبمیوه، رب انار و مربای انجیر.", wall: "#d7ccc8", roof: "#2e7d32", draw: "press", recipes: [{ out: "ketchup", n: 1, inp: { tomato: 3 }, time: 65, xp: 6 }, { out: "jam", n: 1, inp: { strawberry: 3 }, time: 80, xp: 7 }, { out: "oil", n: 1, inp: { sunflower: 3 }, time: 90, xp: 8 }, { out: "juice", n: 1, inp: { grape: 3 }, time: 100, xp: 9 }, { out: "pom_paste", n: 1, inp: { pomegranate: 3 }, time: 150, xp: 40, lvl: 15 }, { out: "fig_jam", n: 1, inp: { fig: 3 }, time: 170, xp: 55, lvl: 23 }] },
   { id: "sawmill", name: "نجاری", cost: 900, lvl: 4, desc: "الوار را تخته و تخته را جعبه‌ی چوبی می‌کند.", wall: "#c8a27a", roof: "#6d4c41", draw: "sawmill", recipes: [{ out: "planks", n: 1, inp: { wood: 2 }, time: 40, xp: 3 }, { out: "crate", n: 1, inp: { planks: 2 }, time: 70, xp: 6 }] },

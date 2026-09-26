@@ -2,7 +2,7 @@
  * src/game/sim/economy.ts — شروع بازی، قیمت، سفارش، تجربه، فروش، قرارداد، دستاورد و تناسخ
  * (P5.11: logic.ts به چهار ماژول ≤ ۴۰۰ خط شکسته شد؛ همه از مسیر "./logic" صادر می‌شوند)
  */
-import { CROPS, BUILDINGS, ITEMS, DAY_LEN, NPCS, xpFor, TECH_TREE, ACHIEVEMENTS, CONTRACTS, fmt } from "../data";
+import { CROPS, BUILDINGS, ITEMS, DAY_LEN, NPCS, xpFor, TECH_TREE, ACHIEVEMENTS, CONTRACTS, fmt, type Recipe } from "../data";
 import {
   type State, type Order, type Events, newStoryState, generateMap, rnd, NCH, capacity, invCount,
   countB, hasTech, hasSkill, DROUGHT,
@@ -72,9 +72,15 @@ export function price(s: State, id: string): number {
   return priceAt(s, id, m.sat);
 }
 
+/** دستور باز است؟ (سطح و — از P6.3 — نسل) */
+export const recipeOpen = (s: State, r: Recipe) => (r.lvl ?? 0) <= s.level && (r.gen ?? 0) <= s.prestige;
+/** برچسبِ قفلِ دستور برای UI و پیام‌ها ("" = باز) */
+export const recipeLock = (s: State, r: Recipe) =>
+  (r.gen ?? 0) > s.prestige ? `از نسل ${fmt((r.gen ?? 0) + 1)}` : (r.lvl ?? 0) > s.level ? `سطح ${fmt(r.lvl ?? 0)}` : "";
+
 export function unlockedItems(s: State): string[] {
   const out: string[] = CROPS.filter((c) => c.lvl <= s.level).map((c) => c.out ?? c.id);
-  BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => { if ((r.lvl ?? 0) <= s.level) out.push(r.out); }); });
+  BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => { if (recipeOpen(s, r)) out.push(r.out); }); });
   return Array.from(new Set(out));
 }
 
@@ -238,25 +244,4 @@ function checkAchievements(s: State, ev: Events) {
   }
 }
 
-export function canPrestige(s: State) { return s.level >= 20 && s.coins >= 10000; }
-export function doPrestige(s: State, ev: Events) {
-  if (!canPrestige(s)) return;
-  const prev = s.prestige;
-  const fresh = newState();
-  fresh.prestige = prev + 1;
-  fresh.coins = 1000 * (prev + 1);
-  fresh.stats.earned = s.stats.earned;
-  fresh.stats.harvested = s.stats.harvested;
-  fresh.stats.orders = s.stats.orders;
-  fresh.stats.produced = s.stats.produced;
-  fresh.stats.animals = s.stats.animals;
-  fresh.stats.decorations = s.stats.decorations;
-  fresh.stats.skillPoints = s.stats.skillPoints + 3;
-  fresh.achievements = s.achievements;
-  fresh.techs = s.techs;
-  fresh.skills = s.skills;
-  fresh.story = s.story;
-  fresh.rep = s.rep;
-  Object.assign(s, fresh);
-  ev.toast(`نسل ${fmt(prev + 1)} آغاز شد! ۳ امتیاز مهارت و ضرایب دائمی گرفتی.`, "prestige"); ev.sound("prestige");
-}
+// P6.3: canPrestige / doPrestige به sim/legacy.ts رفتند (میراثِ نسل‌ها)

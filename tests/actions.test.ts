@@ -321,7 +321,7 @@ describe("قرارداد و تناسخ", () => {
     expect(s.story.name).toBe("امید");
     expect(s.techs).toContain("seeds1");
     expect(s.skills).toContain("master_planter");
-    expect(s.coins).toBe(1000);
+    expect(s.coins).toBe(1000 + 2000); // P6.3: پایه‌ی نسل + ارثیه‌ی ۱۰٪ از ۲۰٬۰۰۰
     expect(lastToast().t).toBe("prestige");
   });
 });
