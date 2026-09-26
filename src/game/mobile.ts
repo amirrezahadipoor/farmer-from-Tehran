@@ -24,7 +24,14 @@ const PATTERNS: Record<HapticKind, number | number[]> = {
   big: [18, 50, 18, 50, 18, 50, 40],
 };
 
-let hapticsOn = true;
+/** ترجیح بازیکن از همان ابتدا خوانده می‌شود (بدون effect)؛ روی سرور پیش‌فرض روشن است. */
+let hapticsOn = (() => {
+  try {
+    return localStorage.getItem("farm_haptics") !== "0";
+  } catch {
+    return true;
+  }
+})();
 export function setHaptics(on: boolean) {
   hapticsOn = on;
   try {

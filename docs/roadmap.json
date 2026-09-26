@@ -22,7 +22,8 @@
     "key": "خطای ESLint",
     "from": "۹۵",
     "to": "۰",
-    "current": "۱۰۵ (بازنویسی در P5.10)"
+    "current": "۰ (بلاک‌کننده در CI با --max-warnings=0)",
+    "met": true
    },
    {
     "key": "خطای TypeScript",
@@ -34,7 +35,8 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۷۰ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل"
+    "current": "۷۸ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
+    "met": true
    },
    {
     "key": "تصاویر ۴۰۴",
@@ -52,13 +54,13 @@
     "key": "اندازه‌ی Game.tsx",
     "from": "۱۶۳۲ خط",
     "to": "≤ ۴۰۰ خط (هر فایل)",
-    "current": "۲۱۸۰ خط (بازنویسی در P5.10)"
+    "current": "۱۸۸ خط (بزرگ‌ترین فایل UI: ۲۹۴؛ logic/render در P5.11/P5.14)"
    },
    {
     "key": "FPS روی موبایل میانی",
     "from": "نامعلوم",
     "to": "≥ ۵۵",
-    "current": "۲۵.۶ عادی / ۳۷.۱ باران در رندر نرم‌افزاری CI (سازگارسازی رزولوشن فعال)"
+    "current": "کروم CI: ۵۶.۱ عادی / ۵۵.۸ باران (dpr ۰.۶۵) · وب‌کیت نرم‌افزاری: ۹.۳"
    }
   ]
  },
@@ -445,8 +447,9 @@
      "id": "5.10",
      "title": "شکستن Game.tsx + صفر کردن ۹۵ خطای ESLint",
      "dod": "eslint --max-warnings=0 سبز",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 14,
+     "evidence": "Game.tsx از ۲۱۸۰ به ۱۸۸ خط: store.ts (useSyncExternalStore به‌جای خواندن ref در رندر)، loop.ts، usePersistence.ts، useCanvasInput.ts، events.ts، audio.ts و ui/* (HUD، نوار ابزار، لایه‌ها، شیت + ۱۲ پنل؛ بزرگ‌ترین فایل UI ۲۹۴ خط) — ESLint از ۱۰۵ خطا به ۰؛ quality.yml حالا npm run lint (--max-warnings=0) را بلاک‌کننده اجرا می‌کند + ۸ تست واحد tests/runtime.test.ts"
     },
     {
      "id": "5.11",

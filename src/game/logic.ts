@@ -353,10 +353,13 @@ export function collect(s: State, t: Tile, x: number, y: number, ev: Events, sil
   return any;
 }
 
+/** ظرفیت صف تولید هر کارگاه (با سطح و تحقیق «خوراک‌دهی خودکار» بیشتر می‌شود). */
+export const queueMax = (s: State) => 3 + Math.floor(s.level / 4) + (hasTech(s, "auto_feed") ? 2 : 0);
+
 export function queueRecipe(s: State, t: Tile, ri: number, ev: Events, silent = false): boolean {
   const b = BMAP[t.b!]; if (!b) return false;
   const r = b.recipes[ri]; if (!r) return false;
-  const maxQ = 3 + Math.floor(s.level / 4) + (hasTech(s, "auto_feed") ? 2 : 0);
+  const maxQ = queueMax(s);
   if ((t.q?.length || 0) >= maxQ) { if (!silent) ev.toast("صف تولید این کارگاه پر است", "err"); return false; }
   if (!has(s, r.inp)) { if (!silent) ev.toast("مواد اولیه کافی در انبار نیست", "err"); return false; }
   Object.entries(r.inp).forEach(([k, n]) => (s.inv[k] -= n));
@@ -625,6 +628,38 @@ export function hire(s: State, kind: WorkerKind, ev: Events) {
   s.coins -= w.hire; s.stats.spent += w.hire;
   s.workers.push({ id: s.nextId++, kind });
   ev.toast(`${w.icon} ${w.name} استخدام شد`, "ok"); ev.sound("coin");
+}
+
+/* ----------------- کنش‌های ساده‌ی UI (تغییر وضعیت فقط از مسیر منطق) ----------------- */
+
+/** رد سفارش: همان لحظه منقضی می‌شود تا tick سفارش تازه جایش بگذارد. */
+export function rejectOrder(s: State, oi: number) {
+  const o = s.orders[oi];
+  if (o) s.orders[oi] = { ...o, exp: 0 };
+}
+
+/** تعدیل یک کارگر از نوع داده‌شده؛ خروجی = آیا کسی تعدیل شد. */
+export function fireWorker(s: State, kind: WorkerKind): boolean {
+  const j = s.workers.findIndex((w) => w.kind === kind);
+  if (j < 0) return false;
+  s.workers.splice(j, 1);
+  return true;
+}
+
+/** روشن/خاموش کردن «تولید خودکار پیوسته»ی یک کارگاه. */
+export function toggleAutoMode(t: Tile): boolean {
+  t.autoMode = !t.autoMode;
+  return t.autoMode;
+}
+
+/** نمایش/پنهان کردن پرده‌ی داستان. */
+export function setStoryShown(s: State, shown: boolean) {
+  s.story.shown = shown;
+}
+
+/** ثبت نام بازیکن (برای داستان و سند دره). */
+export function setPlayerName(s: State, name: string) {
+  s.story.name = name.trim().slice(0, 24);
 }
 
 export function unlockTech(s: State, id: string, ev: Events) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CHAPTERS, currentChapter, sceneText, goalProgress, isStoryFinished } from "./story";
 import { State } from "./logic";
 import { fmt } from "./data";
@@ -29,27 +29,23 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
   const isEnd = st.phase === "end";
   const scenes = isEnd ? ch.endScenes : ch.scenes;
   const scene = scenes[Math.min(st.sceneIdx, scenes.length - 1)];
-  const [typed, setTyped] = useState("");
-  const [done, setDone] = useState(false);
   const [name, setName] = useState(st.name || "");
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const full = useMemo(() => (scene ? sceneText(scene.text, st.name) : ""), [scene, st.name]);
+  const full = scene ? sceneText(scene.text, st.name) : "";
+  // ماشین‌تحریر: پیشرفت به «متن» گره خورده است؛ متن تازه = شروع از صفر، بدون setState همگام در effect
+  const [tw, setTw] = useState({ text: "", n: 0 });
+  const shown = tw.text === full ? tw.n : 0;
+  const typed = full.slice(0, shown);
+  const done = shown >= full.length;
 
-  // Typewriter effect
   useEffect(() => {
-    setTyped("");
-    setDone(false);
     let i = 0;
-    if (timer.current) clearInterval(timer.current);
-    timer.current = setInterval(() => {
+    const iv = setInterval(() => {
       i += 1;
-      setTyped(full.slice(0, i));
-      if (i >= full.length) {
-        if (timer.current) clearInterval(timer.current);
-        setDone(true);
-      }
+      // اگر بازیکن با لمس متن را کامل کرده، تیکِ بعدی آن را عقب نمی‌برد
+      setTw((prev) => (prev.text === full && prev.n >= i ? prev : { text: full, n: i }));
+      if (i >= full.length) clearInterval(iv);
     }, 22);
-    return () => { if (timer.current) clearInterval(timer.current); };
+    return () => clearInterval(iv);
   }, [full]);
 
   // پیش‌بارگذاری تصویر صحنه‌ی بعدی تا هیچ‌وقت تأخیرِ سیاه‌شدن نبینی (P2.5)
@@ -109,9 +105,7 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
 
   const click = () => {
     if (!done) {
-      if (timer.current) clearInterval(timer.current);
-      setTyped(full);
-      setDone(true);
+      setTw({ text: full, n: full.length }); // لمس = نمایش کامل متن
       return;
     }
     onAdvance();
