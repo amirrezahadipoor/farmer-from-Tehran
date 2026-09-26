@@ -93,6 +93,7 @@ const UI_ICONS: Record<string, string> = {
   film: `<rect x="2.5" y="8.5" width="19" height="12" rx="1.5" fill="#37474f" ${S}/><path d="M2.5 8.5 20.2 3.4l.8 2.8-17.7 5.1z" fill="#eceff1" ${S}/><path d="M6.5 7.4 8 10.3M11 6.1l1.5 2.9M15.5 4.8 17 7.7" stroke="${OL}" stroke-width="1.6"/><path d="M6 13h12M6 16.5h8" stroke="#90a4ae" stroke-width="1.3" stroke-linecap="round"/>`,
   sprout: `<path d="M12 21v-8" stroke="#4d9a3a" stroke-width="2" stroke-linecap="round"/><path d="M12 13c.1-4 2.3-6.3 6.3-7-.1 3.8-2.3 6.3-6.3 7z" fill="#6dbb4a" ${S}/><path d="M12 14.2c-.1-3-1.7-4.8-4.8-5.3.1 2.9 1.8 4.7 4.8 5.3z" fill="#8fd35f" ${S}/><path d="M6 21h12" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>`,
   plus: `<path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`,
+  menu: `<rect x="2.5" y="4.5" width="19" height="15.5" rx="3" fill="#fff0cf" ${S}/><path d="M6.5 9h11M6.5 12.5h11M6.5 16h7" stroke="${OL}" stroke-width="1.9" stroke-linecap="round"/>`,
   arrow: `<path d="M19 12H5M11 6 5 12l6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   settings: `<path d="${gearPath(12, 12, 9.6, 8)}" fill="#90a4ae" ${S}/><circle cx="12" cy="12" r="3.4" fill="#eceff1" ${S}/><circle cx="12" cy="12" r="1.3" fill="#607d8b"/>`,
   zoomIn: `<circle cx="10.5" cy="10.5" r="6.8" fill="#e3f2fd" ${S}/><path d="M15.6 15.6 21 21" stroke="${OL}" stroke-width="2.6" stroke-linecap="round"/><path d="M10.5 7.6v5.8M7.6 10.5h5.8" stroke="#1565c0" stroke-width="2" stroke-linecap="round"/>`,
