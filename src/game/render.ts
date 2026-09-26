@@ -408,6 +408,16 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
         }
       } break;
     }
+    case "poplar": {
+      // نهال صنوبر: تنه‌ی باریک و تاجِ کشیده که با رشد بلند می‌شود
+      const h = 16 + 34 * sc;
+      ctx.fillStyle = "#6d4424"; ctx.fillRect(x - 1.4, y - h * 0.45, 2.8, h * 0.45);
+      const leafCol = seasonId === "autumn" ? "#f9a825" : seasonId === "winter" ? "#cfd8dc" : ripe ? "#558b2f" : leaf;
+      ellipse(ctx, x + sw * 0.5, y - h * 0.62, 5 + 3 * sc, h * 0.42, leafCol);
+      ellipse(ctx, x + sw * 0.5 - 1.8, y - h * 0.7, 2 + sc, h * 0.26, shade(leafCol, 0.22));
+      if (ripe) { ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + sw * 0.5, y - h * 0.95); ctx.lineTo(x + sw * 0.5, y - h * 0.3); ctx.stroke(); }
+      break;
+    }
     case "clover": {
       for (let i = -1; i <= 1; i++) {
         ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x + i * 2, y); ctx.lineTo(x + i * 2, y - 8 * sc); ctx.stroke();
@@ -654,6 +664,47 @@ function drawBuilding(ctx: CanvasRenderingContext2D, t: Tile, x: number, y: numb
       // tiny tractor wheels
       ctx.fillStyle = "#212121";
       ellipse(ctx, x - a * 0.4, y + b * 0.3, 6, 3, "#212121"); ellipse(ctx, x + a * 0.4, y + b * 0.6, 6, 3, "#212121");
+      break;
+    }
+    case "sawmill": {
+      // نجاری: کارگاه تخته‌ای + توده‌ی الوار + تیغه‌ی اره‌ی گردان
+      const a = A * 0.62, b = B * 0.62, h = 28;
+      box(ctx, x - 6, y - 3, a, b, h, W, true);
+      faceQuad(ctx, x - 6, y - 3, a, b, "R", 0.3, 0.62, 0, 18, "#4e342e");
+      windowLit(ctx, x - 6, y - 3, a, b, "L", 0.5, 12, dark);
+      roofGable(ctx, x - 6, y - 3, a, b, h, 18, R);
+      for (let i = 0; i < 3; i++) { const lx = x + 22 - i * 3, ly = y + 10 - i * 5; ctx.fillStyle = "#8d5a2b"; ctx.fillRect(lx - 11, ly - 4, 20, 7); ellipse(ctx, lx + 9, ly - 0.5, 3.5, 3.6, "#e0b57e"); }
+      if (t.q && t.q.length) {
+        ctx.save(); ctx.translate(x + 26, y - 14); ctx.rotate(now * 9);
+        ctx.fillStyle = "#cfd8dc"; ctx.beginPath(); for (let k = 0; k < 12; k++) { const r = k % 2 ? 6 : 8.5, an = (k / 12) * Math.PI * 2; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.fill();
+        ellipse(ctx, 0, 0, 2, 2, "#546e7a"); ctx.restore();
+      }
+      break;
+    }
+    case "quarry": {
+      // معدن: دیواره‌ی سنگی، داربست چوبی و واگن سنگ
+      poly(ctx, [[x - 34, y + 2], [x - 26, y - 26], [x - 6, y - 40], [x + 16, y - 34], [x + 30, y - 12], [x + 24, y + 6], [x - 10, y + 12]], "#78909c");
+      poly(ctx, [[x - 26, y - 26], [x - 6, y - 40], [x + 16, y - 34], [x + 2, y - 20], [x - 14, y - 18]], "#b0bec5");
+      poly(ctx, [[x + 2, y - 20], [x + 16, y - 34], [x + 30, y - 12], [x + 18, y - 4]], "#546e7a");
+      ctx.strokeStyle = "#8d5a2b"; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(x - 10, y + 2); ctx.lineTo(x - 10, y - 22); ctx.moveTo(x + 6, y + 4); ctx.lineTo(x + 6, y - 20); ctx.moveTo(x - 13, y - 20); ctx.lineTo(x + 9, y - 22); ctx.stroke();
+      ctx.fillStyle = "#212121"; ctx.fillRect(x - 7, y - 14, 10, 14);
+      const cartX = x + 20 + (t.q && t.q.length ? Math.sin(now * 1.4) * 5 : 0);
+      ctx.fillStyle = "#6d4c41"; ctx.fillRect(cartX - 8, y + 4, 16, 7);
+      ellipse(ctx, cartX - 5, y + 12, 2.4, 2.4, "#37474f"); ellipse(ctx, cartX + 5, y + 12, 2.4, 2.4, "#37474f");
+      ellipse(ctx, cartX - 2, y + 3, 4, 2.6, "#90a4ae"); ellipse(ctx, cartX + 3, y + 2, 3.4, 2.2, "#b0bec5");
+      break;
+    }
+    case "stonemason": {
+      // سنگ‌تراشی: کارگاه سنگی با سقف تخت + بلوک‌های تراش‌خورده
+      const a = A * 0.6, b = B * 0.6, h = 26;
+      box(ctx, x - 5, y - 2, a, b, h, W);
+      for (let r = 1; r < 4; r++) faceQuad(ctx, x - 5, y - 2, a, b, "L", 0, 1, r * 6.5 - 0.6, r * 6.5 + 0.6, "rgba(69,90,100,0.35)");
+      faceQuad(ctx, x - 5, y - 2, a, b, "R", 0.32, 0.62, 0, 16, "#37474f");
+      windowLit(ctx, x - 5, y - 2, a, b, "L", 0.55, 12, dark);
+      roofPyramid(ctx, x - 5, y - 2, a, b, h, 10, R);
+      for (let i = 0; i < 3; i++) box(ctx, x + 18 + (i % 2) * 7, y + 8 - Math.floor(i / 2) * 7, 5, 3, 6, i === 2 ? "#eceff1" : "#cfd8dc");
+      if (t.q && t.q.length && Math.sin(now * 10) > 0.6) for (let k = 0; k < 3; k++) ellipse(ctx, x + 20 + Math.cos(now * 20 + k) * 6, y - 2 - k * 3, 1.2, 1.2, "rgba(236,239,241,0.9)");
       break;
     }
     case "bakery": case "press": case "sweet_shop": {

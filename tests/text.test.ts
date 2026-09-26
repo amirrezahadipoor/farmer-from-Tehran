@@ -232,7 +232,10 @@ describe("نام‌ها یکتا و فارسی", () => {
   it("نام محصول‌ها و کالاها تکراری نیست (جز محصولِ هم‌نام با کالای خودش)", () => {
     const names = Object.values(ITEMS).map((i) => i.name);
     expect(new Set(names).size).toBe(names.length);
-    for (const c of CROPS) expect(ITEMS[c.id]?.name).toBe(c.name);
+    for (const c of CROPS) {
+      if (c.out) expect(ITEMS[c.out], `${c.id} → ${c.out}`).toBeDefined(); // صنوبر ← الوار
+      else expect(ITEMS[c.id]?.name).toBe(c.name);
+    }
   });
 });
 
