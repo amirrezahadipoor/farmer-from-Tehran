@@ -219,7 +219,8 @@ describe("سفارش، حقوق و دستاوردها", () => {
 });
 
 describe("هیچ تحقیق/مهارت/کارگرِ «توخالی» نمانده", () => {
-  const logic = readFileSync(new URL("../src/game/logic.ts", import.meta.url), "utf8");
+  // منطق از P5.11 در src/game/sim/*.ts است (logic.ts فقط درگاه است)
+  const logic = ["state", "economy", "actions", "tick"].map((m) => readFileSync(new URL(`../src/game/sim/${m}.ts`, import.meta.url), "utf8")).join("\n");
   it.each([...TECH_TREE.map((t) => t.id), ...SKILLS.map((k) => k.id)])("%s در منطق بازی اثر دارد", (id) => {
     expect(logic.includes(`"${id}"`)).toBe(true);
   });

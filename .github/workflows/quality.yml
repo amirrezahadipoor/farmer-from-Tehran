@@ -31,8 +31,8 @@ jobs:
         run: npm run lint:text
       - name: Assets (تصاویر و فونت‌های گم‌شده)
         run: npm run check-assets
-      - name: Unit tests
-        run: npm run test
+      - name: Unit tests + پوشش منطق (P5.11 — آستانه‌ی ۸۰٪)
+        run: npm run test:coverage
       - name: Build (بدون هیچ متغیر محیطی)
         run: npm run build
       - name: راه‌اندازی و تست سلامت سرور

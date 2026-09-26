@@ -35,7 +35,7 @@
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۱۸۳ واحد (Vitest) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
+    "current": "۲۳۲ واحد (Vitest؛ پوشش منطق ۹۶٪ خط / ۸۴٪ شاخه) + ۲۹ سناریوی E2E × ۲ پروفایل موبایل",
     "met": true
    },
    {
@@ -54,7 +54,7 @@
     "key": "اندازه‌ی Game.tsx",
     "from": "۱۶۳۲ خط",
     "to": "≤ ۴۰۰ خط (هر فایل)",
-    "current": "۱۸۸ خط (بزرگ‌ترین فایل UI: ۲۹۴؛ logic/render در P5.11/P5.14)"
+    "current": "Game.tsx ۱۸۸ خط؛ logic.ts → ۴ ماژول ≤ ۳۵۲؛ مانده: render.ts و icons.tsx (P5.14)"
    },
    {
     "key": "FPS روی موبایل میانی",
@@ -458,8 +458,9 @@
      "id": "5.11",
      "title": "تست خودکار اقتصاد و منطق (Vitest) در CI",
      "dod": "≥ ۶۰ سناریو، پوشش ≥ ۸۰٪ منطق",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 18,
+     "evidence": "۲۳۲ سناریوی Vitest در ۱۰ فایل (قبل: ۶۴ + ۵ todo)؛ پوشش منطق بازی (sim/*، story، persist، data): ۹۶٪ خط، ۸۴٪ شاخه، ۹۶٪ تابع — آستانه‌ی ۸۰٪ در vitest.config.ts و اجرای npm run test:coverage در quality.yml؛ logic.ts به ۴ ماژول sim/{state,economy,actions,tick} (≤ ۳۵۲ خط) شکسته شد؛ تست‌ها دو باگ واقعی یافتند و رفع شد: قیمتِ آخرین قطعه‌ی نقشه ۱۰ میلیون سکه (رشد ۱.۱۵ → ۱.۰۸۵) و تستِ نادرستِ بذرپاش"
     },
     {
      "id": "5.12",
