@@ -13,7 +13,7 @@ concurrency:
 jobs:
   # ── بلاک‌کننده‌ها: اگر این‌ها سبز نباشند، پوش پذیرفته نمی‌شود
   verify:
-    name: typecheck · build · test · assets
+    name: typecheck · lint · build · test · assets
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - name: TypeScript
         run: npm run typecheck
+      - name: ESLint (بلاک‌کننده از P5.10 — صفر خطا، صفر هشدار)
+        run: npm run lint
       - name: Assets (تصاویر و فونت‌های گم‌شده)
         run: npm run check-assets
       - name: Unit tests
@@ -40,19 +42,3 @@ jobs:
           done
           curl -sf http://127.0.0.1:3000/ | head -c 200
           curl -sf http://127.0.0.1:3000/api/health
-
-  # ── غیربلاک‌کننده تا فاز ۵.۱۰ (شکستن Game.tsx و صفر کردن خطاهای ری‌اکت)
-  lint-baseline:
-    name: lint (baseline — غیربلاک‌کننده تا P5.10)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: ESLint
-        run: npm run lint

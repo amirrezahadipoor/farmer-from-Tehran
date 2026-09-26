@@ -77,7 +77,16 @@ const kpiCurrent = (k) => {
   if (/۴۰۴|تصویر/.test(key)) return "۰ (check-assets سبز)";
   if (/تست/.test(key)) return `${auto.tests() || "۱۹"} سناریو`;
   if (/PWA|آفلاین/.test(key)) return "manifest ✅ / SW ⏳";
-  if (/ESLint/.test(key)) return "۹۵ → ۴۸ (بازنویسی ادامه دارد)";
+  if (/ESLint/.test(key)) {
+    // شمارش واقعی (نه عدد ثابت): خطا + هشدار
+    const out = probe("npx eslint . -f json");
+    try {
+      const n = JSON.parse(out).reduce((a, f) => a + f.errorCount + f.warningCount, 0);
+      return fa(n);
+    } catch {
+      return k.from;
+    }
+  }
   if (/TypeScript/.test(key)) return "۰";
   return k.from;
 };
@@ -127,7 +136,8 @@ ${nextUp.map((t, i) => `${fa(i + 1)}. ${t}`).join("\n")}
 ${data.meta.kpis
   .map((k) => {
     const cur = kpiCurrent(k);
-    const ok = String(cur).replace(/[^0-9۰-۹]/g, "") === String(k.to).replace(/[^0-9۰-۹]/g, "") && String(cur) === String(k.to);
+    // «met» فقط وقتی در roadmap.json گذاشته می‌شود که هدف با شاهد (CI/اندازه‌گیری) برآورده شده باشد
+    const ok = k.met === true || (String(cur).replace(/[^0-9۰-۹]/g, "") === String(k.to).replace(/[^0-9۰-۹]/g, "") && String(cur) === String(k.to));
     return `| ${k.key} | ${k.from} | ${cur} | **${k.to}** | ${ok ? "✅" : "⏳"} |`;
   })
   .join("\n")}

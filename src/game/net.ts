@@ -11,7 +11,7 @@
  *  • هوک وضعیت شبکه تا UI بتواند صادق باشد: آنلاین/آفلاین/در صف.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { writeLocalSave } from "./persist";
 
 const OUTBOX_KEY = "farm_outbox";
@@ -32,24 +32,23 @@ export function isOnline() {
   return typeof navigator === "undefined" ? true : navigator.onLine;
 }
 
-/** هوک وضعیت آنلاین/آفلاین + تلاش برای تخلیه‌ی صف در لحظه‌ی اتصال. */
+/** اشتراک در رویدادهای online/offline (برای useSyncExternalStore). */
+function subscribeOnline(cb: () => void) {
+  const goOnline = () => {
+    cb();
+    void flushOutbox(); // لحظه‌ی اتصال: صفِ ذخیره را خالی کن
+  };
+  window.addEventListener("online", goOnline);
+  window.addEventListener("offline", cb);
+  return () => {
+    window.removeEventListener("online", goOnline);
+    window.removeEventListener("offline", cb);
+  };
+}
+
+/** هوک وضعیت آنلاین/آفلاین — بدون setState داخل effect (سازگار با قواعد React 19). */
 export function useOnline() {
-  const [online, setOnline] = useState(true);
-  useEffect(() => {
-    setOnline(isOnline());
-    const goOnline = () => {
-      setOnline(true);
-      void flushOutbox();
-    };
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
-  return online;
+  return useSyncExternalStore(subscribeOnline, isOnline, () => true);
 }
 
 /* ------------------------------- صندوق خروجی ------------------------------- */
@@ -224,24 +223,3 @@ export const STORY_ART_URLS = [
   "/images/story_expo.webp",
   "/images/story_sunset.webp",
 ];
-
-/* --------------------------- همگام‌سازی دوره‌ای --------------------------- */
-
-/** هر ۳۰ ثانیه تلاش می‌کند صف را خالی کند (اگر آفلاین بودیم). */
-export function useOutboxSync(onFlushed?: () => void) {
-  const cb = useRef(onFlushed);
-  cb.current = onFlushed;
-  const online = useOnline();
-  const flush = useCallback(async () => {
-    const ok = await flushOutbox();
-    if (ok) cb.current?.();
-    return ok;
-  }, []);
-  useEffect(() => {
-    const iv = setInterval(() => {
-      if (hasPendingSave()) void flush();
-    }, 30000);
-    return () => clearInterval(iv);
-  }, [flush, online]);
-  return flush;
-}
