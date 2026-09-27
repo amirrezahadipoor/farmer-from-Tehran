@@ -4,6 +4,8 @@
  * src/game/ui/Hud.tsx — نوار بالا (سطح، سکه، انبار، منو، داستان، زمان/هوا) + کنترل دوربین
  */
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import { CONTRACTS, SEASONS, fmt, xpFor } from "../data";
 import { capacity, claimableQuests, invCount, type State } from "../logic";
 import { lightInfo } from "../render/core";
@@ -29,13 +31,18 @@ export function menuBadges(s: State) {
   return { readyOrders, claimableContracts, skillPoints: s.stats.skillPoints, readyQuests: claimableQuests(s) };
 }
 
+/** V.10: پرده‌ی حالتِ عکس فقط با اولین لمسِ دکمه‌ی دوربین بارگذاری می‌شود */
+const PhotoMode = dynamic(() => import("./Photo"), { ssr: false });
+
 export function CameraControls() {
+  const [photo, setPhoto] = useState(false);
   const items = [
     ["zoomIn", "بزرگ‌نمایی", () => zoomBy(1.25)],
     ["zoomOut", "کوچک‌نمایی", () => zoomBy(0.8)],
     ["center", "بازگشت به مزرعه", recenter],
   ] as const;
   return (
+    <>
     <div className="absolute top-1/2 z-30 flex -translate-y-1/2 flex-col gap-1.5 md:gap-2" style={{ right: "max(8px, env(safe-area-inset-right))" }}>
       {items.map(([ic, label, fn]) => (
         <button
@@ -52,7 +59,22 @@ export function CameraControls() {
           <Icon name={ic} size={26} />
         </button>
       ))}
+      <button
+        type="button"
+        aria-label="حالت عکس"
+        data-cam="photo"
+        onClick={() => {
+          sound("click");
+          setPhoto(true);
+        }}
+        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/95 shadow-lg ring-1 ring-amber-900/10 transition active:scale-90 md:h-[52px] md:w-[52px]"
+      >
+        <Icon name="camera" size={26} />
+      </button>
     </div>
+    {/* بیرونِ ستون: transformِ ستون برای position:fixed قابِ مرجع می‌ساخت و پرده را کوچک می‌کرد */}
+    {photo && <PhotoMode onClose={() => setPhoto(false)} />}
+    </>
   );
 }
 

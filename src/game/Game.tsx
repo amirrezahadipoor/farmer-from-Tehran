@@ -234,7 +234,7 @@ export default function Game() {
     <div className="relative select-none overflow-hidden" dir="rtl" style={{ height: "var(--app-h, 100dvh)", width: "100vw" }}>
       {/* نقشه‌ی ۲.۵بعدی: آسمان زیرِ بوم و رنگ‌های صفحه‌ای رویش لایه‌ی CSS هستند (P6.6) */}
       <SkyLayers withImage={!!s && started === true} />
-      <canvas ref={canvasRef} className="absolute inset-0 touch-none select-none" aria-label="نقشه‌ی مزرعه" role="img" {...canvasHandlers} />
+      <canvas ref={canvasRef} data-map="" className="absolute inset-0 touch-none select-none" aria-label="نقشه‌ی مزرعه" role="img" {...canvasHandlers} />
       <TintLayers />
 
       {/* رابطِ بازی فقط بعد از «آغاز»: پشتِ اسپلش دیده نمی‌شود و ساختنش بارگذاریِ اول را کند می‌کرد */}
