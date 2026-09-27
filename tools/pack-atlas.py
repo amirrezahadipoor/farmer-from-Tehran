@@ -96,7 +96,7 @@ def main():
     entries = {}
 
     def add(key, fname, atlas_name, scale=None):
-        x, y, w, h = pos_all[fname]
+        x, y, w, h = pos_all[os.path.basename(fname)]
         e = {"a": atlas_name, "x": x, "y": y, "w": w, "h": h}
         if scale is not None:
             e["s"] = round(scale, 4)
@@ -105,8 +105,9 @@ def main():
         entries[key] = e
 
     def atlas_of(fname):
+        b = os.path.basename(fname)
         for n, fs in plan["atlases"].items():
-            if fname in fs:
+            if b in [os.path.basename(f) for f in fs]:
                 return n
         raise SystemExit(f"فایل در هیچ اطلسی نیست: {fname}")
 
@@ -114,10 +115,10 @@ def main():
         add(key, fname, atlas_of(fname))
 
     for crop, kf_files in plan.get("crops", {}).items():
-        for base_key in plan.get("crop-keys", {}).get(crop, []):
-            # فقط ۵ فریمِ کلیدی می‌رود به manifest؛ مقیاسِ ۲۰ پله در runtime (cropFrame) محاسبه می‌شود
+        # crop-keys: «فصل|تغییر» (مثلاً spring|1)؛ کلیدِ کامل = c|crop|q|فصل|تغییر (الگوی کشِ بازی)
+        for sv in plan.get("crop-keys", {}).get(crop, []):
             for i, q in enumerate(CROP_KF):
-                add(f"{base_key}|{q}", kf_files[i], atlas_of(kf_files[i]))
+                add(f"c|{crop}|{q}|{sv}", kf_files[i], atlas_of(kf_files[i]))
 
     manifest = {"atlases": atlases, "entries": entries}
     os.makedirs(os.path.dirname(args.manifest) or ".", exist_ok=True)

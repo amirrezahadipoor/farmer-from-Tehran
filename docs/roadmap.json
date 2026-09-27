@@ -41,7 +41,7 @@
         "key": "درصدِ اشیاِ دنیای بازی با آرتِ نقاشی‌شده",
         "from": "۰ (۱۰٪ هندسیِ رویه‌ای)",
         "to": "۱۰۰٪",
-        "current": "۰"
+        "current": "زمین ۱۰٪ + گندم + ۱/۵۵ ساختمان (world اطلس: ۳۴۸KB)"
       },
       {
         "key": "نسبت سکه‌ی پایان نسل به آستانه‌ی تناسخ (بات بهینه)",
@@ -68,6 +68,112 @@
         "current": "۹۷",
         "met": true
       }
+    ],
+    "assets": [
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|grass|spring",
+        "file": "art-src/sprites/grass_spring.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "کاشیِ چمنِ بهار — نخستین مرجعِ art bible"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|grass|summer",
+        "file": "art-src/sprites/grass_summer.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "چمنِ تابستان (چگال‌تر، سبز-طلایی)"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|grass|autumn",
+        "file": "art-src/sprites/grass_autumn.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "چمنِ پاییز (کهربایی + برگ‌ریزان)"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|grass|winter",
+        "file": "art-src/sprites/grass_winter.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "رویِ summer با پاسِ رنگیِ رویه‌ای (PIL) — برف جدا رویه‌ای است (snowCover)"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|soil",
+        "file": "art-src/sprites/soil.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "زمینِ شخم‌خورده با ۵ ردیفِ شخم"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|soilwet",
+        "file": "art-src/sprites/soilwet.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "رویِ soil با پاسِ تاریک‌رنگی (PIL)؛ درخششِ آبی رویه‌ای می‌ماند"
+      },
+      {
+        "type": "زمین (در بازی)",
+        "key": "g|water",
+        "file": "art-src/sprites/water.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "آبِ دریاچه؛ لبه‌ی شنیِ خیس و موج و ماهی رویه‌ای می‌مانند"
+      },
+      {
+        "type": "محصول (در بازی)",
+        "key": "c|wheat|{0,5,10,15,20}|{فصل}|{۰-۲}",
+        "file": "art-src/sprites/wheat_kf0..4.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "۵ فریمِ کلیدیِ رشدِ گندم؛ ۲۰ پله با cropFrame در runtime؛ ۴ فصل × ۳ تغییر = ۶۰ ورودیِ manifest"
+      },
+      {
+        "type": "ساختمان (در بازی)",
+        "key": "b|barn",
+        "file": "art-src/sprites/barn.png",
+        "atlas": "world",
+        "status": "در بازی",
+        "note": "گاوداری (بامِ تراکوتا + چرخ‌باد + کاه)؛ سایه‌ی زمین در خودِ تصویر"
+      },
+      {
+        "type": "درخت (در نوبت)",
+        "key": "t|*|f",
+        "file": "art-src/sprites/tree_fruit.png",
+        "atlas": "—",
+        "status": "در نوبت",
+        "note": "درختِ میوه‌دار؛ درخت‌های کامل ۴ فصل × ۳ نوع (گسترده/نمدی/میوه) در نوبت (فاز B.2)"
+      },
+      {
+        "type": "دام (در نوبت)",
+        "key": "animal|cow",
+        "file": "art-src/sprites/cow.png",
+        "atlas": "—",
+        "status": "در نوبت",
+        "note": "گاو؛ مرغ/گوسفند/خوک و حالت‌هایشان در نوبت (فاز C.3)"
+      },
+      {
+        "type": "پرتره (در نوبت)",
+        "key": "portrait|hero_f",
+        "file": "art-src/sprites/hero_f.png",
+        "atlas": "—",
+        "status": "در نوبت",
+        "note": "پرتره‌ی قهرمانِ زن (روسریِ تراکوتا)؛ قهرمانِ مرد و لایه‌سازیِ چهره‌ها در نوبت (فاز E.2)"
+      },
+      {
+        "type": "آیکون (در نوبت)",
+        "key": "icon|wheat",
+        "file": "art-src/sprites/wheat_icon.png",
+        "atlas": "—",
+        "status": "در نوبت",
+        "note": "آیکونِ گندم در سبکِ جدید؛ ۲۸ آیکونِ دیگرِ آیتم در نوبت (فاز E.1)"
+      }
     ]
   },
   "phases": [
@@ -80,8 +186,9 @@
           "id": "1",
           "title": "Art Bible: ۶ دارایی مرجع (کاشی چمن، درخت میوه، گاو، طویله، پرتره‌ی قهرمان، آیکون آیتم) با پرامپتِ سبکِ مشترک",
           "dod": "شش تصویر در یک contact-sheet کنار هم؛ سبک/نور/پالتِ یکدست (نور از بالا-چپ، ایزومتریک ۲:۱، پالت گرم)؛ فایل پرامپت‌ها در docs/prompts/ برای بازتولیدپذیری",
-          "status": "doing",
-          "evidence": "۴ از ۶ دارایی مرجع تولید و پردازش‌شده با کلیدِ سبز (grass/tree/cow/barn)؛ contact-sheet: art-src/sprites/CONTACT_SHEET.png؛ تصمیمِ کلیدِ سبز به‌جای مجانتا مستند در docs/prompts/art-style.md؛ ۲ مورد (قهرمان/آیکون گندم) در نوبتِ تولیدِ بعدی"
+          "status": "done",
+          "evidence": "۶/۶ مرجعِ art bible: grass_tile, tree_fruit, cow, barn, hero_f (نسخه‌ی سبزِ اصلاح‌شده), wheat_icon؛ contact-sheet: art-src/sprites/CONTACT_SHEET.png؛ تصمیماتِ سبک (کلیدِ خودکارِ سبز) در docs/prompts/art-style.md",
+          "push": 3
         },
         {
           "id": "2",
@@ -122,31 +229,40 @@
           "id": "1",
           "title": "کاشی‌های زمین: چمن/شخم‌خورده/آب‌کاری‌شده + آب با ۴ حالتِ لبه (الگوی waterEdges)",
           "dod": "همه روی لوزیِ ۸۸×۴۴ با هم‌ترازیِ پیکسلی؛ در ground.ts جایگزینِ drawImage با fallback؛ اسکرین‌شاتِ شب/روز",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کاشی‌های چمن ۴ فصل + شخم/شخم‌خوب + آب در اطلسِ world و در بازی؛ لبه‌های شنیِ آب و موج/ماهی رویه‌ای (همان الگوی waterEdges)؛ اسکرین‌شات: docs/art-compare/art-after-atlas.png",
+          "push": 3
         },
         {
           "id": "2",
           "title": "درخت‌ها: گسترده/نمدی/میوه‌دار × ۴ فصل",
           "dod": "کلیدهای t|season|b|c|f مطابقِ کشِ فعلی؛ سایه‌ی پایه در خودِ اسپرایت (هم‌راستا با lightInfo)؛ اسکرین‌شات ۴ فصل",
-          "status": "todo"
+          "status": "doing",
+          "evidence": "درختِ میوه‌دار تولید و پردازش‌شده (art-src/sprites/tree_fruit.png) ولی هنوز در بازی نیست؛ درخت‌های کامل ۴ فصل × ۳ نوع در نوبتِ تولید"
         },
         {
           "id": "3",
           "title": "گندم: ۵ فریم کلیدی رشد + توابعِ خالصِ بین‌فریمی (۲۰ پله از ۵ تصویر)",
           "dod": "تست واحدِ cropFrame(q) (نقطه‌های قطع، scale، crossfade)؛ در drawCropTile جایگزین با fallback؛ بلاکِ درخشش/تکانِ باد رویه‌ای می‌ماند",
-          "status": "todo"
+          "status": "done",
+          "evidence": "گندم ۵ فریمِ کلیدی + cropFrame (۲۰ پله از ۵ تصویر) در بازی؛ ۶۰ ورودیِ manifest (۴ فصل × ۳ تغییر)؛ گرادیانِ رشد در اسکرین‌شاتِ art-after-atlas.png دیده می‌شود",
+          "push": 3
         },
         {
           "id": "4",
           "title": "طویله (ساختمانِ کامل) + حبابِ «آماده»",
           "dod": "ساختمان در سه‌رخ ایزومتریک با سایه‌ی زمین؛ برف و تاریکیِ شب رویه‌ای روی تصویر (همان BArgs)؛ اسکرین‌شاتِ شب",
-          "status": "todo"
+          "status": "done",
+          "evidence": "گاوداری (b|barn) در بازی با سایه‌ی داخلِ تصویر؛ حبابِ «آماده» و حلقه‌ی پیشرفت رویه‌ای می‌مانند (در اسکرین‌شات دیده می‌شوند)",
+          "push": 3
         },
         {
           "id": "5",
           "title": "تأیید: اسکرین‌شاتِ قبل/بعد + renderStats قبل/بعد (بدون افت فریم)",
           "dod": "shot-mobile/shot-panels سبز؛ عددِ فریمِ قبل/بعد در evidence؛ e2e کامل سبز",
-          "status": "todo"
+          "status": "done",
+          "evidence": "اسکرین‌شاتِ قبل/بعد: docs/art-compare/art-before-procedural.png و art-after-atlas.png (ابزار: tools/shot-atlas.mjs)؛ بدونِ اطلس ۴۰۴ مانیفست → رسمِ رویه‌ای (fallback تأیید شد)؛ با اطلس: atlasReady=true، صفر خطای کنسول/۴۰۴، ≈۱٫۷ms در فریم",
+          "push": 3
         }
       ]
     },
