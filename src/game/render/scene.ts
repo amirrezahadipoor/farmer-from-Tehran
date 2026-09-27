@@ -159,7 +159,7 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fill(c2);
 
   const k = dpr * cam.z;
-  const sway = k >= 0.9; // دورتر از این، تکانِ باد زیرِ یک پیکسل است: اسپرایتِ بی‌کجی (مسیرِ سریع)
+  const sway = k >= 0.9 && v.w >= 700;
   ctx.setTransform(k, 0, 0, k, dpr * (w / 2 + cam.x), dpr * (h / 2 + cam.y));
   const sdx = -Math.cos(L.p * Math.PI * 2 - Math.PI / 2) * 12;
   // مستطیلِ دیده‌شده در مختصاتِ جهان؛ اشیا با حاشیه (بلندیِ ساختمان‌ها)
