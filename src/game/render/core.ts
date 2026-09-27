@@ -18,7 +18,11 @@ export interface View {
   /** پرده‌ی تمام‌صفحه (داستان) روی نقشه است: رندر لازم نیست (P6.6) */
   covered?: boolean;
 }
-export interface Walker { x: number; y: number; tx: number; ty: number; kind: string; face: number; wait: number }
+export interface Walker {
+  x: number; y: number; tx: number; ty: number; kind: string; face: number; wait: number;
+  /** V.1: کنشِ در حال پخش برای آواتار (شخم/کاشت/…) و زمانِ باقی‌مانده‌ی انیمیشن */
+  act?: string; actT?: number; look?: "m" | "f" | "n";
+}
 /** ورودیِ رسمِ یک ساختمان (بین دسته‌های bFarm/bCraft/bDecor مشترک) */
 export interface BArgs { draw?: string; t: Tile; id: string; def: BuildingDef; x: number; y: number; now: number; dark: number; sdx: number; W: string; R: string }
 

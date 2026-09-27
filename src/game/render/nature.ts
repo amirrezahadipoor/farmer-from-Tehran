@@ -280,8 +280,89 @@ export function drawCropTile(ctx: CanvasRenderingContext2D, t: Tile, gx: number,
   }
 }
 
+/* ------------------------------------------------------------ قهرمان (V.1) */
+/** آواتار بازیکن: ظاهر به جنسیتِ انتخابی، انیمیشن کنش با toolِ فعال */
+function drawHero(ctx: CanvasRenderingContext2D, w: Walker, now: number) {
+  const { x, y } = tileCenter(w.x - 0.5, w.y - 0.5);
+  const actT = w.actT ?? 0;
+  const acting = actT > 0;
+  const moving = !acting && Math.hypot(w.tx - w.x, w.ty - w.y) > 0.06;
+  const step = moving ? Math.sin(now * 13) : 0;
+  const bob = moving ? Math.abs(step) * 2.5 : acting ? Math.abs(Math.sin((0.7 - actT) * 14)) * 1.5 : 0;
+  const look = w.look ?? "n";
+  ellipse(ctx, x, y, 8, 3.4, "rgba(0,0,0,0.32)");
+  // پاها
+  ctx.fillStyle = "#4e342e";
+  ctx.fillRect(x - 3.5, y - 9, 2.6, 9 - step * 2.5);
+  ctx.fillRect(x + 1, y - 9, 2.6, 9 + step * 2.5);
+  // تنه و پیش‌بند
+  if (look === "f") {
+    ellipse(ctx, x, y - 13 - bob, 7, 8.5, "#00897b");
+    ellipse(ctx, x, y - 8 - bob, 7.5, 5, "#00897b"); // دامن
+    ellipse(ctx, x, y - 12 - bob, 4.5, 6, "#ffe082");
+  } else {
+    ellipse(ctx, x, y - 14 - bob, 6.8, 7.8, "#43a047");
+    ellipse(ctx, x, y - 12 - bob, 4.5, 5.5, "#ffe082");
+  }
+  // سر
+  ellipse(ctx, x, y - 23 - bob, 4.8, 4.8, "#ffcc80");
+  if (look === "f") {
+    // روسری: کمان روی سر + دنباله‌ی پشت
+    ctx.fillStyle = "#d81b60";
+    ctx.beginPath(); ctx.arc(x, y - 24 - bob, 5.2, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+    ctx.fillRect(x - 5.2, y - 24 - bob, 2.2, 7);
+    ellipse(ctx, x, y - 27.5 - bob, 2.2, 2.2, "#d81b60");
+  } else if (look === "m") {
+    ctx.fillStyle = "#5d4037"; ctx.fillRect(x - 4.8, y - 27 - bob, 9.6, 3.4); // مو
+    ellipse(ctx, x, y - 27.5 - bob, 9, 2.6, "#e6c36a"); // کلاه کاهی
+    ellipse(ctx, x, y - 29.5 - bob, 5, 3, "#e6c36a");
+  } else {
+    ctx.fillStyle = "#5d4037"; ctx.beginPath(); ctx.arc(x, y - 24.5 - bob, 5, Math.PI, Math.PI * 2); ctx.fill();
+    ellipse(ctx, x, y - 27 - bob, 7.5, 2.2, "#607d8b"); // کلاه ساده
+  }
+  // دست‌ها و ابزارِ کنش
+  const p = acting ? 1 - actT / 0.7 : 0;
+  const sw = acting ? Math.sin(p * Math.PI) : 0; // ۰→۱→۰
+  const hx = x + 6 * (w.face || 1), hy = y - 14 - bob;
+  const act = w.act ?? "";
+  if (act === "hoe" || act === "clear") {
+    const a = -1.9 + sw * 1.5; // بالا آوردن و کوبیدن
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(a * (w.face || 1));
+    ctx.strokeStyle = "#8d6e63"; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(11, 0); ctx.stroke();
+    ctx.fillStyle = act === "hoe" ? "#90a4ae" : "#b0bec5"; ctx.fillRect(9.5, -3.5, 3, 7);
+    ctx.restore();
+  } else if (act === "water") {
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(0.5 * sw * (w.face || 1));
+    ctx.fillStyle = "#42a5f5"; ctx.fillRect(-1, -4, 8, 6); ctx.fillRect(6, -6, 4, 3);
+    ctx.restore();
+    if (sw > 0.25) {
+      ctx.fillStyle = "rgba(66,165,245,0.85)";
+      for (let k = 0; k < 3; k++) ellipse(ctx, hx + 9 + k * 3, hy + 2 + k * 3 + sw * 4, 1.3, 1.8, "rgba(66,165,245,0.85)");
+    }
+  } else if (act === "seed" || act === "fert") {
+    ctx.strokeStyle = "#ffcc80"; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(x, hy); ctx.lineTo(hx + sw * 3, hy - 2 - sw * 3); ctx.stroke();
+    if (sw > 0.2) {
+      const c = act === "seed" ? "#8d6e63" : "#66bb6a";
+      for (let k = 0; k < 3; k++) ellipse(ctx, hx + 4 + k * 4, hy - 4 + Math.abs(k - 1) * 3 + sw * 6, 1.4, 1.4, c);
+    }
+  } else {
+    // دست‌های ساده؛ هنگام برداشت یک جرقه
+    ctx.strokeStyle = "#ffcc80"; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(x - 5, hy); ctx.lineTo(x - 8, hy + 4 - (acting ? sw * 8 : 0)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 5, hy); ctx.lineTo(x + 8, hy + 4 - (acting ? sw * 8 : 0)); ctx.stroke();
+    if (acting && sw > 0.5) {
+      ctx.fillStyle = "rgba(255,235,130,0.9)";
+      const sy = hy - 10;
+      ctx.beginPath(); ctx.moveTo(hx, sy - 4); ctx.lineTo(hx + 1.5, sy - 1.5); ctx.lineTo(hx + 4, sy); ctx.lineTo(hx + 1.5, sy + 1.5);
+      ctx.lineTo(hx, sy + 4); ctx.lineTo(hx - 1.5, sy + 1.5); ctx.lineTo(hx - 4, sy); ctx.lineTo(hx - 1.5, sy - 1.5); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+
 /* ------------------------------------------------------------ کارگرها */
 export function drawWalker(ctx: CanvasRenderingContext2D, w: Walker, now: number) {
+  if (w.kind === "hero") return drawHero(ctx, w, now);
   const { x, y } = tileCenter(w.x - 0.5, w.y - 0.5);
   const moving = w.wait <= 0;
   const bob = moving ? Math.abs(Math.sin(now * 11)) * 2.5 : 0;

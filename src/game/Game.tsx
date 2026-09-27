@@ -127,6 +127,8 @@ export default function Game() {
       },
       toast,
       view: () => rt.view,
+      /** V.1: موقعیت و کنشِ آواتارِ قهرمان برای تست خودکار */
+      hero: () => ({ x: rt.hero.x, y: rt.hero.y, tx: rt.hero.tx, ty: rt.hero.ty, act: rt.hero.act, actT: rt.hero.actT, look: rt.hero.look, init: rt.hero.init }),
       // رندررها تکه‌ی جدا هستند؛ page.evaluate قولِ برگشتی را صبر می‌کند
       perf: async () => ({ ...rt.stats, ...(await import("./render/scene")).renderStats(), dpr: rt.view.dpr }),
       lockDpr: (d: number | null) => {

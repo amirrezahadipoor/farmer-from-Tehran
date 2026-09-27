@@ -17,6 +17,7 @@ import { applyScreenFx, render, renderStats, screenFx } from "./render";
 import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
+import { stepHero } from "./hero";
 import { raiseFatal, reportError } from "./errors";
 
 const MIN_DPR = 0.6;
@@ -197,10 +198,11 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       tick(s, dt, ev);
       stepFx(dt);
       stepWalkers(s, dt);
+      stepHero(s, dt);
       if (!rt.view.covered) {
         const r0 = renderStats().rebuilds;
         const t0 = performance.now();
-        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values()]);
+        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values(), rt.hero]);
         rt.stats.renders++;
         rt.stats.renderMs += performance.now() - t0;
         if (renderStats().rebuilds !== r0) skipGap = true;

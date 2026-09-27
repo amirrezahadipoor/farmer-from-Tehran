@@ -14,6 +14,7 @@ import { screenToTile, tileCenter } from "./render/core";
 import { haptic } from "./mobile";
 import { sound } from "./audio";
 import { game, rt } from "./store";
+import { sendHero } from "./hero";
 import type { Panel } from "./ui/common";
 
 /** ثبت اشاره‌گر با گارد: در بعضی مرورگرها/رویدادهای مصنوعی خطای NotFoundError می‌دهد. */
@@ -71,6 +72,7 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
         if (JSON.stringify(s.tiles[idx(x, y)]) !== before) done++;
       }
     }
+    if (done) sendHero(s, tx, ty, tool);
     if (opened && !done) setPanel({ bx: tx, by: ty });
     sound(done ? "click" : "err");
     ev.toast(done ? `عملیات دسته‌ای روی ${fmt(done)} زمین اجرا شد` : "برای عمل دسته‌ای زمین آزادِ بیشتری لازم است", done ? "ok" : "err");
@@ -87,6 +89,7 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     }
     haptic("tap");
     const r = toolAction(s, tx, ty, tool, arg, ev);
+    if (r !== "open") sendHero(s, tx, ty, tool);
     if (r === "open") {
       setPanel({ bx: tx, by: ty });
       sound("click");

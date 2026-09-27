@@ -66,6 +66,8 @@ export function useGame(): State {
 export const rt = {
   fx: [] as Fx[],
   walkers: new Map<number, Walker>(),
+  /** V.1: آواتارِ قهرمان — زمان‌اجرا فقط؛ در سیو ذخیره نمی‌شود */
+  hero: { x: -1, y: -1, tx: -1, ty: -1, kind: "hero", face: 1, wait: 0, act: "", actT: 0, look: "n" as "m" | "f" | "n", init: false },
   view: {
     w: 800,
     h: 600,
@@ -86,4 +88,6 @@ export const rt = {
 export function resetRuntime() {
   rt.fx = [];
   rt.walkers.clear();
+  rt.hero.init = false;
+  rt.hero.actT = 0;
 }
