@@ -36,6 +36,7 @@ import Hud, { CameraControls } from "./ui/Hud";
 import Toolbar, { SeedTray } from "./ui/Toolbar";
 import { Toasts, useToasts, SaveIssueBanner, AwayCard, MainMenu } from "./ui/Overlays";
 import { Tour } from "./ui/Tour";
+import { tileCenter } from "./render/core";
 import Splash from "./ui/Splash";
 import Loading from "./ui/Loading";
 import { SkyLayers, TintLayers } from "./ui/ScreenLayers";
@@ -128,6 +129,12 @@ export default function Game() {
       },
       toast,
       view: () => rt.view,
+      /** W.1: مرکزِ یک کاشی روی صفحه (px) — همان فرمولِ حلقه‌ی آموزش — برای ضربه‌ی واقعی در تست */
+      tileScreen: (gx: number, gy: number) => {
+        const v = rt.view;
+        const c = tileCenter(gx, gy);
+        return { x: c.x * v.cam.z + v.w / 2 + v.cam.x, y: c.y * v.cam.z + v.h / 2 + v.cam.y };
+      },
       /** V.1: موقعیت و کنشِ آواتارِ قهرمان برای تست خودکار */
       hero: () => ({ x: rt.hero.x, y: rt.hero.y, tx: rt.hero.tx, ty: rt.hero.ty, act: rt.hero.act, actT: rt.hero.actT, look: rt.hero.look, init: rt.hero.init }),
       /** V.3: وضعیت لایه‌ی حس رضایت و تریگرهای آن برای تست خودکار */
