@@ -10,5 +10,5 @@
  *   scene.ts ....... یک فریم: آسمان، زمین، اشیا به ترتیبِ عمق، افکت، نور، هوا، وینیت
  */
 export { TW, TH, tileCenter, screenToTile, lightInfo, type View, type Walker } from "./render/core";
-export { render, renderStats, screenFx, applyScreenFx, type ScreenFx } from "./render/scene";
+export { render, renderStats, screenFx, applyScreenFx, skyBodies, type ScreenFx } from "./render/scene";
 export { drawBuildingThumb } from "./render/buildings";
