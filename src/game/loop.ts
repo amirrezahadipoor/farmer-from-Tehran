@@ -237,7 +237,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
           const vv = rt.view, kk = vv.dpr * vv.cam.z;
           const li = lightInfo(s);
           const cl = s.weather === "rain" ? 1 : s.weather === "fog" ? 0.9 : s.weather === "snow" ? 0.8 : s.weather === "heatwave" ? 0.15 : 0.35;
-          postFX.update({ time: t / 1000, part: vv.reduced ? [0, 0, 0] : [s.weather === "rain" ? 1 : 0, s.weather === "snow" ? 1 : 0, s.weather === "heatwave" ? 1 : 0], ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height, dark: li.dark, dusk: li.dusk, cloud: cl, skyT: vv.reduced ? 0 : t / 1000 });
+          postFX.update({ time: t / 1000, part: vv.reduced ? [0, 0, 0] : [s.weather === "rain" ? 1 : 0, s.weather === "snow" ? 1 : 0, s.weather === "heatwave" ? 1 : 0], ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height, dark: li.dark, dusk: li.dusk, cloud: cl, skyT: vv.reduced ? 0 : t / 1000, lutV: (2 * (li.dark > 0.35 ? 4 : s.seasonIndex % 4) + 1.5) / 10 });
           postFX.present(); // texture ← مسیرِ GPU (گرید + دیدِ جوی + وینیت)
           ctx.drawImage(postFX.canvas, 0, 0); // فریمِ پردازش‌شده روی بومِ نمایش
         } else {

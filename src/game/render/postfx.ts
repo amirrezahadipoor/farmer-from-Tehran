@@ -14,102 +14,6 @@
  * برای فازِ ۲ (رندرِ واقعیِ GPU) می‌توان همین بوم را به PixiJS/SDF منتقل کرد.
  */
 
-const VERT = /* glsl */ `#version 300 es
-layout(location = 0) in vec2 aPos;
-out vec2 vUv;
-void main() {
-  // flip Y so canvas row 0 (top) lands at the top of the screen
-  vUv = vec2(aPos.x * 0.5 + 0.5, 0.5 - aPos.y * 0.5);
-  gl_Position = vec4(aPos, 0.0, 1.0);
-}`;
-
-const FRAG = /* glsl */ `#version 300 es
-precision highp float;
-in vec2 vUv;
-out vec4 fragColor;
-uniform sampler2D uTex;
-uniform sampler2D uWaterTex;
-uniform float uFog;
-uniform float uGrade;
-uniform float uWaterOn;
-uniform vec3 uPart;
-uniform float uTime;
-uniform vec4 uCam;
-uniform vec2 uScreen;
-uniform vec4 uSky;
-void main() {
-  vec4 c = texture(uTex, vUv);
-  if (c.a < 0.02) {
-    float t = 1.0 - vUv.y;
-    vec3 zen = mix(vec3(0.24, 0.48, 0.85), vec3(0.03, 0.05, 0.13), uSky.x);
-    vec3 hor = mix(vec3(0.72, 0.87, 0.98), vec3(0.07, 0.10, 0.20), uSky.x);
-    vec3 sky = mix(hor, zen, smoothstep(0.15, 0.85, t));
-    sky = mix(sky, vec3(1.0, 0.52, 0.22) * (0.35 + 0.65 * (1.0 - t)), uSky.y * 0.55 * (1.0 - t));
-    vec2 g = floor(vUv * vec2(90.0, 60.0));
-    float st = fract(sin(dot(g, vec2(12.9898, 78.233))) * 43758.5453);
-    float tw = 0.5 + 0.5 * sin(uSky.w * (1.5 + st * 2.5) + st * 40.0);
-    float star = step(0.9975, st) * tw * uSky.x;
-    vec2 cp = vUv * vec2(3.2, 2.1) + vec2(uSky.w * 0.008, 0.0);
-    float n = 0.0;
-    n += 0.55 * (0.5 + 0.5 * sin(cp.x * 3.1 + sin(cp.y * 2.7) * 1.7));
-    n += 0.30 * (0.5 + 0.5 * sin(cp.x * 6.7 + 1.3 + sin(cp.y * 5.3 + 0.7) * 1.4));
-    n += 0.15 * (0.5 + 0.5 * sin(cp.x * 13.3 + 2.1 + sin(cp.y * 11.1) * 1.2));
-    float cloud = smoothstep(1.0 - uSky.z * 0.75, 1.35 - uSky.z * 0.5, n) * smoothstep(0.05, 0.35, t) * (1.0 - uSky.x * 0.85);
-    sky = mix(sky, vec3(0.97, 0.98, 1.0), cloud * 0.85);
-    sky += vec3(star);
-    c = vec4(sky, 1.0);
-  }
-  vec2 px = vUv * uScreen;
-  vec2 world = (px - uCam.xy) / uCam.z;
-  vec2 muv = vec2((world.x + 1584.0) / 3168.0, (world.y + 792.0) / 1584.0);
-  float m = step(0.5, texture(uWaterTex, muv).r) * uWaterOn;
-  if (m > 0.0) {
-    float t = uTime;
-    float w1 = sin(world.x * 0.09 + t * 1.6) * sin(world.y * 0.12 - t * 1.1);
-    float w2 = sin((world.x + world.y) * 0.055 + t * 0.8);
-    float caust = smoothstep(0.45, 0.95, 0.5 + 0.5 * (w1 * 0.6 + w2 * 0.4));
-    float spec = smoothstep(0.9, 1.0, 0.5 + 0.5 * sin(world.x * 0.33 - t * 2.7) * sin(world.y * 0.41 + t * 2.1));
-    vec2 cell = fract(world * 0.06) - 0.5;
-    float ripple = uPart.x * max(sin(length(cell) * 34.0 - t * 5.0), 0.0) * smoothstep(0.5, 0.12, length(cell)) * 0.5;
-    vec3 add = vec3(0.06, 0.26, 0.32) * caust + vec3(0.85, 0.95, 1.0) * spec * 0.30 + vec3(0.30, 0.45, 0.50) * ripple;
-    c.rgb = mix(c.rgb, c.rgb * 0.86 + add, m);
-  }
-  vec3 part = vec3(0.0);
-  if (uPart.x > 0.0) {
-    vec2 rp = vec2(vUv.x * 46.0, vUv.y * 9.0 - uTime * 2.6);
-    vec2 gi = floor(rp);
-    vec2 gf = fract(rp);
-    float rn = fract(sin(dot(gi, vec2(41.7, 67.3))) * 43758.5453);
-    float lx = 0.15 + 0.7 * fract(rn * 7.31);
-    float streak = step(0.42, rn) * smoothstep(0.10, 0.02, abs(gf.x - lx)) * smoothstep(0.85, 0.15, gf.y) * smoothstep(0.05, 0.25, gf.y);
-    part += vec3(0.72, 0.85, 1.0) * streak * 0.40 * uPart.x;
-  }
-  if (uPart.y > 0.0) {
-    vec2 sp = vec2(vUv.x * 60.0 + sin(uTime * 0.7 + vUv.y * 9.0) * 0.6, vUv.y * 34.0 - uTime * 0.55);
-    vec2 gi = floor(sp);
-    vec2 gf = fract(sp);
-    float rn = fract(sin(dot(gi, vec2(13.7, 91.1))) * 43758.5453);
-    float d = length(gf - vec2(0.2 + 0.6 * fract(rn * 3.7), 0.2 + 0.6 * fract(rn * 5.3)));
-    part += vec3(1.0) * step(0.55, rn) * smoothstep(0.16, 0.05, d) * 0.55 * uPart.y;
-  }
-  if (uPart.z > 0.0) {
-    float yw = sin(vUv.y * 90.0 + uTime * 1.6 + sin(vUv.x * 7.0 + uTime) * 2.0);
-    part += vec3(1.0, 0.7, 0.3) * smoothstep(0.96, 1.0, yw) * 0.10 * uPart.z;
-  }
-  c.rgb += part;
-  // 1) filmic grade: soft desaturation + gentle contrast
-  float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
-  c.rgb = mix(c.rgb, vec3(l), 0.06 * uGrade);
-  c.rgb = (c.rgb - 0.5) * (1.0 + 0.12 * uGrade) + 0.5;
-  // 2) aerial perspective: far (top of screen) fades to soft haze
-  float f = (1.0 - smoothstep(0.05, 0.55, vUv.y)) * uFog;
-  c.rgb = mix(c.rgb, vec3(0.76, 0.84, 0.92), f * 0.30);
-  // 3) vignette: soft corners to focus the eye
-  vec2 q = vUv - 0.5;
-  c.rgb *= 1.0 - dot(q, q) * 0.42 * uGrade;
-  fragColor = c;
-}`;
-
 export interface PostFX {
   /** بومِ WebGL که فریمِ پردازش‌شده در آن است */
   canvas: HTMLCanvasElement;
@@ -120,7 +24,7 @@ export interface PostFX {
   setGrade: (v: number) => void;
   setFog: (v: number) => void;
   setWaterMask: (cv: HTMLCanvasElement) => void;
-  update: (u: { time: number; part: [number, number, number]; ox: number; oy: number; k: number; sw: number; sh: number; dark: number; dusk: number; cloud: number; skyT: number }) => void;
+  update: (u: { time: number; part: [number, number, number]; ox: number; oy: number; k: number; sw: number; sh: number; dark: number; dusk: number; cloud: number; skyT: number; lutV: number }) => void;
 }
 
 /** آیا این مرورگر WebGL2 سالم دارد؟ (در محیطِ تست/سرور: همیشه false → مسیرِ ۲بعدی) */
@@ -134,6 +38,8 @@ export function webgl2Available(): boolean {
     return false;
   }
 }
+
+import { BRIGHT, BLUR, FRAG, VERT, buildLutCanvas } from "./fxgl";
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
   const sh = gl.createShader(type);
@@ -181,6 +87,44 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
       throw new Error(`لینک: ${gl.getProgramInfoLog(prog)}`);
     }
     gl.useProgram(prog);
+    const linkProg = (fsSrc: string) => {
+      const pr = gl.createProgram();
+      if (!pr) return null;
+      const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+      const fs = compile(gl, gl.FRAGMENT_SHADER, fsSrc);
+      if (!vs || !fs) return null;
+      gl.attachShader(pr, vs);
+      gl.attachShader(pr, fs);
+      gl.linkProgram(pr);
+      return gl.getProgramParameter(pr, gl.LINK_STATUS) ? pr : null;
+    };
+    const brightProg = linkProg(BRIGHT);
+    const blurProg = linkProg(BLUR);
+    if (!brightProg || !blurProg) return null;
+    const mkTex = () => {
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return t;
+    };
+    const bA = mkTex(), bB = mkTex();
+    const fA = gl.createFramebuffer(), fB = gl.createFramebuffer();
+    const ltex = mkTex();
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, buildLutCanvas());
+    const uBloom = gl.getUniformLocation(prog, "uBloom");
+    const uLutRow = gl.getUniformLocation(prog, "uLutRow");
+    const uLut = gl.getUniformLocation(prog, "uLut");
+    const brTex = brightProg ? gl.getUniformLocation(brightProg, "uTex") : null;
+    const blTex = gl.getUniformLocation(blurProg, "uTex");
+    const blDir = gl.getUniformLocation(blurProg, "uDir");
+    gl.uniform1i(uBloom, 2);
+    gl.uniform1i(uLut, 3);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, ltex);
+    gl.activeTexture(gl.TEXTURE0);
     // مثلثِ تمام‌صفحه (سه راس کافی است)
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
@@ -221,14 +165,46 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
     gl.activeTexture(gl.TEXTURE0);
 
+    const attach = (f: WebGLFramebuffer | null, t: WebGLTexture | null, w: number, h: number) => {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    };
+    let hw = 0, hh = 0;
     const present = () => {
       const w = src.width, h = src.height;
       if (!w || !h) return;
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-      gl.viewport(0, 0, w, h);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      const nw = Math.max(2, w >> 1), nh = Math.max(2, h >> 1);
+      if (brightProg && gl.getProgramParameter(brightProg, gl.LINK_STATUS)) {
+        if (nw !== hw || nh !== hh) { hw = nw; hh = nh; attach(fA, bA, hw, hh); attach(fB, bB, hw, hh); }
+        gl.useProgram(brightProg);
+        gl.uniform1i(brTex, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fA);
+        gl.viewport(0, 0, hw, hh);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.useProgram(blurProg);
+        gl.uniform1i(blTex, 0);
+        gl.bindTexture(gl.TEXTURE_2D, bA);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fB);
+        gl.uniform2f(blDir, 1 / hw, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.bindTexture(gl.TEXTURE_2D, bB);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fA);
+        gl.uniform2f(blDir, 0, 1 / hh);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.useProgram(prog);
+      gl.viewport(0, 0, w, h);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, bA);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
     return {
@@ -238,6 +214,11 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
         try {
           gl.deleteTexture(tex);
           gl.deleteTexture(wtex);
+          gl.deleteTexture(bA);
+          gl.deleteTexture(bB);
+          gl.deleteTexture(ltex);
+          gl.deleteFramebuffer(fA);
+          gl.deleteFramebuffer(fB);
           gl.deleteBuffer(buf);
           gl.deleteProgram(prog);
           gl.getExtension("WEBGL_lose_context")?.loseContext();
@@ -258,6 +239,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
         gl.uniform4f(uCam, u.ox, u.oy, u.k, 0);
         gl.uniform2f(uScreen, u.sw, u.sh);
         gl.uniform4f(uSky, u.dark, u.dusk, u.cloud, u.skyT);
+        gl.uniform1f(uLutRow, u.lutV);
       },
     };
   } catch {
