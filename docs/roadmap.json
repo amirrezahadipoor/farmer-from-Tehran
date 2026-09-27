@@ -29,32 +29,35 @@
     "key": "خطای TypeScript",
     "from": "۰",
     "to": "۰",
-    "current": "۰"
+    "current": "۰",
+    "met": true
    },
    {
     "key": "تست خودکار",
     "from": "۰",
     "to": "≥ ۶۰ سناریو",
-    "current": "۳۲۹ واحد (Vitest؛ ۳ تای آن روی Postgresِ واقعی در CI؛ پوشش ۹۷٪ خط / ۸۸٪ شاخه) + ۳۴ سناریوی E2E × ۲ پروفایل موبایل",
+    "current": "۳۳۳ واحد (Vitest؛ ۳ تای آن روی Postgresِ واقعی در CI؛ پوشش ۹۸٪ خط / ۸۸٪ شاخه) + ۳۶ سناریوی E2E × ۲ پروفایل موبایل",
     "met": true
    },
    {
     "key": "تصاویر ۴۰۴",
     "from": "۷",
     "to": "۰",
-    "current": "۰"
+    "current": "۰ (e2e/assets.spec روی پیش‌کشِ SW + check-assets)",
+    "met": true
    },
    {
     "key": "پوشش PWA/آفلاین",
     "from": "۰٪",
     "to": "۱۰۰٪",
-    "current": "manifest: دارد / SW: دارد / outbox: دارد"
+    "current": "۱۰۰٪ — manifest (آیکونِ maskable) + SW v2 (پیش‌کشِ همه‌ی دارایی‌ها، ثبت بعد از load) + outbox؛ بازگشایی و ادامه‌ی بازی بدونِ شبکه در e2e/offline.spec",
+    "met": true
    },
    {
     "key": "اندازه‌ی Game.tsx",
     "from": "۱۶۳۲ خط",
     "to": "≤ ۴۰۰ خط (هر فایل)",
-    "current": "Game.tsx ۱۹۷ خط؛ render.ts ← ۸ ماژول ≤ ۲۹۶؛ icons.tsx ← ۸۱ + ۴ ماژول؛ بزرگ‌ترین فایلِ src ۳۵۵ خط (نگهبان: tests/filesize.test.ts)",
+    "current": "Game.tsx ۲۴۷ خط؛ render.ts ← ۸ ماژول ≤ ۲۹۶؛ icons.tsx ← ۱۰۳ + ۴ ماژول؛ بزرگ‌ترین فایلِ src ۳۵۵ خط (نگهبان: tests/filesize.test.ts)",
     "met": true
    },
    {
@@ -62,6 +65,13 @@
     "from": "نامعلوم",
     "to": "≥ ۵۵",
     "current": "موبایلِ میانی (Pixel 7 + CPU ×۴، رندرِ نرم‌افزاری): ۵۸.۲ fps · عادی ۶۰.۲ و باران ۶۰.۲ در dpr ۱.۴ (پیش از P5.14: ۳۵.۴ در dpr ۰.۶ و با ×۴: ۶.۸) — کفِ CI: ۵۵",
+    "met": true
+   },
+   {
+    "key": "Lighthouse موبایل (کارایی / دسترس‌پذیری / بهترین شیوه‌ها / SEO)",
+    "from": "۵۲ / ۹۳ / ۱۰۰ / ۱۰۰",
+    "to": "≥ ۹۵ در هر ۴ شاخص",
+    "current": "۹۹ / ۱۰۰ / ۱۰۰ / ۱۰۰ (میانه‌ی ۵ اجرا روی رانرِ گیت‌هاب، دو اجرای مستقل؛ ورک‌فلوی lighthouse)",
     "met": true
    }
   ]
@@ -546,8 +556,9 @@
      "id": "6.5",
      "title": "بهینه‌سازی نهایی + پولیش بصری",
      "dod": "Lighthouse ≥ ۹۵ در همه‌ی شاخص‌ها",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 28,
+     "evidence": "Lighthouse موبایل روی رانرِ گیت‌هاب (ورک‌فلوی تازه‌ی lighthouse.yml، Lighthouse 12.8.2، میانه‌ی ۵ اجرا، دروازه‌ی ≥ ۹۵): performance ۹۹ · accessibility ۱۰۰ · best-practices ۱۰۰ · seo ۱۰۰ در دو اجرای مستقل (cbbfc52 و a49d8f9؛ FCP ۰٫۸s، LCP ۲٫۱ تا ۲٫۳s، TBT ۱۵ تا ۲۶ms، CLS ۰) در برابرِ مبنای ۵۲/۹۳/۱۰۰/۱۰۰ (TBT ۲۴۳۰ms، LCP ۴٫۹s)؛ UIِ بازی بعد از «آغاز» سوار می‌شود و Sheet، پرده‌های داستان و حلقه‌ی رندر تنبل و در زمانِ بیکاری پیش‌واکشی می‌شوند؛ کارتِ اسپلش بالا-لنگر است (CLSِ تجزیه‌ی نیمه‌کاره ۰٫۰۷ تا ۰٫۱۷ ← ۰)؛ فونت‌های زیرمجموعه (~۲۷KB) و پیش از آغاز فقط Bold و Black؛ لوگوی WebPِ بُرش‌خورده (۲۳KB)؛ faNum بی‌ICU (هم‌ارزِ ICU روی ۲۰هزار مقدار)؛ کشِ پایدارِ SVG؛ قفلِ زوم برداشته و برچسبِ HUD درست شد؛ SW v2 بعد از load؛ دروازه‌ی CI با pipefail و اجرای گرم‌کن — e2e/splash.spec.ts (۳۲۰ و ۳۹۰: CLS < ۰٫۰۱، لوگو، دکمه ≥ ۴۴px، فقط دو فونت)؛ شاهد: docs/logs/lighthouse-6-5.txt، docs/shots/p6-5-splash-320.png و p6-5-splash-390.png"
     },
     {
      "id": "6.6",

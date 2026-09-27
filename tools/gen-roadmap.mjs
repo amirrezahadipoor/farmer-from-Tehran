@@ -134,7 +134,7 @@ ${data.phases
 
 ### سه کار بعدی (به همین ترتیب)
 
-${nextUp.map((t, i) => `${fa(i + 1)}. ${t}`).join("\n")}
+${nextUp.length ? nextUp.map((t, i) => `${fa(i + 1)}. ${t}`).join("\n") : `کاری باقی نمانده: هر ${fa(data.phases.reduce((a, p) => a + p.items.length, 0))} آیتمِ نقشه‌ی راه با شاهد انجام شده‌اند.`}
 
 ## شاخص‌های کلیدی (KPI)
 
