@@ -119,16 +119,20 @@ export function Pill({
   onClick,
   label,
   className = "",
+  tour,
 }: {
   icon: string;
   children?: React.ReactNode;
   onClick?: () => void;
   label?: string;
   className?: string;
+  /** نشانگرِ پایدار برای آموزشِ تعاملی (مستقل از متنِ برچسب که ممکن است عوض شود) */
+  tour?: string;
 }) {
   return (
     <button
       type="button"
+      data-tour={tour}
       onClick={onClick}
       aria-label={label}
       className={`flex h-10 items-center gap-1.5 rounded-full bg-white/95 pl-3 pr-1.5 text-[12px] font-black text-amber-950 shadow-lg ring-1 ring-amber-900/10 transition active:scale-95 md:h-11 md:text-sm ${className}`}
