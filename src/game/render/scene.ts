@@ -9,7 +9,7 @@
  * CSS هستند (ui/ScreenLayers.tsx): ترکیبشان کارِ کامپوزیتور است، نه رشته‌ی اصلی، و فقط وقتی
  * مقدارشان واقعاً عوض شود یک بار سبک نوشته می‌شود (applyScreenFx).
  */
-import { N, CH, SEASONS } from "../data";
+import { N, CH, SEASONS, fmt } from "../data";
 import { idx, locked, chunkOf, canExpand, expandCost, type Fx, type State, type Tile } from "../logic";
 import { drawIcon } from "../icons";
 import { A, B, clamp, diamond, ellipse, glowSprite, hash, lightInfo, makeCanvas, tileCenter, type View, type Walker } from "./core";
@@ -200,7 +200,7 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     if (!vis(p.x, p.y)) continue;
     const bob = Math.sin(now * 2.2 + c) * 3;
     ctx.fillStyle = "#5d4037"; ctx.fillRect(p.x - 2, p.y - 32, 4, 32);
-    ctx.drawImage(signSprite(expandCost(s).toLocaleString("fa-IR")), p.x - 60, p.y - 49 + bob - 28, 120, 56);
+    ctx.drawImage(signSprite(fmt(expandCost(s))), p.x - 60, p.y - 49 + bob - 28, 120, 56);
     drawIcon(ctx, "ui:coin", p.x - 26, p.y - 41 + bob, 13);
   }
 

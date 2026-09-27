@@ -1,0 +1,51 @@
+name: lighthouse
+
+# P6.5: «Lighthouse ≥ ۹۵ در همه‌ی شاخص‌ها» روی رانرِ تمیزِ گیت‌هاب سنجیده می‌شود (نه ماشینِ توسعه):
+# پروفایلِ موبایلِ پیش‌فرضِ Lighthouse 12 (شبیه‌سازیِ 4G کند و CPU×۴)، ۵ اجرا و میانه‌ی هر شاخص.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse موبایل (میانه‌ی ۵ اجرا، هدف ≥ ۹۵)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: اجرای سرورِ تولید
+        run: |
+          npx next start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/ > /dev/null && exit 0; sleep 1; done
+          cat /tmp/next.log; exit 1
+      - name: Lighthouse × ۵
+        run: |
+          mkdir -p lh
+          for i in 1 2 3 4 5; do
+            npx --yes lighthouse@12 http://127.0.0.1:3000/ --quiet \
+              --chrome-flags="--headless=new --no-sandbox" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --output=json --output=html --output-path="lh/run-$i"
+          done
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+      - name: میانه و بررسیِ آستانه
+        run: node tools/lighthouse-median.mjs lh 95 | tee lh/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: آپلود گزارش‌ها
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: lh/
+          retention-days: 30

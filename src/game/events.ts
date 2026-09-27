@@ -6,7 +6,7 @@
  */
 
 import type { Events } from "./logic";
-import { tileCenter } from "./render";
+import { tileCenter } from "./render/core";
 import { stripEmoji } from "./icons";
 import { sound } from "./audio";
 import { rt } from "./store";

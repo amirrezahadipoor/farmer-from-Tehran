@@ -12,11 +12,17 @@ import { memo } from "react";
 
 const LAYER = "pointer-events-none absolute inset-0";
 
-/** زیرِ بوم: تصویرِ آسمان (با گرادیانِ جایگزین تا بارگذاری) و تیرگیِ آسمان در شب */
-export const SkyLayers = memo(function SkyLayers() {
+const SKY_GRADIENT = "linear-gradient(#64c3eb, #1c73af)";
+
+/**
+ * زیرِ بوم: تصویرِ آسمان (با گرادیانِ جایگزین تا بارگذاری) و تیرگیِ آسمان در شب.
+ * withImage=false پشتِ اسپلش/صفحه‌ی بارگذاری: آنجا تصویر دیده نمی‌شود و ۳۸KB از مسیرِ بحرانیِ
+ * بارگذاریِ اول کم می‌شود (P6.5)؛ با ورود به بازی تصویر روی همان گرادیان می‌نشیند.
+ */
+export const SkyLayers = memo(function SkyLayers({ withImage = true }: { withImage?: boolean }) {
   return (
     <>
-      <div aria-hidden className={`${LAYER} bg-cover bg-center`} style={{ backgroundImage: "url(/images/bg_sky.webp), linear-gradient(#64c3eb, #1c73af)" }} />
+      <div aria-hidden className={`${LAYER} bg-cover bg-center`} style={{ backgroundImage: withImage ? `url(/images/bg_sky.webp), ${SKY_GRADIENT}` : SKY_GRADIENT }} />
       <div aria-hidden data-fx="sky" className={LAYER} style={{ background: "rgb(5,15,40)", opacity: 0 }} />
     </>
   );

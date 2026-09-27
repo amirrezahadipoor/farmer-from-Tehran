@@ -11,8 +11,15 @@ import { ITEM_SVG } from "./art/itemIcons";
 export { portraitSvg, speakerSvg, npcSvg, workerSvg, type PortraitSpec } from "./art/portraits";
 
 /* ---------------------------------------------------------- lookups */
-export const uiSvg = (name: string) => wrap(UI_ICONS[name] || UI_ICONS.help);
-export const itemSvg = (id: string) => wrap(ITEM_SVG[id] || UI_ICONS.box);
+// رشته‌ی نهایی هر آیکون یک بار ساخته می‌شود (همان رشته برای React و کشِ بوم)
+const svgMemo = new Map<string, string>();
+const memoSvg = (key: string, make: () => string) => {
+  let s = svgMemo.get(key);
+  if (s === undefined) svgMemo.set(key, (s = make()));
+  return s;
+};
+export const uiSvg = (name: string) => memoSvg("ui:" + name, () => wrap(UI_ICONS[name] || UI_ICONS.help));
+export const itemSvg = (id: string) => memoSvg("item:" + id, () => wrap(ITEM_SVG[id] || UI_ICONS.box));
 export const hasItemIcon = (id: string) => !!ITEM_SVG[id];
 
 const TECH_ICON: Record<string, string> = {
@@ -57,6 +64,21 @@ export function drawIcon(ctx: CanvasRenderingContext2D, key: string, x: number, 
 export { EMOJI_RE, dropEmoji, stripEmoji } from "./noEmoji";
 
 /* ------------------------------------------------------------ React */
+/**
+ * React 19 پراپِ dangerouslySetInnerHTML را با «هویتِ شیء» مقایسه می‌کند، نه با رشته: شیءِ تازه در هر
+ * رندر یعنی innerHTML دوباره و پارسِ دوباره‌ی SVG — برای هر آیکونِ HUD چهار بار در ثانیه و در
+ * هیدریتِ اسپلش دو بار (P6.5، دیده‌شده در ردِ اجرا). برای هر رشته یک شیءِ ثابت نگه می‌داریم.
+ */
+const htmlProps = new Map<string, { __html: string }>();
+function htmlProp(html: string) {
+  let o = htmlProps.get(html);
+  if (!o) {
+    o = { __html: html };
+    htmlProps.set(html, o);
+  }
+  return o;
+}
+
 function Svg({ html, size, className, style, title }: { html: string; size: number | string; className?: string; style?: CSSProperties; title?: string }) {
   const px = typeof size === "number" ? `${size}px` : size;
   return (
@@ -66,7 +88,7 @@ function Svg({ html, size, className, style, title }: { html: string; size: numb
       aria-hidden={title ? undefined : true}
       className={`inline-block shrink-0 align-middle ${className || ""}`}
       style={{ width: px, height: px, ...style }}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={htmlProp(html)}
     />
   );
 }

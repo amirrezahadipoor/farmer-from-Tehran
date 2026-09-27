@@ -4,10 +4,12 @@
  * src/game/ui/common.tsx — اجزای مشترک رابط کاربری (P5.10)
  */
 
-import { useEffect, useRef } from "react";
 import type { Events, State } from "../logic";
-import { drawBuildingThumb } from "../render";
 import { Icon } from "../icons";
+import { faNum } from "../faNum";
+
+/** همان خروجیِ toLocaleString("fa-IR")، بی‌ICU و بی‌ساختنِ NumberFormat در هر رندر (P6.5)؛ اعشار هم می‌پذیرد */
+const fmtNum = (v: number) => faNum(v);
 
 export type PanelId =
   | "market"
@@ -76,7 +78,7 @@ export const btn =
 export const Coin = ({ v, size = 15 }: { v: number | string; size?: number }) => (
   <span className="inline-flex items-center gap-1">
     <Icon name="coin" size={size} />
-    {typeof v === "number" ? v.toLocaleString("fa-IR") : v}
+    {typeof v === "number" ? fmtNum(v) : v}
   </span>
 );
 
@@ -94,27 +96,6 @@ export function Spark({ data }: { data: number[] }) {
   );
 }
 
-export function BuildingThumb({ id, dim, size = 84 }: { id: string; dim?: boolean; size?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const cv = ref.current;
-    if (!cv) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = size * dpr;
-    cv.height = size * dpr;
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
-    const draw = () => {
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawBuildingThumb(ctx, id, size, size);
-    };
-    draw();
-    const t = setTimeout(draw, 250); // بعد از بارگذاری فونت/تصاویر
-    return () => clearTimeout(t);
-  }, [id, size]);
-  return <canvas ref={ref} aria-hidden="true" style={{ width: size, height: size }} className={`mx-auto block ${dim ? "opacity-40 grayscale" : ""}`} />;
-}
-
 export function LevelRing({ level, pct }: { level: number; pct: number }) {
   const r = 17,
     cc = 2 * Math.PI * r;
@@ -125,7 +106,7 @@ export function LevelRing({ level, pct }: { level: number; pct: number }) {
         <circle cx="20" cy="20" r={r} fill="none" stroke="#ffffff33" strokeWidth="4" />
         <circle cx="20" cy="20" r={r} fill="none" stroke="#a3e635" strokeWidth="4" strokeLinecap="round" strokeDasharray={cc} strokeDashoffset={cc * (1 - Math.min(1, pct))} />
       </svg>
-      <span className="relative text-sm font-black text-white">{level.toLocaleString("fa-IR")}</span>
+      <span className="relative text-sm font-black text-white">{fmtNum(level)}</span>
     </span>
   );
 }

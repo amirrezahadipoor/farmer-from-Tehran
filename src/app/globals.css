@@ -101,3 +101,10 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 @media (orientation: landscape) and (max-height: 520px) {
   .landscape-compact { max-height: 66vh !important; }
 }
+
+/* P6.5: HTMLِ ایستا هم اسپلش دارد هم صفحه‌ی بارگذاری؛ اسکریپتِ سرِ صفحه (layout.tsx) پیش از
+   اولین نقاشی data-boot را برای بازیکنِ برگشتی می‌گذارد و فقط پوسته‌ی درست دیده می‌شود */
+html[data-boot="back"] .boot-new,
+html:not([data-boot="back"]) .boot-back {
+  display: none;
+}

@@ -8,7 +8,7 @@
  *   • /api/*                       → شبکه‌ی مستقیم (صف آفلاین سمت اپ است)
  * پیام‌ها: SKIP_WAITING | PREFETCH (لیست URL برای گرم‌کردن کش تصاویر داستان)
  */
-const VERSION = "v1";
+const VERSION = "v2"; // v2 (P6.5): فونت‌های زیرمجموعه + نشانِ WebP
 const CORE = `gvf-core-${VERSION}`;
 const RUNTIME = `gvf-rt-${VERSION}`;
 const IMAGES = `gvf-img-${VERSION}`;
@@ -67,7 +67,7 @@ const IMAGE_RE = /\.(?:webp|avif|png|jpe?g|gif|svg|ico)$/i;
 /** تصاویری که برای داستان و منو لازم‌اند (هم‌نام با private/images). */
 const STORY_IMAGES = [
   "/images/bg_sky.webp",
-  "/images/logo_badge.png",
+  "/images/logo_badge.webp",
   "/images/story_office.webp",
   "/images/story_will.webp",
   "/images/story_farm.webp",
