@@ -70,6 +70,21 @@ describe.skipIf(!URL_)("Postgres واقعی", () => {
     expect((await post("p_fresh_db", A)).status).toBe(200);
     expect((await get("p_fresh_db", A)).status).toBe(200);
   });
+  it("مالکیت در خودِ نوشتن اتمی است: توکنِ دیگر هیچ ردیفی را بازنویسی نمی‌کند", async () => {
+    const { store } = await mk();
+    const hA = "a".repeat(64);
+    const hB = "b".repeat(64);
+    const s1 = JSON.parse(JSON.stringify(newState()));
+    expect(await store.put("p_race_row01", { ...s1, coins: 111 }, hA)).toBe(true);
+    expect(await store.put("p_race_row01", { ...s1, coins: 222 }, hB)).toBe(false);
+    const row = await store.get("p_race_row01");
+    expect(row?.tokenHash).toBe(hA);
+    expect((row?.data as { coins: number }).coins).toBe(111);
+    expect(await store.put("p_race_row01", { ...s1, coins: 333 }, hA)).toBe(true);
+    const [x, y] = await Promise.all([store.put("p_race_row02", s1, hA), store.put("p_race_row02", s1, hB)]);
+    expect([x, y].filter(Boolean)).toHaveLength(1);
+  });
+
   it("مورد ۳: کدِ انتقال روی Postgres اتمی مصرف می‌شود (دو دریافتِ هم‌زمان، یک برنده)", async () => {
     vi.resetModules();
     const { PgTransferStore } = await import("../src/server/transfer/store");

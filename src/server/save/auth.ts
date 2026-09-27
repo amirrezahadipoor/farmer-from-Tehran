@@ -23,9 +23,23 @@ export function tokenMatches(token: string, storedHash: string): boolean {
   return a.length === b.length && a.length > 0 && timingSafeEqual(a, b);
 }
 
-/** IP کلاینت برای محدودیتِ نرخ (پشت پراکسی: اولین مقدارِ x-forwarded-for) */
-export function clientIp(req: Request): string {
+/** شمارِ پراکسی‌های مطمئنِ جلوی سرور (Vercel یا یک nginx = ۱؛ CDN + nginx = ۲) */
+function trustedHops(): number {
+  const n = Number(process.env.TRUSTED_PROXY_HOPS ?? 1);
+  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 1;
+}
+
+/**
+ * IP کلاینت برای محدودیتِ نرخ. X-Forwarded-For را هر کلاینتی با مقدارِ دلخواه می‌فرستد و هر پراکسی فقط IPِ
+ * فرستنده‌اش را به تهِ فهرست اضافه می‌کند؛ پس اولین مقدار جعل‌پذیر است (با عوض‌کردنش سقفِ نرخ دور زده می‌شد)
+ * و مقدارِ درست n-امین از آخر است که n شمارِ پراکسی‌های مطمئن است.
+ */
+export function clientIp(req: Request, hops = trustedHops()): string {
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim().slice(0, 64) || "unknown";
+  if (fwd) {
+    const list = fwd.split(",").map((x) => x.trim()).filter(Boolean);
+    const ip = list[Math.max(0, list.length - hops)];
+    if (ip) return ip.slice(0, 64);
+  }
   return (req.headers.get("x-real-ip") || "unknown").slice(0, 64);
 }

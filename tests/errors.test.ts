@@ -107,7 +107,7 @@ describe("لاگِ سرور", () => {
 
   it("خطای پایگاه‌داده در سیو دیگر بی‌صدا نیست", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const store = { get: async () => { throw new Error("connection refused"); }, put: async () => undefined };
+    const store = { get: async () => { throw new Error("connection refused"); }, put: async () => true };
     const req = new Request("http://x/api/save?id=abc123", { headers: { "x-farm-token": "a".repeat(64) } });
     const res = await handleGet(req, { store, writeLimit: new RateLimiter(5, 1000), ipLimit: new RateLimiter(5, 1000) });
     expect((await res.json()).mode).toBe("offline");

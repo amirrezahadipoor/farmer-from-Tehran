@@ -79,6 +79,18 @@ describe("مالکیت با توکن", () => {
     expect((await post({ id: ID, data: save() }, A)).status).toBe(403);
   });
 
+  it("دو نوشتنِ اولِ هم‌زمان: فقط یکی مالک می‌شود (بررسیِ مالکیت در خودِ نوشتن اتمی است)", async () => {
+    // هر دو درخواست پیش از نوشتنِ دیگری «بی‌مالک» می‌بینند (همان مسابقه‌ای که خواندن-بعد-نوشتن نمی‌دید)
+    const realGet = store.get.bind(store);
+    store.get = async () => null;
+    expect((await post({ id: ID, data: { ...save(), coins: 111 } }, A)).status).toBe(200);
+    const lost = await post({ id: ID, data: { ...save(), coins: 222 } }, B);
+    expect(lost.status).toBe(403);
+    store.get = realGet;
+    expect(store.rows.get(ID)!.tokenHash).toBe(hashToken(A));
+    expect((store.rows.get(ID)!.data as { coins: number }).coins).toBe(111);
+  });
+
   it("شناسه‌ی نامعتبر → ۴۰۰؛ شناسه‌ی ناموجود → دادهِ خالی (نه خطا)", async () => {
     expect((await post({ id: "bad id!", data: save() })).status).toBe(400);
     expect((await post({ data: save() })).status).toBe(400);
@@ -193,7 +205,10 @@ describe("ابزارهای احراز", () => {
     expect(tokenMatches(A, hashToken(A))).toBe(true);
     expect(tokenMatches(B, hashToken(A))).toBe(false);
     expect(tokenMatches(A, "")).toBe(false);
-    expect(clientIp(new Request("http://x", { headers: { "x-forwarded-for": "1.2.3.4, 5.6.7.8" } }))).toBe("1.2.3.4");
+    // اولین مقدار را خودِ کلاینت می‌فرستد (جعل‌پذیر)؛ مقدارِ درست را پراکسیِ مطمئن به ته اضافه کرده است
+    expect(clientIp(new Request("http://x", { headers: { "x-forwarded-for": "6.6.6.6, 5.6.7.8" } }))).toBe("5.6.7.8");
+    expect(clientIp(new Request("http://x", { headers: { "x-forwarded-for": "6.6.6.6, 1.2.3.4, 10.0.0.2" } }), 2)).toBe("1.2.3.4");
+    expect(clientIp(new Request("http://x", { headers: { "x-forwarded-for": "1.2.3.4" } }), 3)).toBe("1.2.3.4");
     expect(clientIp(new Request("http://x", { headers: { "x-real-ip": "9.9.9.9" } }))).toBe("9.9.9.9");
     expect(clientIp(new Request("http://x"))).toBe("unknown");
   });

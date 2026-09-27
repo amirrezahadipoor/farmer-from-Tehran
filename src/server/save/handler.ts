@@ -91,7 +91,8 @@ export async function handlePost(req: Request, deps: SaveDeps): Promise<Response
   try {
     const row = await deps.store.get(id);
     if (row?.tokenHash && !tokenMatches(token, row.tokenHash)) return json({ ok: false, mode: "cloud", error: "forbidden" }, 403);
-    await deps.store.put(id, clean, row?.tokenHash ?? hashToken(token));
+    // مالکیت در خودِ نوشتن هم اتمی بررسی می‌شود: اگر دستگاهِ دیگری در همین فاصله زودتر نوشت، این یکی ۴۰۳ است
+    if (!(await deps.store.put(id, clean, hashToken(token)))) return json({ ok: false, mode: "cloud", error: "forbidden" }, 403);
     return json({ ok: true, mode: "cloud" });
   } catch (e) {
     logServerError("save.post", e);
