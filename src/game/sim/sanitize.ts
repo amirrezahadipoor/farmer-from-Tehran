@@ -138,6 +138,13 @@ export function sanitizeSave(raw: unknown): State | null {
   s.orders = Array.isArray(s.orders) ? s.orders.filter((o) => isObj(o)).slice(0, 50) : [];
   s.workers = Array.isArray(s.workers) ? s.workers.filter((w) => isObj(w)).slice(0, 50) : [];
   if (!isObj(s.achievements)) s.achievements = {};
+  // V.5: فستیوال فصلی — ساختار خراب یعنی «بدون فستیوال» (بازی هرگز قفل نمی‌شود)
+  if (!isObj(s.fest)) s.fest = undefined;
+  else {
+    const f = s.fest as Record<string, unknown>;
+    const choice = ["invest", "feast", "rest"].includes(String(f.choice)) ? (f.choice as "invest" | "feast" | "rest") : null;
+    s.fest = { idx: intOr(f.idx, 0, 0, 3), day: intOr(f.day, 1, 1, 1e6), choice };
+  }
   s.achievements = Object.fromEntries(Object.entries(s.achievements).filter(([, v]) => v === true));
 
   // ── داستان: اگر مرحله/صحنه بیرون از محدوده باشد، به ابتدای همان فصل برمی‌گردد

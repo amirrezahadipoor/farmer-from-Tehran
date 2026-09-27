@@ -126,6 +126,23 @@ export function drawAmbient(ctx: CanvasRenderingContext2D, s: State, now: number
     ctx.lineWidth = 1.8;
     ctx.stroke(sky);
   }
+
+  // V.5: شبِ روز فستیوال — ریسه‌ی فانوس‌های گرم دور دهکده چشمک می‌زند
+  if (s.fest && s.day === s.fest.day && isNight(L.hour)) {
+    for (let i = 0; i < 12; i++) {
+      const p = hash(i, 7);
+      const x = C.x + (p - 0.5) * 460;
+      const y = C.y - 30 + (hash(i, 8) - 0.5) * 220;
+      const flicker = 0.7 + 0.3 * Math.sin(now * 3 + i * 2.3);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 14);
+      g.addColorStop(0, `rgba(255,200,90,${(0.5 * flicker).toFixed(2)})`);
+      g.addColorStop(1, "rgba(255,200,90,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 14, y - 14, 28, 28);
+      ctx.fillStyle = `rgba(255,235,170,${(0.9 * flicker).toFixed(2)})`;
+      ctx.fillRect(x - 1.5, y - 2, 3, 4);
+    }
+  }
 }
 
 /** دودِ آرام از دودکش: سه پفِ بالا‌رونده در یک مسیر — برای خانه/آسیاب/نانوایی */

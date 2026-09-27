@@ -9,6 +9,7 @@ import {
 } from "./state";
 import { genOrder, price, addXp } from "./economy";
 import { workshopTimeFactor } from "./legacy";
+import { proposeFestival, festActive } from "./festival";
 import { harvest, plant, collect, queueRecipe } from "./actions";
 
 /** کارگاه‌های دامی (مرغداری، گاوداری، …) — هدفِ دامپزشک، دامپروری پیشرفته و دامدار مهربان */
@@ -70,11 +71,14 @@ export function tick(s: State, dt: number, ev: Events) {
     ev.toast(s.currentEvent.text, "lvl");
   }
   if (s.currentEvent && s.time >= s.currentEvent.endsAt) { s.currentEvent = null; ev.toast("رویداد فصلی دهکده به پایان رسید"); }
+  // V.5: روز اول هر فصل، فستیوال دهکده پیشنهاد می‌شود (یک‌بار در هر فصل)
+  if (proposeFestival(s)) ev.toast(`فستیوالِ فصل ${SEASONS[s.seasonIndex].name} رسید — یکی از سه راه را برگزین`, "lvl");
   const season = SEASONS[s.seasonIndex];
   const drought = s.currentEvent?.type === "drought";
   // خشکسالی خشک‌شدن را تند و «شبکه‌ی قنات» کُند می‌کند (رطوبت ۵۰٪ ماندگارتر)
   const dryRate = (drought ? DROUGHT.dry : 1) / (hasTech(s, "qanat_net") ? 1.5 : 1);
   let gMult = season.growthRate;
+  if (festActive(s, "rest")) gMult *= 1.1; // V.5: آرامش فستیوال
   if (s.currentEvent?.type === "bountiful_harvest") gMult *= 1.2;
   if (s.weather === "heatwave") gMult *= 0.9;
   if (s.weather === "snow") gMult *= 0.82;
