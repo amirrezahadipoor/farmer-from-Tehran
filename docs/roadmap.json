@@ -50,7 +50,8 @@
     "key": "هدرهای امنیتی",
     "from": "۰ از ۵",
     "to": "۵ از ۵",
-    "current": "۰ از ۵ (و X-Powered-By فرستاده می‌شود)"
+    "current": "۵ از ۵ (به‌علاوه‌ی COOP و HSTS)؛ X-Powered-By خاموش",
+    "met": true
    },
    {
     "key": "اسکرین‌شات در گیت",
@@ -121,8 +122,9 @@
      "id": "6",
      "title": "هدرهای امنیتی و حذفِ ابزارِ تست از نسخه‌ی نهایی",
      "dod": "CSP، frame-ancestors، nosniff، Referrer-Policy و Permissions-Policy و حذفِ X-Powered-By؛ قلابِ window.__game فقط در بیلدِ تست؛ تستِ هدرها در CI؛ Lighthouse ≥ ۹۵ حفظ شود",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 31,
+     "evidence": "src/security.ts یک منبع برای هر دو انتشار: CSP (بدونِ هیچ مبدأ بیرونی، بدونِ eval در production، object-src none، base-uri، form-action، frame-ancestors none)، X-Frame-Options DENY، nosniff، Referrer-Policy و Permissions-Policy (به‌علاوه‌ی COOP و HSTS) روی سند، SW و API؛ فایل‌های ایستا فقط nosniff؛ X-Powered-By خاموش؛ دموی ایستا: CSP و referrer به‌صورتِ meta. قلابِ window.__game فقط با GVF_TEST_HOOKS=1 (توسعه یا بیلدِ browser-test)؛ در بیلدِ منتشرشده کلِ کدش حذف می‌شود و lighthouse.yml اگر __game در چانکی بماند قرمز می‌شود. شاهد: tests/security.test.ts (۶ تست)، e2e/security.spec.ts (هدرهای واقعی + بازی بی‌نقضِ CSP در ۲ پروفایل) و تستِ دودِ دمو (meta CSP، بی‌قلاب، بی‌نقض) — CI سبز روی b55d5ad؛ Lighthouse میانه‌ی ۹۶ و ۹۷ در دو اجرا (حدِ ۹۵ حفظ شد)"
     },
     {
      "id": "7",

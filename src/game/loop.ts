@@ -17,6 +17,7 @@ import { applyScreenFx, render, renderStats, screenFx } from "./render";
 import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
+import { raiseFatal, reportError } from "./errors";
 
 const MIN_DPR = 0.6;
 const maxDpr = () => Math.min(2, window.devicePixelRatio || 1);
@@ -170,7 +171,23 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     }
   };
 
+  // مورد ۴: فریمِ بعد اول زمان‌بندی می‌شود تا یک فریمِ خراب بازی را یخ نزند؛ خطا ثبت می‌شود و اگر
+  // پشتِ‌سرِهم تکرار شد (وضعیتِ خراب)، صفحه‌ی بازیابی می‌آید
+  let failures = 0;
   const loop = (t: number) => {
+    raf = requestAnimationFrame(loop);
+    try {
+      frame(t);
+      failures = 0;
+    } catch (e) {
+      reportError(e, "loop");
+      if (++failures >= 30) {
+        cancelAnimationFrame(raf);
+        raiseFatal(e);
+      }
+    }
+  };
+  const frame = (t: number) => {
     adaptResolution(t);
     const dt = Math.min(0.1, (t - last) / 1000);
     last = t;
@@ -203,7 +220,6 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
         game.bump();
       }
     }
-    raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
   return () => {
