@@ -12,6 +12,7 @@ import { normalizeQuests } from "./quests";
 import { normalizeGenerations } from "./legacy";
 import { normalizeLineage } from "./lineage";
 import { ITEMS, N, CH, WEATHER_TYPES } from "../data";
+import { asGender } from "../gender";
 
 const NCH = Math.ceil(N / CH);
 
@@ -142,6 +143,7 @@ export function sanitizeSave(raw: unknown): State | null {
   // ── داستان: اگر مرحله/صحنه بیرون از محدوده باشد، به ابتدای همان فصل برمی‌گردد
   if (!isObj(s.story)) s.story = newStoryState();
   s.story.name = typeof s.story.name === "string" ? s.story.name.slice(0, 24) : "";
+  s.story.gender = asGender(s.story.gender); // مورد ۷: سیوِ قدیمی = خطابِ خنثی
   s.story.chapter = intOr(s.story.chapter, 0, 0, 99);
   s.story.sceneIdx = intOr(s.story.sceneIdx, 0, 0, 999);
   if (s.story.phase !== "scenes" && s.story.phase !== "goal" && s.story.phase !== "end") s.story.phase = "scenes";

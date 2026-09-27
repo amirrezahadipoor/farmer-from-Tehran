@@ -24,8 +24,13 @@ const BACKUP_KEY = "farm_save_bak";
  */
 async function writeStorageOutsideGame(page: Page, entries: Record<string, string>) {
   await page.goto("/api/health", { waitUntil: "load" });
-  await page.evaluate((e) => {
+  await page.evaluate(async (e) => {
     for (const [k, v] of Object.entries(e)) localStorage.setItem(k, v);
+    // سناریوی سیوِ فقط-localStorage (بازیکنِ نسخه‌ی پیش از مورد ۳): نسخه‌ی سالمِ IndexedDB این‌جا عمداً نیست
+    await new Promise<void>((resolve) => {
+      const q = indexedDB.deleteDatabase("golden-valley");
+      q.onsuccess = q.onerror = q.onblocked = () => resolve();
+    });
   }, entries);
 }
 

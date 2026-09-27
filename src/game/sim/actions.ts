@@ -9,6 +9,7 @@ import {
 } from "./state";
 import { addInv, addXp, recipeLock, updateContract } from "./economy";
 import { seedDiscount } from "./legacy";
+import { asGender, type Gender } from "../gender";
 
 export function harvest(s: State, x: number, y: number, ev: Events, silent = false): boolean {
   const t = s.tiles[idx(x, y)];
@@ -325,8 +326,9 @@ export function setStoryShown(s: State, shown: boolean) {
 }
 
 /** ثبت نام بازیکن (برای داستان و سند دره). */
-export function setPlayerName(s: State, name: string) {
+export function setPlayerName(s: State, name: string, gender?: Gender) {
   s.story.name = name.trim().slice(0, 24);
+  if (gender) s.story.gender = asGender(gender); // مورد ۷
 }
 
 export function unlockTech(s: State, id: string, ev: Events) {

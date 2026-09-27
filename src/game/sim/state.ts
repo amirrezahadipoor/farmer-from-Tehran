@@ -4,6 +4,7 @@
  */
 import { ITEMS, N, CH, WorkerKind, CONTRACTS, WeatherType, EventType } from "../data";
 import { stripEmoji } from "../noEmoji";
+import type { Gender } from "../gender";
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
 export interface Tile {
   k: TileKind; v: number; crop?: string; g?: number; wet?: boolean; fert?: boolean;
@@ -26,7 +27,7 @@ export interface State {
   rep: number; techs: string[]; skills: string[];
   achievements: Record<string, boolean>; contracts: ContractState[];
   stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; };
-  story: { name: string; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
+  story: { name: string; gender: Gender; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
   /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
   xpAcc?: number;
@@ -39,7 +40,7 @@ export interface State {
 }
 
 export function newStoryState() {
-  return { name: "", chapter: 0, phase: "scenes" as const, sceneIdx: 0, done: false, shown: true, completed: [] as string[] };
+  return { name: "", gender: "n" as Gender, chapter: 0, phase: "scenes" as const, sceneIdx: 0, done: false, shown: true, completed: [] as string[] };
 }
 
 /**

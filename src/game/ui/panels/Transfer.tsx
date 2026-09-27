@@ -11,7 +11,7 @@ import { STATIC_BUILD } from "../../base";
 import { requestPersistence, type PersistState } from "../../persist";
 import { TRANSFER_ERRORS, adoptSave, createTransferCode, decodeSave, encodeSave, redeemTransferCode } from "../../transfer";
 import { formatCode } from "../../transferCode";
-import { game } from "../../store";
+import { game, resetRuntime } from "../../store";
 import { btn, type PanelProps } from "../common";
 
 const card = "rounded-2xl bg-white p-3 shadow";
@@ -85,6 +85,10 @@ export function TransferPanel({ ui }: PanelProps) {
 
   const confirmImport = async () => {
     if (!pending) return;
+    // حافظه‌ی بازی هم همین مزرعه می‌شود: ذخیره‌ی خودکارِ لحظه‌ی خروج (reload) باید مزرعه‌ی تازه را بنویسد،
+    // نه وضعیتِ قبلی را با زمانِ جدیدتر روی آن
+    resetRuntime();
+    game.set(pending);
     await adoptSave(pending);
     location.reload();
   };

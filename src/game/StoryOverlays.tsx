@@ -20,7 +20,7 @@ export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
       <StoryModal
         s={s}
         onAdvance={() => advanceStory(s, ev)}
-        onName={(n) => setPlayerName(s, n)}
+        onName={(n, g) => setPlayerName(s, n, g)}
         onClose={() => {
           setStoryShown(s, false);
           refresh();
@@ -34,7 +34,7 @@ export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
       <LineageModal
         s={s}
         onAdvance={() => advanceLineage(s, ev)}
-        onName={(n) => nameHeir(s, n)}
+        onName={(n, g) => nameHeir(s, n, g)}
         onClose={() => {
           setLineageShown(s, false);
           refresh();

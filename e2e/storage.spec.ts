@@ -62,7 +62,10 @@ test.describe("ماندگاریِ سیو و انتقال", () => {
       }
     });
     await enterGame(page);
-    await expect.poll(() => page.evaluate(() => (window as unknown as { __persistAsked: number }).__persistAsked)).toBeGreaterThan(0);
+    // مرورگرِ بی‌navigator.storage.persist (مثلِ WebKitِ آزمون) را برنامه هم نادیده می‌گیرد
+    if (await page.evaluate(() => typeof navigator.storage?.persist === "function")) {
+      await expect.poll(() => page.evaluate(() => (window as unknown as { __persistAsked: number }).__persistAsked)).toBeGreaterThan(0);
+    }
 
     await page.evaluate(async () => {
       const game = (window as unknown as { __game: G }).__game;
