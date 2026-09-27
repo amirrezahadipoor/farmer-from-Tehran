@@ -164,7 +164,8 @@ for (const p of data.phases) {
   md += `**پیشرفت:** \`${bar(phasePct(p), 14)}\` (${fa(d)}/${fa(p.items.length)})\n\n`;
   md += `| وضعیت | # | کار | معیار پذیرش (DoD) | شاهد | پوش |\n|:--:|:--:|---|---|---|:--:|\n`;
   for (const it of p.items) {
-    const ev = it.evidence ? it.evidence.replace(/\|/g, "/") : "—";
+    const rawEv = Array.isArray(it.evidence) ? it.evidence.join("؛ ") : it.evidence;
+    const ev = rawEv ? String(rawEv).replace(/\|/g, "/") : "—";
     md += `| ${STATUS[it.status] || STATUS.todo} | ${fa(it.id)} | ${clean(it.title)} | ${clean(it.dod)} | ${clean(ev)} | ${it.push ? "#" + fa(it.push) : "—"} |\n`;
   }
   md += `\n`;
