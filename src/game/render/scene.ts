@@ -291,7 +291,8 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     }
   }
 
-  if (L.dark > 0.12) { // نورِ گرمِ خانه‌ها در شب: یک اسپرایتِ هاله به‌جای گرادیانِ تازه برای هر ساختمان
+  const hq = v.w >= 700 || (v.maxDpr ?? 2) - v.dpr < 0.05;
+  if (L.dark > 0.12 && hq) { // نورِ گرمِ خانه‌ها در شب: یک اسپرایتِ هاله به‌جای گرادیانِ تازه برای هر ساختمان
     ctx.globalCompositeOperation = "lighter";
     ctx.globalAlpha = L.dark * 0.6;
     const glow = glowSprite("rgba(255,190,90,1)", "rgba(255,170,70,0)");
@@ -305,7 +306,7 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "source-over";
   }
-  if (L.dusk > 0.02 && !SL.night) {
+  if (L.dusk > 0.02 && !SL.night && hq) {
     const sb = skyBodies(L.p).sun;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const cx = (sb.x / 100) * w, cy = (sb.y / 100) * h;
