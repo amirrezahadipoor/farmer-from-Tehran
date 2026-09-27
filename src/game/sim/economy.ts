@@ -135,6 +135,7 @@ export function addXp(s: State, n: number, ev: Events) {
   if (hasSkill(s, "zen_master")) m += 0.10;
   if (hasSkill(s, "crop_lord")) m += 0.10;
   m += s.prestige * 0.2;
+  if (s.level >= 10 && s.level < 20) m += 0.15; // V.7: کاهش گرایند میانه‌ی بازی
   s.xp += Math.round(n * m);
   let lvlGained = 0;
   while (s.xp >= xpFor(s.level)) {

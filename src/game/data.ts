@@ -13,7 +13,7 @@ export interface Recipe { out: string; n: number; inp: Record<string, number>; t
 export interface BuildingDef {
   id: string; name: string; cost: number; lvl: number; desc: string;
   recipes: Recipe[]; wall: string; roof: string; limit?: number; isAuto?: boolean;
-  radius?: number; draw?: "coop"|"barn"|"sheep"|"pigpen"|"beehive"|"mill"|"silo"|"sprinkler"|"mega_sprinkler"|"harvester"|"auto_planter"|"auto_fertilizer"|"bakery"|"dairy"|"press"|"sweet_shop"|"feedmill"|"composter"|"well"|"greenhouse"|"statue"|"windmill_deco"|"pergola"|"flowerbed"|"pond_deco"|"bamboo"|"stone_wall"|"gate"|"fountain"|"gazebo"|"sawmill"|"quarry"|"stonemason"|"workshop"|"qanat"|"caravanserai"|"tiled_pool"|"windcatcher"|"tiled_portal"|"scarecrow"|"seesaw"|"haystack"|"lantern"|"flower_arch"|"rock_spring";
+  radius?: number; draw?: "coop"|"barn"|"sheep"|"pigpen"|"beehive"|"mill"|"silo"|"sprinkler"|"mega_sprinkler"|"harvester"|"auto_planter"|"auto_fertilizer"|"bakery"|"dairy"|"press"|"sweet_shop"|"feedmill"|"composter"|"well"|"greenhouse"|"statue"|"windmill_deco"|"pergola"|"flowerbed"|"pond_deco"|"bamboo"|"stone_wall"|"gate"|"fountain"|"gazebo"|"sawmill"|"quarry"|"stonemason"|"workshop"|"qanat"|"caravanserai"|"tiled_pool"|"windcatcher"|"tiled_portal"|"scarecrow"|"seesaw"|"haystack"|"lantern"|"flower_arch"|"rock_spring"|"golden_tree";
   isDecor?: boolean; flowerColor?: string; pondColor?: string;
 }
 export interface TechItem { id: string; name: string; cost: number; desc: string; req?: string; /** سطحِ لازم برای تحقیق */ lvl?: number; }
@@ -202,6 +202,9 @@ export const BUILDINGS: BuildingDef[] = [
   { id: "lantern", name: "فانوس باغ", cost: 900, lvl: 7, desc: "شب‌ها مسیر جوی را روشن می‌کند و کرم‌های شب‌تاب را می‌خواند.", wall: "#37474f", roof: "#ffd54f", draw: "lantern", isDecor: true, recipes: [] },
   { id: "flower_arch", name: "طاق گل", cost: 1400, lvl: 8, desc: "طاقِ چوبی پوشیده از رز؛ دروازه‌ی عکسِ هر عروسیِ ده.", wall: "#6d4c41", roof: "#ec407a", draw: "flower_arch", isDecor: true, recipes: [] },
   { id: "rock_spring", name: "آب‌سنگ", cost: 2200, lvl: 10, desc: "چشمه‌ای که از دلِ سنگ می‌جهد؛ صدای آب، آرامشِ باغ.", wall: "#78909c", roof: "#4fc3f7", draw: "rock_spring", isDecor: true, recipes: [] },
+  { id: "mirror_pool", name: "حوض آینه‌ها", cost: 20000, lvl: 18, desc: "آبِ آرامش مثل آینه، آسمانِ دره را نگه می‌دارد. (چاهِ سکه‌ی افسانه‌ای)", wall: "#26a69a", roof: "#4dd0e1", draw: "tiled_pool", isDecor: true, limit: 1, recipes: [] },
+  { id: "golden_tree", name: "درخت زرین دره", cost: 30000, lvl: 20, desc: "برگ‌های طلایی‌اش شب مثل فانوس می‌درخشند؛ یادگارِ آبادانی. (چاهِ سکه‌ی افسانه‌ای)", wall: "#fbc02d", roof: "#f57f17", draw: "golden_tree", isDecor: true, limit: 1, recipes: [] },
+  { id: "valley_portal", name: "سردر زرین دره", cost: 50000, lvl: 22, desc: "سردرِ زرینِ کاشی؛ تنها برای کسی که دره را به رویا رساند. (چاهِ سکه‌ی افسانه‌ای)", wall: "#1e88e5", roof: "#fdd835", draw: "tiled_portal", isDecor: true, limit: 1, recipes: [] },
 ];
 
 export const BMAP: Record<string, BuildingDef> = Object.fromEntries(BUILDINGS.map((b) => [b.id, b]));

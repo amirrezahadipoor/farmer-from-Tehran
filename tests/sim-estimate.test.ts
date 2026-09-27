@@ -1,7 +1,7 @@
-import { it } from "vitest";
+import { it, expect } from "vitest";
 import {
   newState, tick, harvest, plant, collect, sell, queueRecipe, unlockTech, learnSkill,
-  fulfill, claimContract, hire, toolAction,
+  fulfill, claimContract, hire, toolAction, prestigeCoins,
 } from "../src/game/logic";
 import { BMAP, CROPS, CONTRACTS, TECH_TREE, SKILLS, xpFor, DAY_LEN, N } from "../src/game/data";
 import type { State, Events } from "../src/game/logic";
@@ -99,15 +99,22 @@ it("bot plays to prestige — timing estimate", () => {
     if (t12 < 0 && s.level >= 12) t12 = s.time;
     if (t20 < 0 && s.level >= 20) t20 = s.time;
     if (t10k < 0 && s.coins >= 10000) t10k = s.time;
-    if (s.level >= 20 && s.coins >= 10000) break;
+    if (s.level >= 20 && s.coins >= prestigeCoins(s)) break; // V.7: آستانه‌ی پویا
   }
   const h = (t: number) => (t / 3600).toFixed(2);
+  // V.7: معیارهای رضایت — در هر اجرا در لاگ ثبت می‌شوند
+  const hours = s.time / 3600;
+  const ratio = s.coins / prestigeCoins(s);
+  expect(hours).toBeGreaterThanOrEqual(0.5);
+  expect(hours).toBeLessThanOrEqual(1.5);
+  expect(ratio).toBeLessThanOrEqual(5);
   console.log("SIM RESULT:", JSON.stringify({
-    reachedPrestige: s.level >= 20 && s.coins >= 10000,
+    reachedPrestige: s.level >= 20 && s.coins >= prestigeCoins(s),
     timeToPrestigeHours: h(s.time),
     timeToLevel12Hours: h(t12),
     timeToLevel20Hours: h(t20),
     timeTo10kCoinsHours: h(t10k),
+    coinsAtPrestige: s.coins, threshold: prestigeCoins(s), ratio: +ratio.toFixed(2),
     final: { level: s.level, coins: s.coins, day: s.day, harvested: s.stats.harvested, produced: s.stats.produced, orders: s.stats.orders, earned: s.stats.earned },
   }));
   // xp curve sanity for reporting

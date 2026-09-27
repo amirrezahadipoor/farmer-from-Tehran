@@ -29,6 +29,8 @@ export interface State {
   stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; };
   story: { name: string; gender: Gender; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
+  /** V.7: روزِ آخرین پاداشِ اولین برداشت */
+  bonusDay?: number;
   /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
   xpAcc?: number;
   /** اهداف روزانه/هفتگی، زنجیره و نشان‌ها (P6.2) — با اولین تیکِ روز ساخته می‌شود */

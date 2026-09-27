@@ -24,6 +24,12 @@ export function harvest(s: State, x: number, y: number, ev: Events, silent = fal
   const got = addInv(s, outId, n);
   if (got === 0) { if (!silent) ev.toast("انبار پر است! محصولات را بفروشید یا سیلو بسازید", "err"); return false; }
   s.stats.harvested += got;
+  if ((s.bonusDay ?? 0) !== s.day) { // V.7: پاداش «اولین برداشت روز»
+    s.bonusDay = s.day;
+    const b = 20 + s.level * 5;
+    s.coins += b; s.stats.earned += b;
+    ev.toast(`اولین برداشت روز: +${fmt(b)} سکه`, "ok");
+  }
   ev.fx(x, y, `+${fmt(got)}`, "#fff", c.color, `item:${outId}`);
   addXp(s, c.xp, ev);
   updateContract(s, "harvest", got, ev);

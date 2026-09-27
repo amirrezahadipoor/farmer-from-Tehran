@@ -286,3 +286,33 @@ describe("قواعد پایه — هیچ ابزاری بی‌هزینه معجز
     expect(s.coins).toBeGreaterThanOrEqual(0);
   });
 });
+
+// ─── V.7: پاداش «اولین برداشت روز» ─────────────────────────────────────
+describe("پاداش اولین برداشت روز", () => {
+  it("فقط اولین برداشتِ هر روز پاداش می‌دهد", () => {
+    const s = newState();
+    s.tiles[147] = { k: "grass", v: 0, crop: "tomato", g: 1 }; // (3,4) در نقشه‌ی ۳۶
+    s.tiles[148] = { k: "grass", v: 0, crop: "tomato", g: 1 }; // (4,4)
+    const toasts: string[] = [];
+    const ev2: Events = { toast: (msg) => { toasts.push(msg); }, fx: () => {}, sound: () => {} };
+    const before = s.coins;
+    expect(harvest(s, 3, 4, ev2)).toBe(true);
+    expect(harvest(s, 4, 4, ev2)).toBe(true);
+    expect(toasts.filter((m) => m.includes("اولین برداشت روز"))).toHaveLength(1);
+    const b = 20 + s.level * 5;
+    expect(s.bonusDay).toBe(s.day);
+    expect(s.coins).toBeGreaterThanOrEqual(before + b);
+  });
+  it("روز بعد دوباره پاداش می‌دهد", () => {
+    const s = newState();
+    s.tiles[147] = { k: "grass", v: 0, crop: "tomato", g: 1 }; // (3,4)
+    const toasts: string[] = [];
+    const ev2: Events = { toast: (msg) => { toasts.push(msg); }, fx: () => {}, sound: () => {} };
+    expect(harvest(s, 3, 4, ev2)).toBe(true);
+    const bonusOf = (m: string) => m.includes("اولین برداشت روز");
+    expect(toasts.filter(bonusOf)).toHaveLength(1);
+    s.day += 1; s.tiles[147] = { k: "grass", v: 0, crop: "tomato", g: 1 };
+    expect(harvest(s, 3, 4, ev2)).toBe(true);
+    expect(toasts.filter(bonusOf)).toHaveLength(2);
+  });
+});

@@ -10,6 +10,7 @@ import { fmt } from "../../data";
 import {
   INHERIT_SHARE,
   PRESTIGE_COINS,
+  prestigeCoins,
   PRESTIGE_LEVEL,
   canPrestige,
   doPrestige,
@@ -85,7 +86,7 @@ export function LegacySection({ s, ui }: PanelProps) {
         }}
         className={`${btn} min-h-11 w-full text-sm text-white ${arm ? "bg-red-600" : "bg-gradient-to-r from-amber-500 to-yellow-600"}`}
       >
-        {!ready ? `نیاز: سطح ${fmt(PRESTIGE_LEVEL)} و ${fmt(PRESTIGE_COINS)} سکه` : arm ? "مطمئنی؟ آغاز نسل تازه" : "آغاز تناسخ"}
+        {!ready ? `نیاز: سطح ${fmt(PRESTIGE_LEVEL)} و ${fmt(prestigeCoins(s))} سکه` : arm ? "مطمئنی؟ آغاز نسل تازه" : "آغاز تناسخ"}
       </button>
 
       <div>
