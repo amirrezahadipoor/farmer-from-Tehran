@@ -51,7 +51,7 @@ beforeAll(async () => {
   nature = await import("../src/game/render/nature");
 });
 
-const view = () => ({ w: 412, h: 839, dpr: 1, cam: { x: 0, y: -14, z: 0.6 }, hover: null, tool: "hand", arg: "" });
+const view = (): import("../src/game/render").View => ({ w: 412, h: 839, dpr: 1, cam: { x: 0, y: -14, z: 0.6 }, hover: null, tool: "hand", arg: "" });
 function frameOf(s: State, now: number, v = view()) {
   for (const k of Object.keys(frame)) delete frame[k];
   const c = { width: 412, height: 839 };
@@ -230,5 +230,18 @@ describe("A.6 — ماسکِ آب برای شیدرِ SDF", () => {
     expect(cv).not.toBeNull();
     expect(cv!.width).toBe(256);
     expect(cv!.height).toBe(128);
+  });
+});
+
+describe("A.8 — ذره‌های آب‌وهوا روی GPU", () => {
+  it("با پرچمِ gpu، مسیرِ ۲بعدیِ ذره‌ها حذف می‌شود (باران: بدونِ stroke اضافه)", () => {
+    const s = newState();
+    s.weather = "rain";
+    s.time = 120;
+    const cpu = frameOf(s, 1, { ...view(), reduced: false });
+    const gpu = frameOf(s, 1.01, { ...view(), reduced: false, gpu: true });
+    expect(gpu.stroke || 0).toBeLessThan(cpu.stroke || 0);
+    const red = frameOf(s, 1.02, { ...view(), reduced: true });
+    expect(red.stroke || 0).toBe(gpu.stroke || 0);
   });
 });

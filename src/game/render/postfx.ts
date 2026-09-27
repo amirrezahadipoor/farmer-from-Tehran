@@ -32,7 +32,7 @@ uniform sampler2D uWaterTex;
 uniform float uFog;
 uniform float uGrade;
 uniform float uWaterOn;
-uniform float uRain;
+uniform vec3 uPart;
 uniform float uTime;
 uniform vec4 uCam;
 uniform vec2 uScreen;
@@ -70,10 +70,33 @@ void main() {
     float caust = smoothstep(0.45, 0.95, 0.5 + 0.5 * (w1 * 0.6 + w2 * 0.4));
     float spec = smoothstep(0.9, 1.0, 0.5 + 0.5 * sin(world.x * 0.33 - t * 2.7) * sin(world.y * 0.41 + t * 2.1));
     vec2 cell = fract(world * 0.06) - 0.5;
-    float ripple = uRain * max(sin(length(cell) * 34.0 - t * 5.0), 0.0) * smoothstep(0.5, 0.12, length(cell)) * 0.5;
+    float ripple = uPart.x * max(sin(length(cell) * 34.0 - t * 5.0), 0.0) * smoothstep(0.5, 0.12, length(cell)) * 0.5;
     vec3 add = vec3(0.06, 0.26, 0.32) * caust + vec3(0.85, 0.95, 1.0) * spec * 0.30 + vec3(0.30, 0.45, 0.50) * ripple;
     c.rgb = mix(c.rgb, c.rgb * 0.86 + add, m);
   }
+  vec3 part = vec3(0.0);
+  if (uPart.x > 0.0) {
+    vec2 rp = vec2(vUv.x * 46.0, vUv.y * 9.0 - uTime * 2.6);
+    vec2 gi = floor(rp);
+    vec2 gf = fract(rp);
+    float rn = fract(sin(dot(gi, vec2(41.7, 67.3))) * 43758.5453);
+    float lx = 0.15 + 0.7 * fract(rn * 7.31);
+    float streak = step(0.42, rn) * smoothstep(0.10, 0.02, abs(gf.x - lx)) * smoothstep(0.85, 0.15, gf.y) * smoothstep(0.05, 0.25, gf.y);
+    part += vec3(0.72, 0.85, 1.0) * streak * 0.40 * uPart.x;
+  }
+  if (uPart.y > 0.0) {
+    vec2 sp = vec2(vUv.x * 60.0 + sin(uTime * 0.7 + vUv.y * 9.0) * 0.6, vUv.y * 34.0 - uTime * 0.55);
+    vec2 gi = floor(sp);
+    vec2 gf = fract(sp);
+    float rn = fract(sin(dot(gi, vec2(13.7, 91.1))) * 43758.5453);
+    float d = length(gf - vec2(0.2 + 0.6 * fract(rn * 3.7), 0.2 + 0.6 * fract(rn * 5.3)));
+    part += vec3(1.0) * step(0.55, rn) * smoothstep(0.16, 0.05, d) * 0.55 * uPart.y;
+  }
+  if (uPart.z > 0.0) {
+    float yw = sin(vUv.y * 90.0 + uTime * 1.6 + sin(vUv.x * 7.0 + uTime) * 2.0);
+    part += vec3(1.0, 0.7, 0.3) * smoothstep(0.96, 1.0, yw) * 0.10 * uPart.z;
+  }
+  c.rgb += part;
   // 1) filmic grade: soft desaturation + gentle contrast
   float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
   c.rgb = mix(c.rgb, vec3(l), 0.06 * uGrade);
@@ -97,7 +120,7 @@ export interface PostFX {
   setGrade: (v: number) => void;
   setFog: (v: number) => void;
   setWaterMask: (cv: HTMLCanvasElement) => void;
-  update: (u: { time: number; rain: number; ox: number; oy: number; k: number; sw: number; sh: number; dark: number; dusk: number; cloud: number; skyT: number }) => void;
+  update: (u: { time: number; part: [number, number, number]; ox: number; oy: number; k: number; sw: number; sh: number; dark: number; dusk: number; cloud: number; skyT: number }) => void;
 }
 
 /** آیا این مرورگر WebGL2 سالم دارد؟ (در محیطِ تست/سرور: همیشه false → مسیرِ ۲بعدی) */
@@ -178,7 +201,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
     const uGrade = gl.getUniformLocation(prog, "uGrade");
     const uWaterTex = gl.getUniformLocation(prog, "uWaterTex");
     const uWaterOn = gl.getUniformLocation(prog, "uWaterOn");
-    const uRain = gl.getUniformLocation(prog, "uRain");
+    const uPart = gl.getUniformLocation(prog, "uPart");
     const uTime = gl.getUniformLocation(prog, "uTime");
     const uCam = gl.getUniformLocation(prog, "uCam");
     const uScreen = gl.getUniformLocation(prog, "uScreen");
@@ -230,7 +253,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
         gl.activeTexture(gl.TEXTURE0);
       },
       update: (u) => {
-        gl.uniform1f(uRain, u.rain);
+        gl.uniform3f(uPart, u.part[0], u.part[1], u.part[2]);
         gl.uniform1f(uTime, u.time);
         gl.uniform4f(uCam, u.ox, u.oy, u.k, 0);
         gl.uniform2f(uScreen, u.sw, u.sh);

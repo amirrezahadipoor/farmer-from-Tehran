@@ -123,6 +123,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     try {
       const m = await import("./render/postfx");
       if (m.webgl2Available()) postFX = (await m.createPostFX(srcCv)) ?? null;
+      rt.view.gpu = !!postFX;
     } catch { /* مسیرِ ۲بعدی می‌ماند */ }
   })();
   let raf = 0,
@@ -236,7 +237,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
           const vv = rt.view, kk = vv.dpr * vv.cam.z;
           const li = lightInfo(s);
           const cl = s.weather === "rain" ? 1 : s.weather === "fog" ? 0.9 : s.weather === "snow" ? 0.8 : s.weather === "heatwave" ? 0.15 : 0.35;
-          postFX.update({ time: t / 1000, rain: s.weather === "rain" ? 1 : 0, ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height, dark: li.dark, dusk: li.dusk, cloud: cl, skyT: vv.reduced ? 0 : t / 1000 });
+          postFX.update({ time: t / 1000, part: vv.reduced ? [0, 0, 0] : [s.weather === "rain" ? 1 : 0, s.weather === "snow" ? 1 : 0, s.weather === "heatwave" ? 1 : 0], ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height, dark: li.dark, dusk: li.dusk, cloud: cl, skyT: vv.reduced ? 0 : t / 1000 });
           postFX.present(); // texture ← مسیرِ GPU (گرید + دیدِ جوی + وینیت)
           ctx.drawImage(postFX.canvas, 0, 0); // فریمِ پردازش‌شده روی بومِ نمایش
         } else {
@@ -271,5 +272,6 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     window.removeEventListener("resize", resize);
     postFX?.destroy();
     postFX = null;
+    rt.view.gpu = false;
   };
 }
