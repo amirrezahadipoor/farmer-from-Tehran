@@ -19,6 +19,25 @@ import { drawBuilding } from "./buildings";
 import { drawAmbient, drawSmoke } from "./ambient";
 
 const ground = new GroundLayer();
+let waterMask: HTMLCanvasElement | null = null;
+export function waterMaskCanvas(): HTMLCanvasElement | null {
+  if (waterMask || !ground.water.length) return waterMask;
+  waterMask = makeCanvas(256, 128);
+  const c = waterMask.getContext("2d")!;
+  c.fillStyle = "#fff";
+  const S = 12.375;
+  for (const wt of ground.water) {
+    const mx = (wt.x + 1584) / S, my = (wt.y + 792) / S;
+    c.beginPath();
+    c.moveTo(mx, my - 22 / S);
+    c.lineTo(mx + 44 / S, my);
+    c.lineTo(mx, my + 22 / S);
+    c.lineTo(mx - 44 / S, my);
+    c.closePath();
+    c.fill();
+  }
+  return waterMask;
+}
 /** کاشی‌های دیده‌شده به ترتیبِ عمق (قطر به قطر)، یک بار در هر فریم؛ آرایه‌ی ازپیش‌ساخته (بی‌زباله) */
 const visList = new Int32Array(N * N);
 function collectVisible(x0: number, x1: number, y0: number, y1: number) {

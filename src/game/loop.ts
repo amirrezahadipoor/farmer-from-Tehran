@@ -13,7 +13,8 @@
 import { ambience, type AmbientEnv } from "./audio";
 import { DAY_LEN, N, SEASONS } from "./data";
 import { tick, locked, idx, ensureQuests, type Events, type State } from "./logic";
-import { applyScreenFx, render, renderStats, screenFx } from "./render";
+import { applyScreenFx, render, renderStats, screenFx, waterMaskCanvas } from "./render";
+import type { PostFX } from "./render/postfx";
 import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
@@ -116,7 +117,8 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   // ── انجینِ آرت، فازِ ۱: پست‌پردازشِ GPU (PixiJS/WebGL2) — اختیاری؛ نبودنش = مسیرِ ۲بعدیِ خالص
   const srcCv = document.createElement("canvas");
   const sctx2d = srcCv.getContext("2d");
-  let postFX: { canvas: HTMLCanvasElement; present: () => void; destroy: () => void } | null = null;
+  let postFX: PostFX | null = null;
+  let maskSeen: HTMLCanvasElement | null = null;
   void (async () => {
     try {
       const m = await import("./render/postfx");
@@ -229,6 +231,10 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
         if (postFX && sctx2d && srcCv.width !== cv.width) { srcCv.width = cv.width; srcCv.height = cv.height; }
         if (postFX && sctx2d && srcCv.width === cv.width && srcCv.height === cv.height) {
           render(sctx2d, s, rt.view, t / 1000, rt.fx, walkers); // دنیا روی بومِ آفلاین
+          const wm = waterMaskCanvas();
+          if (wm && wm !== maskSeen) { postFX.setWaterMask(wm); maskSeen = wm; }
+          const vv = rt.view, kk = vv.dpr * vv.cam.z;
+          postFX.update({ time: t / 1000, rain: s.weather === "rain" ? 1 : 0, ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height });
           postFX.present(); // texture ← مسیرِ GPU (گرید + دیدِ جوی + وینیت)
           ctx.drawImage(postFX.canvas, 0, 0); // فریمِ پردازش‌شده روی بومِ نمایش
         } else {

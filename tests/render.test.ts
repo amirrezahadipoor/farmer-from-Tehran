@@ -38,6 +38,7 @@ let renderStats: typeof import("../src/game/render").renderStats;
 let screenFx: typeof import("../src/game/render").screenFx;
 let skyBodies: typeof import("../src/game/render").skyBodies;
 let sunLight: typeof import("../src/game/render").sunLight;
+let waterMaskCanvas: typeof import("../src/game/render").waterMaskCanvas;
 let ground: typeof import("../src/game/render/ground");
 let nature: typeof import("../src/game/render/nature");
 beforeAll(async () => {
@@ -45,7 +46,7 @@ beforeAll(async () => {
   g.Path2D = FakePath;
   g.DOMMatrix = class { constructor(_m?: number[]) {} };
   g.document = { createElement: () => { const c = { width: 1, height: 1, getContext: () => fakeCtx(cache, c) }; return c; } };
-  ({ render, renderStats, screenFx, skyBodies, sunLight } = await import("../src/game/render"));
+  ({ render, renderStats, screenFx, skyBodies, sunLight, waterMaskCanvas } = await import("../src/game/render"));
   ground = await import("../src/game/render/ground");
   nature = await import("../src/game/render/nature");
 });
@@ -212,5 +213,22 @@ describe("A.5 — نورِ بلادرنگ: سایه از جایِ خورشید �
     s.time = 120;
     const noon = frameOf(s, 1);
     expect(dusk.createRadialGradient || 0).toBeGreaterThan(noon.createRadialGradient || 0);
+  });
+});
+
+describe("A.6 — ماسکِ آب برای شیدرِ SDF", () => {
+  it("پس از نخستین فریم: بومِ ۲۵۶×۱۲۸ با لوزیِ کاشی‌های آب", () => {
+    const s = newState();
+    s.weather = "sun";
+    frameOf(s, 1);
+    const hasWater = s.tiles.some((t) => t.k === "water");
+    const cv = waterMaskCanvas();
+    if (!hasWater) {
+      expect(cv).toBeNull();
+      return;
+    }
+    expect(cv).not.toBeNull();
+    expect(cv!.width).toBe(256);
+    expect(cv!.height).toBe(128);
   });
 });

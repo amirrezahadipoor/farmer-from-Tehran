@@ -28,10 +28,31 @@ precision highp float;
 in vec2 vUv;
 out vec4 fragColor;
 uniform sampler2D uTex;
+uniform sampler2D uWaterTex;
 uniform float uFog;
 uniform float uGrade;
+uniform float uWaterOn;
+uniform float uRain;
+uniform float uTime;
+uniform vec4 uCam;
+uniform vec2 uScreen;
 void main() {
   vec4 c = texture(uTex, vUv);
+  vec2 px = vUv * uScreen;
+  vec2 world = (px - uCam.xy) / uCam.z;
+  vec2 muv = vec2((world.x + 1584.0) / 3168.0, (world.y + 792.0) / 1584.0);
+  float m = step(0.5, texture(uWaterTex, muv).r) * uWaterOn;
+  if (m > 0.0) {
+    float t = uTime;
+    float w1 = sin(world.x * 0.09 + t * 1.6) * sin(world.y * 0.12 - t * 1.1);
+    float w2 = sin((world.x + world.y) * 0.055 + t * 0.8);
+    float caust = smoothstep(0.45, 0.95, 0.5 + 0.5 * (w1 * 0.6 + w2 * 0.4));
+    float spec = smoothstep(0.9, 1.0, 0.5 + 0.5 * sin(world.x * 0.33 - t * 2.7) * sin(world.y * 0.41 + t * 2.1));
+    vec2 cell = fract(world * 0.06) - 0.5;
+    float ripple = uRain * max(sin(length(cell) * 34.0 - t * 5.0), 0.0) * smoothstep(0.5, 0.12, length(cell)) * 0.5;
+    vec3 add = vec3(0.06, 0.26, 0.32) * caust + vec3(0.85, 0.95, 1.0) * spec * 0.30 + vec3(0.30, 0.45, 0.50) * ripple;
+    c.rgb = mix(c.rgb, c.rgb * 0.86 + add, m);
+  }
   // 1) filmic grade: soft desaturation + gentle contrast
   float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
   c.rgb = mix(c.rgb, vec3(l), 0.06 * uGrade);
@@ -54,6 +75,8 @@ export interface PostFX {
   /** شدتِ اثرها (۰ = خاموش) — برای تنظیم و تست */
   setGrade: (v: number) => void;
   setFog: (v: number) => void;
+  setWaterMask: (cv: HTMLCanvasElement) => void;
+  update: (u: { time: number; rain: number; ox: number; oy: number; k: number; sw: number; sh: number }) => void;
 }
 
 /** آیا این مرورگر WebGL2 سالم دارد؟ (در محیطِ تست/سرور: همیشه false → مسیرِ ۲بعدی) */
@@ -132,16 +155,34 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
     const uTex = gl.getUniformLocation(prog, "uTex");
     const uFog = gl.getUniformLocation(prog, "uFog");
     const uGrade = gl.getUniformLocation(prog, "uGrade");
+    const uWaterTex = gl.getUniformLocation(prog, "uWaterTex");
+    const uWaterOn = gl.getUniformLocation(prog, "uWaterOn");
+    const uRain = gl.getUniformLocation(prog, "uRain");
+    const uTime = gl.getUniformLocation(prog, "uTime");
+    const uCam = gl.getUniformLocation(prog, "uCam");
+    const uScreen = gl.getUniformLocation(prog, "uScreen");
     gl.uniform1i(uTex, 0);
+    gl.uniform1i(uWaterTex, 1);
     let fog = 0.42, grade = 1.0;
     gl.uniform1f(uFog, fog);
     gl.uniform1f(uGrade, grade);
+    const wtex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, wtex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+    gl.activeTexture(gl.TEXTURE0);
 
     const present = () => {
       const w = src.width, h = src.height;
       if (!w || !h) return;
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       gl.viewport(0, 0, w, h);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
@@ -151,6 +192,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
       destroy: () => {
         try {
           gl.deleteTexture(tex);
+          gl.deleteTexture(wtex);
           gl.deleteBuffer(buf);
           gl.deleteProgram(prog);
           gl.getExtension("WEBGL_lose_context")?.loseContext();
@@ -158,6 +200,19 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
       },
       setGrade: (v) => { grade = v; gl.uniform1f(uGrade, grade); },
       setFog: (v) => { fog = v; gl.uniform1f(uFog, fog); },
+      setWaterMask: (cv) => {
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, wtex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+        gl.uniform1f(uWaterOn, 1);
+        gl.activeTexture(gl.TEXTURE0);
+      },
+      update: (u) => {
+        gl.uniform1f(uRain, u.rain);
+        gl.uniform1f(uTime, u.time);
+        gl.uniform4f(uCam, u.ox, u.oy, u.k, 0);
+        gl.uniform2f(uScreen, u.sw, u.sh);
+      },
     };
   } catch {
     return null;
