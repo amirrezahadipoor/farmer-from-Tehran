@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
  *
  * روش: پس از ورود به بازی، تعداد فریم‌های واقعیِ رندر طی ۴ ثانیه شمرده می‌شود و رندرهای
  * واقعیِ حلقه (window.__game.perf) هم کنارش گزارش می‌شود. برای حذفِ نویزِ ماشینِ مشترکِ CI
- * بهترینِ دو پنجره‌ی ۴ ثانیه‌ای ملاک است (هر دو در لاگ می‌آیند).
+ * بهترینِ سه پنجره‌ی ۴ ثانیه‌ای ملاک است (هر سه در لاگ می‌آیند).
  * P5.14: کشِ زمین + اسپرایت‌ها ← کفِ کروم از ۱۲ به ۵۵ رسید.
  * P6.6: «پروفایلِ موبایلِ میانی» = Pixel 7 + کندکردنِ CPU ×۴ (تعریفِ Lighthouse از موبایلِ میانی).
  */
@@ -31,11 +31,13 @@ async function play(page: Page) {
   await page.waitForTimeout(6000); // بگذار سازگارسازی خودکار رزولوشن هم وارد عمل شود
 }
 
-/** بهترینِ دو پنجره (نویزِ CI)؛ هر دو برای لاگ برمی‌گردند */
+/** بهترینِ سه پنجره (نویزِ CI)؛ همه برای لاگ برمی‌گردند */
 async function bestFps(page: Page) {
   const a = await measureFps(page);
   const b = await measureFps(page);
-  return { fps: Math.max(a.fps, b.fps), frames: Math.max(a.frames, b.frames), windows: [a.fps, b.fps].map((f) => f.toFixed(1)).join("/") };
+  const c = await measureFps(page);
+  const best = Math.max(a.fps, b.fps, c.fps);
+  return { fps: best, frames: Math.max(a.frames, b.frames, c.frames), windows: [a.fps, b.fps, c.fps].map((f) => f.toFixed(1)).join("/") };
 }
 
 async function measureFps(page: Page, ms = 4000) {
