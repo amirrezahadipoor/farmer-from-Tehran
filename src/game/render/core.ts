@@ -15,6 +15,7 @@ export interface View {
   hover: { x: number; y: number } | null; tool: string; arg: string;
   /** حالت «کاهش حرکت» سیستم: ذره‌ها و انیمیشن‌های اضافه خاموش می‌شوند. */
   reduced?: boolean;
+  gpu?: boolean;
   /** پرده‌ی تمام‌صفحه (داستان) روی نقشه است: رندر لازم نیست (P6.6) */
   covered?: boolean;
 }

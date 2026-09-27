@@ -324,7 +324,7 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const pk = Math.max(0.28, Math.min(1, (w * h) / (390 * 844)));
   const lite = dpr <= 0.7;
-  if (v.reduced) {
+  if (v.gpu || v.reduced) {
     // دسترس‌پذیری: با «کاهش حرکت»، فقط ته‌رنگِ هوا می‌ماند
   } else if (s.weather === "rain") {
     ctx.strokeStyle = "rgba(190,225,255,0.5)"; ctx.lineWidth = 1.3; ctx.beginPath();
