@@ -1,11 +1,13 @@
 /**
- * src/game/render/nature.ts — درخت، سنگ، محصول و کارگرها، با کشِ اسپرایت (P5.14) + آرتِ AI (فاز A)
- * درخت و سنگ و هر کاشیِ محصول یک بار روی بومِ کوچک رسم و هر فریم فقط یک drawImage می‌شوند
- * (تکانِ باد = skewِ کلِ اسپرایت). کلیدی که آرتِ AI ندارد، رسمِ رویه‌ایِ اصلی می‌ماند (fallback).
+ * src/game/render/nature.ts — درخت، سنگ، محصول و کارگرها، با کشِ اسپرایت (P5.14)
+ *
+ * درخت و سنگ و هر کاشیِ محصول یک بار روی بومی کوچک کشیده می‌شوند و هر فریم فقط یک
+ * drawImage هستند (پیش از این: ۴ گرادیانِ شعاعی و ده‌ها شکل برای هر درخت و تا ۹ بوته‌ی
+ * جدا برای هر کاشیِ محصول). تکانِ باد با کجیِ (skew) کلِ اسپرایت ساخته می‌شود: پایه ثابت،
+ * نوک بیشتر — همان حسِ قبلی. مقیاسِ اسپرایت پله‌ای است و با زوم/رزولوشن عوض می‌شود.
  */
 import { CMAP } from "../data";
 import type { Tile } from "../logic";
-import { blitAtlas, resolveAtlas } from "./atlas";
 import { A, B, clamp, ellipse, hash, makeCanvas, poly, shade, tileCenter, type Walker } from "./core";
 
 interface Sprite { cv: HTMLCanvasElement; x0: number; y0: number; w: number; h: number }
@@ -24,16 +26,13 @@ function sprite(key: string, x0: number, y0: number, w: number, h: number, draw:
     const cv = makeCanvas(w * SS, h * SS);
     const c = cv.getContext("2d")!;
     c.setTransform(SS, 0, 0, SS, -x0 * SS, -y0 * SS);
-    const hit = resolveAtlas(key); // آرتِ AI؛ نبودش = رسمِ رویه‌ای (fallback)
-    (hit ? blitAtlas(c, hit, x0, y0, w, h) : draw(c));
+    draw(c);
     sp = { cv, x0, y0, w, h };
     sprites.set(key, sp);
     if (sprites.size > 700) sprites.delete(sprites.keys().next().value!); // قدیمی‌ترین
   }
   return sp;
 }
-/** لودِ اطلس = خالی‌شدنِ کشِ ازپیش‌رسم‌شده (نقشه‌ی راه، فاز A) */
-export const invalidateSprites = (): void => sprites.clear();
 /** اسپرایت با پایه‌ی (x,y)؛ skew > 0 = نوک به راست خم می‌شود */
 function blit(ctx: CanvasRenderingContext2D, sp: Sprite, x: number, y: number, skew = 0) {
   if (!skew) { ctx.drawImage(sp.cv, x + sp.x0, y + sp.y0, sp.w, sp.h); return; }

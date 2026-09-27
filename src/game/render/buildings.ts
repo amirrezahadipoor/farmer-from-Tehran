@@ -6,7 +6,6 @@
 import { BMAP } from "../data";
 import type { Tile } from "../logic";
 import { drawIcon } from "../icons";
-import { blitAtlasWorld, resolveAtlas } from "./atlas";
 import { A, B, diamond, ellipse, makeCanvas, poly, type BArgs } from "./core";
 import { drawFarmBuilding } from "./bFarm";
 import { drawCraftBuilding } from "./bCraft";
@@ -33,17 +32,11 @@ export function drawBuilding(ctx: CanvasRenderingContext2D, t: Tile, x: number, 
   const id = t.b!;
   const def = BMAP[id];
   if (!def) return;
-  // آرتِ AI (نقشه‌ی راه، فاز C): تصویرِ کامل شاملِ سایه‌ی زمین است؛ نبودش = رسمِ رویه‌ای
-  const hit = ghost ? null : resolveAtlas(`b|${id}`);
-  if (hit) {
-    blitAtlasWorld(ctx, hit, x + sdx * 0.6, y, A * 1.9, 100);
-  } else {
-    if (!ghost) { diamond(ctx, x + sdx * 0.6, y + 4, A * 0.9, B * 0.9); ctx.fillStyle = "rgba(10,20,8,0.28)"; ctx.fill(); }
-    diamond(ctx, x, y, A * 0.94, B * 0.94); ctx.fillStyle = "#b0bec5"; ctx.fill();
-    diamond(ctx, x, y, A * 0.88, B * 0.88); ctx.fillStyle = "#d7ccc8"; ctx.fill();
-    const p: BArgs = { draw: def.draw, t, id, def, x, y, now, dark, sdx, W: def.wall, R: def.roof };
-    if (!drawFarmBuilding(ctx, p) && !drawCraftBuilding(ctx, p)) drawDecorBuilding(ctx, p);
-  }
+  if (!ghost) { diamond(ctx, x + sdx * 0.6, y + 4, A * 0.9, B * 0.9); ctx.fillStyle = "rgba(10,20,8,0.28)"; ctx.fill(); }
+  diamond(ctx, x, y, A * 0.94, B * 0.94); ctx.fillStyle = "#b0bec5"; ctx.fill();
+  diamond(ctx, x, y, A * 0.88, B * 0.88); ctx.fillStyle = "#d7ccc8"; ctx.fill();
+  const p: BArgs = { draw: def.draw, t, id, def, x, y, now, dark, sdx, W: def.wall, R: def.roof };
+  if (!drawFarmBuilding(ctx, p) && !drawCraftBuilding(ctx, p)) drawDecorBuilding(ctx, p);
   if (ghost) return;
   const top = y - 100;
   if (t.out && t.out.length) {
