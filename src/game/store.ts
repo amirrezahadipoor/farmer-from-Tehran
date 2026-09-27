@@ -74,6 +74,7 @@ export const rt = {
     w: 800,
     h: 600,
     dpr: 1,
+    maxDpr: 1,
     cam: { x: 0, y: -14, z: 0.62 },
     hover: null,
     tool: "hand",
