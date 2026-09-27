@@ -209,7 +209,10 @@ describe("رویداد خشکسالی (تابستان)", () => {
     const b = fresh();
     b.market = a.market;
     drought(b);
-    expect(price(b, "saffron") / price(a, "saffron")).toBeCloseTo(1 + DROUGHT.price, 2);
+    // قیمت به سکه‌ی صحیح گرد می‌شود و پایه‌اش با فازِ تصادفیِ بازار عوض می‌شود؛ پس نسبتِ دو عددِ گردشده
+    // دقیقاً ۱٫۲ نیست (مثلاً ۲۰۳/۱۷۰). معنای درست: ‎+۲۰٪ با خطای گردکردنِ حداکثر یک سکه
+    expect(Math.abs(price(b, "saffron") - price(a, "saffron") * (1 + DROUGHT.price))).toBeLessThanOrEqual(1 + 1e-9);
+    expect(price(b, "saffron")).toBeGreaterThan(price(a, "saffron"));
     expect(price(b, "icecream")).toBe(price(a, "icecream")); // کالای کارگاهی نه
   });
 });

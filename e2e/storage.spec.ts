@@ -53,9 +53,15 @@ async function openTransfer(page: Page) {
 test.describe("ماندگاریِ سیو و انتقال", () => {
   test("IndexedDB: پاک‌شدنِ localStorage مزرعه را از بین نمی‌برد؛ ماندگاری درخواست می‌شود", async ({ page }) => {
     await page.addInitScript(() => {
-      const w = window as unknown as { __persistAsked: number };
+      // برنامه اول persisted() را می‌پرسد و فقط اگر هنوز ماندگار نبود persist() را صدا می‌زند
+      const w = window as unknown as { __persistAsked: number; __persisted: boolean | null };
       w.__persistAsked = 0;
+      w.__persisted = null;
       const st = navigator.storage;
+      if (st?.persisted) {
+        const was = st.persisted.bind(st);
+        Object.defineProperty(st, "persisted", { configurable: true, value: async () => (w.__persisted = await was()) });
+      }
       if (st?.persist) {
         const orig = st.persist.bind(st);
         Object.defineProperty(st, "persist", { configurable: true, value: () => (w.__persistAsked++, orig()) });
@@ -64,7 +70,13 @@ test.describe("ماندگاریِ سیو و انتقال", () => {
     await enterGame(page);
     // مرورگرِ بی‌navigator.storage.persist (مثلِ WebKitِ آزمون) را برنامه هم نادیده می‌گیرد
     if (await page.evaluate(() => typeof navigator.storage?.persist === "function")) {
-      await expect.poll(() => page.evaluate(() => (window as unknown as { __persistAsked: number }).__persistAsked)).toBeGreaterThan(0);
+      // یا مرورگر از قبل ماندگارش کرده، یا بازی درخواستش را داده است
+      await expect
+        .poll(() => page.evaluate(() => {
+          const w = window as unknown as { __persistAsked: number; __persisted: boolean | null };
+          return w.__persisted === true || w.__persistAsked > 0;
+        }))
+        .toBe(true);
     }
 
     await page.evaluate(async () => {
@@ -107,7 +119,10 @@ test.describe("ماندگاریِ سیو و انتقال", () => {
     await b.getByRole("button", { name: "واردکردنِ متن" }).tap();
     await expect(b.getByRole("alertdialog", { name: "تأییدِ جایگزینیِ مزرعه" })).toBeVisible();
     await b.screenshot({ path: `docs/shots/transfer-${test.info().project.name}.png` });
+    // جایگزینی صفحه را دوباره بارگذاری می‌کند؛ تا صفحه‌ی تازه بالا نیامده چیزی خوانده نشود
+    const reloaded = b.waitForEvent("load");
     await b.getByRole("button", { name: "بله، جایگزین کن" }).tap();
+    await reloaded;
     await expect(b.getByRole("button", { name: "منو" })).toBeVisible({ timeout: 30_000 });
     await expect.poll(() => g(b)).toBe(coins);
     await other.close();
