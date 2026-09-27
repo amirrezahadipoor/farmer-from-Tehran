@@ -100,12 +100,14 @@ export function ambientMix(env: AmbientEnv): AmbientMix {
 }
 
 /* ------------------------------------------------------------ موسیقی */
-export type ModeId = "mahur" | "shur" | "esfahan";
+export type ModeId = "mahur" | "shur" | "esfahan" | "chahargah" | "dashti";
 /** دستگاه‌ها با فاصله‌ی سِنت از تُنیک — «کُرُن» (ربع‌پرده) واقعاً ۱۵۰ یا ۸۵۰ سنت است، نه تقریبِ غربی */
 export const MODES: Record<ModeId, { name: string; tonic: number; cents: number[] }> = {
   mahur: { name: "ماهور", tonic: 261.63, cents: [0, 200, 400, 500, 700, 900, 1100] },
   shur: { name: "شور", tonic: 293.66, cents: [0, 150, 300, 500, 700, 800, 1000] },
   esfahan: { name: "اصفهان", tonic: 220, cents: [0, 200, 300, 500, 700, 850, 1100] },
+  chahargah: { name: "چهارگاه", tonic: 246.94, cents: [0, 100, 400, 500, 700, 800, 1100] }, // V.9: حماسیِ سپیده‌دم
+  dashti: { name: "دشتی", tonic: 293.66, cents: [0, 100, 300, 500, 700, 800, 1000] }, // V.9: لالاییِ شب
 };
 
 /** بسامدِ درجه‌ی deg (۰ = تنیک، ۷ = اکتاوِ بالا، منفی = پایین) */
@@ -116,13 +118,23 @@ export function degreeFreq(mode: ModeId, deg: number) {
   return m.tonic * Math.pow(2, oct + m.cents[i] / 1200);
 }
 
-/** دستگاه، تمپو و بلندیِ موسیقی از حالِ دره: شب «شور»، پاییز و زمستان «اصفهان»، بهار و تابستان «ماهور» */
+/** V.9: انتخابِ خالصِ دستگاه از ساعت/فصل/هوا — سپیده‌دم «چهارگاه»، شب «دشتی»، شبِ بارانی «شور» */
+export function selectMode(hour: number, season: string, weather = "sun"): ModeId {
+  if (hour >= 5 && hour < 8) return "chahargah";
+  const night = hour >= 20 || hour < 5;
+  if (night) return weather === "rain" || weather === "snow" ? "shur" : "dashti";
+  return season === "autumn" || season === "winter" ? "esfahan" : "mahur";
+}
+
+const TEMPO: Record<ModeId, number> = { mahur: 72, esfahan: 64, shur: 54, chahargah: 60, dashti: 56 };
+
+/** دستگاه، تمپو و بلندیِ موسیقی از حالِ دره (V.9: پنج دستگاه) */
 export function musicMode(env: AmbientEnv): { mode: ModeId; tempo: number; level: number } {
-  const sun = sunHeight(env.hour);
+  const mode = selectMode(env.hour, env.season, env.weather);
   const wet = env.weather === "rain" || env.weather === "snow";
-  if (sun < -0.1) return { mode: "shur", tempo: 54, level: wet ? 0.6 : 0.75 };
-  if (env.season === "autumn" || env.season === "winter") return { mode: "esfahan", tempo: 64, level: wet ? 0.8 : 1 };
-  return { mode: "mahur", tempo: 72, level: wet ? 0.8 : 1 };
+  const night = env.hour >= 20 || env.hour < 5;
+  const level = night ? (wet ? 0.6 : 0.75) : wet ? 0.8 : 1;
+  return { mode, tempo: TEMPO[mode], level };
 }
 
 /** تولیدکننده‌ی تصادفیِ قابل‌تکرار (mulberry32) */
