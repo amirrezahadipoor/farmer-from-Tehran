@@ -30,8 +30,14 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/ > /dev/null && exit 0; sleep 1; done
           cat /tmp/next.log; exit 1
       - name: Lighthouse × ۵
+        # یک اجرای گرم‌کنِ کنارگذاشته پیش از ۵ اجرای شمرده‌شده: اولین اجرای Chrome روی رانرِ سرد
+        # همه‌چیز را یکنواخت کُند می‌کند (کارِ رشته‌ی اصلی ~۴ برابر، حتی بخشِ Unattributable؛ TTFB فقط ۷ms)
+        # و در اجرای a49d8f9 عددِ ۷۰ داد در حالی که چهار اجرای بعدی ۹۸ تا ۹۹ بودند.
         run: |
           mkdir -p lh
+          npx --yes lighthouse@12 http://127.0.0.1:3000/ --quiet \
+            --chrome-flags="--headless=new --no-sandbox" \
+            --only-categories=performance --output=json --output-path=/tmp/lh-warmup.json
           for i in 1 2 3 4 5; do
             npx --yes lighthouse@12 http://127.0.0.1:3000/ --quiet \
               --chrome-flags="--headless=new --no-sandbox" \
