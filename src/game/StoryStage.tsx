@@ -11,6 +11,7 @@ import type { SpeakerId, StoryChapter } from "./story";
 import { fmt } from "./data";
 import { Icon, Portrait, speakerSvg, dropEmoji } from "./icons";
 import { sound } from "./audio";
+import { asset } from "./base";
 
 const MOOD_GRADE: Record<string, string> = {
   sad: "from-slate-900/85 via-slate-800/70 to-blue-950/85",
@@ -63,7 +64,7 @@ export function StoryStage({ ch, isEnd, sceneIdx, render = same, progress, banne
     if (next?.bg && next.bg !== scene?.bg) {
       const img = new window.Image();
       img.decoding = "async";
-      img.src = next.bg;
+      img.src = asset(next.bg);
     }
   }, [scenes, sceneIdx, scene?.bg]);
 
@@ -83,7 +84,7 @@ export function StoryStage({ ch, isEnd, sceneIdx, render = same, progress, banne
   return (
     <div className="absolute inset-0 z-[60] overflow-hidden bg-black" dir="rtl" onClick={click}>
       {/* Cinematic background with Ken Burns motion */}
-      <div className="absolute inset-0 animate-[kenburns_26s_ease-in-out_infinite_alternate] bg-cover bg-center" style={{ backgroundImage: `url(${scene.bg})` }} />
+      <div className="absolute inset-0 animate-[kenburns_26s_ease-in-out_infinite_alternate] bg-cover bg-center" style={{ backgroundImage: `url(${asset(scene.bg)})` }} />
       <div className={`absolute inset-0 bg-gradient-to-b ${MOOD_GRADE[scene.mood] || MOOD_GRADE.warm}`} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(0,0,0,0.65)_100%)]" />
       {/* Film grain / vignette stripes */}

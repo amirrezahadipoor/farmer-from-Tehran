@@ -13,9 +13,10 @@
 
 import { useSyncExternalStore } from "react";
 import { TOKEN_HEADER, ensureFarmToken, writeLocalSave } from "./persist";
+import { STATIC_BUILD, asset } from "./base";
 
 const OUTBOX_KEY = "farm_outbox";
-const SAVE_URL = "/api/save";
+const SAVE_URL = asset("/api/save");
 const TIMEOUT_MS = 7000;
 
 export type SaveState = "" | "saving" | "cloud" | "queued" | "local";
@@ -116,6 +117,9 @@ export async function saveGame(id: string, data: unknown): Promise<SaveState> {
     /* حافظه پر */
   }
 
+  // نسخه‌ی ایستای دمو (GitHub Pages) سرور ندارد: ذخیره همین‌جا کامل است (مورد ۲)
+  if (STATIC_BUILD) return "local";
+
   // ۲) اگر آفلاین هستیم، بی‌دلیل منتظر شبکه نمان
   if (!isOnline()) {
     writeOutbox({ id, data, at: Date.now() });
@@ -135,7 +139,7 @@ export async function saveGame(id: string, data: unknown): Promise<SaveState> {
 /** تخلیه‌ی صف: اگر اینترنت برگشت، آخرین سیو را به سرور می‌فرستد؛ خروجی = حالت واقعیِ ذخیره یا `false`. */
 export async function flushOutbox(): Promise<"cloud" | "local" | false> {
   const pending = readOutbox();
-  if (!pending || !isOnline()) return false;
+  if (!pending || !isOnline() || STATIC_BUILD) return false;
   try {
     const mode = await postSave(pending.id, pending.data);
     writeOutbox(null);
@@ -168,7 +172,7 @@ export function registerServiceWorker(onEvent?: (e: SwEvent) => void): () => voi
   const start = () => void (async () => {
     if (cancelled) return;
     try {
-      reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      reg = await navigator.serviceWorker.register(asset("/sw.js"), { scope: asset("/") });
       if (cancelled) return;
       onEvent?.("ready");
 
@@ -203,7 +207,7 @@ export function registerServiceWorker(onEvent?: (e: SwEvent) => void): () => voi
 /** تصاویر داستان را وقتی اپ بیکار است در کش SW گرم می‌کند (برای اجرای آفلاین). */
 export function prefetchStoryArt(urls: string[]) {
   if (typeof navigator === "undefined" || !navigator.serviceWorker?.controller) return;
-  const send = () => navigator.serviceWorker.controller?.postMessage({ type: "PREFETCH", urls });
+  const send = () => navigator.serviceWorker.controller?.postMessage({ type: "PREFETCH", urls: urls.map(asset) });
   const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void })
     .requestIdleCallback;
   if (idle) idle(send, { timeout: 8000 });
