@@ -226,6 +226,16 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
       if (f.text) { ctx.lineWidth = 4; ctx.strokeStyle = "rgba(20,10,0,0.8)"; ctx.strokeText(f.text, tx, f.y); ctx.fillStyle = f.color; ctx.fillText(f.text, tx, f.y); }
       if (f.icon) drawIcon(ctx, f.icon, tx + tw / 2 + 12, f.y, 22);
       ctx.globalAlpha = 1;
+    } else if (f.kind === "ring") {
+      // V.3: حلقه‌ی ضربه روی کاشی — بیضی ایزومتریکِ رونده
+      const rr = 8 + (1 - a) * 22;
+      ctx.globalAlpha = a * 0.8;
+      ctx.strokeStyle = f.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(f.x, f.y, rr, rr * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     } else {
       ctx.globalAlpha = a; ellipse(ctx, f.x, f.y, f.kind === "leaf" ? 3.5 : 2.5, f.kind === "leaf" ? 2 : 2.5, f.color); ctx.globalAlpha = 1;
     }

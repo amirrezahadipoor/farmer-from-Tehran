@@ -82,11 +82,26 @@ export const rt = {
   stats: { renders: 0, renderMs: 0 },
   /** قفلِ دستیِ رزولوشن برای سنجش (null = خودکار) */
   dprLock: null as number | null,
+  /** V.3: جلوه‌های فضای صفحه (سکه‌ی پرنده، کاغذرنگی) */
+  sfx: [] as Sfx[],
+  /** V.3: زمانِ باقی‌مانده‌ی لرزشِ دوربین */
+  shakeT: 0,
 };
+
+/** جلوه‌ی فضای صفحه: سکه با مسیرِ کمانی به قرصِ سکه، کاغذرنگی با فیزیک ساده */
+export interface Sfx {
+  kind: "coin" | "confetti";
+  x: number; y: number; vx: number; vy: number;
+  /** برای سکه: مختصات هدف و پیشرفت ۰..۱ */
+  tx: number; ty: number; t: number;
+  life: number; max: number; color: string; r: number;
+}
 
 /** پاک‌کردن حالت زمان‌اجرا (شروع دوباره از ابتدا). */
 export function resetRuntime() {
   rt.fx = [];
+  rt.sfx = [];
+  rt.shakeT = 0;
   rt.walkers.clear();
   rt.hero.init = false;
   rt.hero.actT = 0;

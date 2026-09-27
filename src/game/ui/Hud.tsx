@@ -101,9 +101,11 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
           </span>
         </button>
 
-        <Pill icon="coin" label={`${fmt(s.coins)} سکه`}>
-          {fmt(s.coins)}
-        </Pill>
+        <span data-coin="">
+          <Pill icon="coin" label={`${fmt(s.coins)} سکه`}>
+            {fmt(s.coins)}
+          </Pill>
+        </span>
 
         <Pill
           icon="box"

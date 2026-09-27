@@ -101,6 +101,8 @@ export function grantInheritedLand(s: State, k: number): number[] {
 
 export function doPrestige(s: State, ev: Events) {
   if (!canPrestige(s)) return;
+  ev.celebrate?.("prestige"); // V.3
+  ev.shake?.();
   const prev = s.prestige;
   const gen = prev + 1;
   const inherit = Math.floor(s.coins * INHERIT_SHARE);

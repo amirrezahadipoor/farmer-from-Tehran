@@ -159,7 +159,7 @@ export function generateMap(): Tile[] {
   if (tiles[idx(sx0 + 5, sy0 + 4)].k !== "water") tiles[idx(sx0 + 5, sy0 + 4)] = { k: "bld", v: 0.5, b: "coop", q: [], p: 0, out: [], autoMode: true };
   return tiles;
 }
-export interface Fx { kind: "text"|"leaf"|"spark"|"water"|"coin"; x: number; y: number; vx: number; vy: number; life: number; max: number; text?: string; icon?: string; color: string; }
+export interface Fx { kind: "text"|"leaf"|"spark"|"water"|"coin"|"ring"; x: number; y: number; vx: number; vy: number; life: number; max: number; text?: string; icon?: string; color: string; }
 /** همه‌ی جلوه‌های صوتی بازی (P5.12) — هر کلید در src/game/sound/sfx.ts دستورِ سنتزِ خودش را دارد */
 export const SFX_KEYS = [
   "click", "tap", "err", "swoosh", "page", "start",
@@ -177,6 +177,12 @@ export interface Events {
   toast: (m: string, t?: "ok" | "err" | "lvl" | "prestige") => void;
   fx: (gx: number, gy: number, text: string, color?: string, burst?: string, icon?: string) => void;
   sound: (k: SfxKey) => void;
+  /** V.3: جشنِ تمام‌صفحه (کاغذرنگی) برای سطح/دستاورد/تناسخ */
+  celebrate?: (kind: "level" | "achievement" | "prestige") => void;
+  /** V.3: لرزشِ ملایم دوربین برای رویدادهای بزرگ (خشکسالی، تناسخ) */
+  shake?: () => void;
+  /** V.3: سکه‌های پرنده به قرصِ سکه‌ی HUD */
+  coins?: (n: number) => void;
 }
 
 export const rnd = (a: number, b: number) => a + Math.random() * (b - a);
