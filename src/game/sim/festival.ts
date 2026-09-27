@@ -18,8 +18,14 @@ export const FEST_CHOICES: { id: FestChoice; name: string; cost: number; desc: s
 export const festActive = (s: State, choice: FestChoice) =>
   !!s.fest && s.fest.choice === choice && s.fest.idx === s.seasonIndex;
 
-/** روز اول هر فصل، یک‌بار پیشنهاد فستیوال می‌دهد */
+/**
+ * روز اول هر فصل، یک‌بار پیشنهاد فستیوال می‌دهد — جز روزِ اولِ مزرعه‌ی تازه:
+ * آن روز وقتِ آموزش است؛ پرده‌ی تمام‌صفحه‌ی جشن روی آموزشِ تعاملی می‌نشست و
+ * بازیکنِ تازه‌کار (بی‌سکه‌ی کافی) را پیش از اولین کاشت به انتخابِ هزینه‌دار وامی‌داشت.
+ * پس اولین جشن، آغازِ تابستان (روز ۶) است.
+ */
 export function proposeFestival(s: State): boolean {
+  if (s.day <= 1) return false;
   if ((s.day - 1) % 5 !== 0) return false;
   if (s.fest && s.fest.idx === s.seasonIndex) return false;
   s.fest = { idx: s.seasonIndex, day: s.day, choice: null };
