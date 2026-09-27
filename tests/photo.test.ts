@@ -103,7 +103,9 @@ describe("V.10 — حالت عکس", () => {
   });
 
   it("ترکیب‌کننده از Math.random استفاده نمی‌کند (خروجیِ تکرارپذیر، بی‌هشدارِ CodeQL)", () => {
-    const src = readFileSync(new URL("../src/game/photo.ts", import.meta.url), "utf8");
-    expect(src).not.toMatch(/Math\.random/);
+    for (const f of ["photo.ts", "photoDraw.ts"]) {
+      const src = readFileSync(new URL(`../src/game/${f}`, import.meta.url), "utf8");
+      expect(src, f).not.toMatch(/Math\.random/);
+    }
   });
 });
