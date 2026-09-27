@@ -184,7 +184,7 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   // سایه‌ی نرم: دو گذار — هاله‌ی بیرونیِ کم‌رنگ + هسته‌ی تیره ≈ فالloffِ گاوسی.
   // هاله یک «سقفِ پسماند» است: فقط در کیفیتِ کامل (dpr نزدیکِ سقف) روشن است؛ در حالتِ
   // تنزل‌یافته‌ی رزولوشنِ خودکار، تک‌گذرِ خطِ پایه می‌ماند (قاعده‌ی ۵۵ فریمِ موبایل)
-  const soft = (v.maxDpr ?? 2) - v.dpr < 0.05;
+  const soft = v.w >= 700 && (v.maxDpr ?? 2) - v.dpr < 0.05;
   const shadows = new Path2D();
   const shadowsSoft = soft ? new Path2D() : null;
   for (let n = 0; n < nVis; n++) {
