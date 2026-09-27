@@ -36,6 +36,7 @@ class FakePath { moveTo() {} lineTo() {} ellipse() {} quadraticCurveTo() {} clos
 let render: typeof import("../src/game/render").render;
 let renderStats: typeof import("../src/game/render").renderStats;
 let screenFx: typeof import("../src/game/render").screenFx;
+let skyBodies: typeof import("../src/game/render").skyBodies;
 let ground: typeof import("../src/game/render/ground");
 let nature: typeof import("../src/game/render/nature");
 beforeAll(async () => {
@@ -43,7 +44,7 @@ beforeAll(async () => {
   g.Path2D = FakePath;
   g.DOMMatrix = class { constructor(_m?: number[]) {} };
   g.document = { createElement: () => { const c = { width: 1, height: 1, getContext: () => fakeCtx(cache, c) }; return c; } };
-  ({ render, renderStats, screenFx } = await import("../src/game/render"));
+  ({ render, renderStats, screenFx, skyBodies } = await import("../src/game/render"));
   ground = await import("../src/game/render/ground");
   nature = await import("../src/game/render/nature");
 });
@@ -151,6 +152,21 @@ describe("کشِ زمین و اسپرایت (P5.14)", () => {
     expect(night.dark).toBeGreaterThan(0.3);
     expect(night.sky).toBeCloseTo(night.dark * 0.85);
     expect(night.fog).toBe(1);
+  });
+
+  it("آسمانِ زنده: خورشیدِ ظهر بالا و ماهِ نیمه‌شب؛ ستاره فقط در تاریکی", () => {
+    const noon = skyBodies(0.5);
+    expect(noon.sun.o).toBeGreaterThan(0.8);
+    expect(noon.sun.y).toBeLessThan(30);
+    expect(noon.moon.o).toBe(0);
+    const mid = skyBodies(0.0);
+    expect(mid.moon.o).toBeGreaterThan(0.8);
+    expect(mid.sun.o).toBe(0);
+    const s = newState();
+    s.time = 12 * 10;
+    expect(screenFx(s).stars).toBe(0);
+    s.time = 24 * 10;
+    expect(screenFx(s).stars).toBeGreaterThan(0.5);
   });
 
   it("کلِ نقشه در کش جا می‌شود (هیچ کاشی بیرونِ مستطیلِ کش نیست)", () => {

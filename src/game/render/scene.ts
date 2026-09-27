@@ -103,20 +103,42 @@ function signSprite(cost: string) {
   return c;
 }
 
+/** جای خورشید/ماه روی قوسِ آسمان (درصدِ صفحه) — خالص و تست‌پذیر (آسمانِ زنده) */
+export function skyBodies(p: number) {
+  const dayT = (p - 0.25) / 0.5; // ۰..۱ در طولِ روز
+  const nightT = ((((p + 0.25) % 1) + 1) % 1) / 0.5; // ۰..۱ در طولِ شب
+  const arc = (t: number) => ({
+    x: 8 + 84 * t,
+    y: 84 - 72 * Math.sin(Math.PI * clamp(t)),
+    o: t > 0 && t < 1 ? clamp(Math.sin(Math.PI * t) * 1.5) : 0,
+  });
+  return { sun: arc(dayT), moon: arc(nightT) };
+}
+
 /** مقدارِ لایه‌های CSSِ صفحه برای این لحظه (خالص؛ تست‌پذیر) */
 export function screenFx(s: State) {
   const L = lightInfo(s);
-  return { sky: L.dark * 0.85, dusk: 0.14 * L.dusk, dark: L.dark, fog: s.weather === "fog" ? 1 : 0 };
+  const { sun, moon } = skyBodies(L.p);
+  return {
+    sky: L.dark * 0.85, dusk: 0.14 * L.dusk, dark: L.dark, fog: s.weather === "fog" ? 1 : 0,
+    stars: clamp((L.dark - 0.25) / 0.4),
+    sunX: sun.x, sunY: sun.y, sun: sun.o,
+    moonX: moon.x, moonY: moon.y, moon: moon.o * clamp((L.dark - 0.08) / 0.3),
+  };
 }
 export type ScreenFx = ReturnType<typeof screenFx>;
-/** فقط وقتی مقدارِ گردشده عوض شود سبکِ لایه نوشته می‌شود (بدون محاسبه‌ی سبک در هر فریم) */
+/** فقط وقتی مقدارِ گردشده عوض شود سبکِ لایه نوشته می‌شود (بدون محاسبه‌ی سبک در هر فریم).
+ *  کلیدهای ساده = شفافیت؛ کلیدهای *X/*Y = جای افقی/عمودیِ همان عنصر (خورشید/ماه). */
 export function applyScreenFx(root: ParentNode, fx: ScreenFx) {
   for (const [k, val] of Object.entries(fx)) {
-    const el = root.querySelector<HTMLElement>(`[data-fx="${k}"]`);
+    const base = k.endsWith("X") || k.endsWith("Y") ? k.slice(0, -1) : k;
+    const el = root.querySelector<HTMLElement>(`[data-fx="${base}"]`);
     const o = val.toFixed(3);
-    if (!el || el.dataset.o === o) continue;
-    el.style.opacity = o;
-    el.dataset.o = o; // روی خودِ عنصر: عنصرِ تازه (سوار شدنِ دوباره) حتماً به‌روز می‌شود
+    if (!el || el.dataset["o" + k] === o) continue;
+    el.dataset["o" + k] = o; // روی خودِ عنصر: عنصرِ تازه (سوار شدنِ دوباره) حتماً به‌روز می‌شود
+    if (k.endsWith("X")) el.style.left = `${val.toFixed(1)}%`;
+    else if (k.endsWith("Y")) el.style.top = `${val.toFixed(1)}%`;
+    else el.style.opacity = o;
   }
 }
 
