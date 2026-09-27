@@ -12,6 +12,7 @@ import {
   loadAudioSettings,
   makePhrase,
   musicMode,
+  selectMode,
   rng,
   saveAudioSettings,
   volumeGain,
@@ -255,11 +256,29 @@ describe("موسیقی: دستگاه‌های ایرانی و جمله‌بند�
     }
     expect(MODES.esfahan.cents[5] % 100).toBe(50); // کُرُنِ درجه‌ی ششم اصفهان
   });
-  it("دستگاه از حالِ دره: شب شور، پاییز اصفهان، بهار ماهور", () => {
-    expect(musicMode({ hour: 1, season: "spring", weather: "clear" }).mode).toBe("shur");
+  it("V.9 — پنج دستگاه از حالِ دره: سپیده‌دم چهارگاه، شب دشتی، شب بارانی شور", () => {
+    expect(selectMode(6, "spring")).toBe("chahargah");
+    expect(selectMode(5, "winter")).toBe("chahargah");
+    expect(selectMode(8, "spring")).not.toBe("chahargah");
+    expect(selectMode(23, "spring")).toBe("dashti");
+    expect(selectMode(20, "summer")).toBe("dashti");
+    expect(selectMode(4, "autumn")).toBe("dashti");
+    expect(selectMode(23, "autumn", "rain")).toBe("shur");
+    expect(selectMode(2, "winter", "snow")).toBe("shur");
+    expect(selectMode(12, "autumn")).toBe("esfahan");
+    expect(selectMode(12, "spring")).toBe("mahur");
+    expect(musicMode({ hour: 1, season: "spring", weather: "clear" }).mode).toBe("dashti");
     expect(musicMode({ hour: 12, season: "autumn", weather: "clear" }).mode).toBe("esfahan");
     expect(musicMode({ hour: 12, season: "spring", weather: "clear" }).mode).toBe("mahur");
     expect(musicMode({ hour: 1, season: "spring", weather: "clear" }).tempo).toBeLessThan(musicMode({ hour: 12, season: "spring", weather: "clear" }).tempo);
+  });
+  it("V.9 — چهارگاه و دشتی هم هفت‌درجه‌اند و اکتاوشان درست", () => {
+    for (const m of ["chahargah", "dashti"] as const) {
+      expect(MODES[m].cents).toHaveLength(7);
+      expect(degreeFreq(m, 7)).toBeCloseTo(degreeFreq(m, 0) * 2, 6);
+    }
+    // کُرُنِ دومِ چهارگاه (۱۰۰ سنت)
+    expect(degreeFreq("chahargah", 1) / degreeFreq("chahargah", 0)).toBeCloseTo(Math.pow(2, 100 / 1200), 6);
   });
   it("۳۰۰ جمله: درون بازه، پایان با فرود روی تنیک/پنجم، ریز فقط وسطِ جمله", () => {
     const r = rng(42);
