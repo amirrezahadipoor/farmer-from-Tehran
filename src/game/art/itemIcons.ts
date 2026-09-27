@@ -142,6 +142,57 @@ const shp = {
   feedBowl: () =>
     `<path d="M3 13h18l-1.8 5.4c-.3.9-1.1 1.4-2 1.4H6.8c-.9 0-1.7-.5-2-1.4z" fill="#8d6e63" ${S}/>` +
     [[7, 11.6], [10, 10.6], [13, 11], [16, 10.4], [9, 12.4], [15, 12.4], [12, 9.6]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.8" ry="1.1" fill="#d7a64a" ${S}/>`).join(""),
+  // ── W.1: شکل‌های بسته‌ی محصولاتِ ۲
+  /** میوه‌ی کشیده (خیار، بادمجان) با کلاهکِ سبز؛ bumps = خارهای ریزِ خیار */
+  longFruit: (c: string, cap: string, bumps = false) =>
+    `<path d="M6.2 18.6c-2-1.6-1.6-4.6.6-6.6l6.6-6c1.8-1.6 4.2-1.8 5.6-.4s1.2 3.8-.4 5.6l-6 6.6c-2 2.2-4.8 2.4-6.4.8z" fill="${c}" ${S}/>` +
+    `<path d="M16.4 5.2c.6-1.4 1.6-2.2 3-2.4-.2 1.4-.9 2.4-2.2 3M15.6 6.4l1.6-1.4 1.8 1.8-1.4 1.6z" fill="${cap}" ${S}/>` +
+    `<ellipse cx="9.4" cy="13" rx="1.2" ry="3.2" transform="rotate(45 9.4 13)" ${HL}/>` +
+    (bumps ? [[8.4, 16.2], [11, 13.4], [13.6, 10.6], [10.2, 16.6], [12.8, 13.8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".45" fill="#1b5e20"/>`).join("") : ""),
+  /** غده (سیب‌زمینی) با چشم‌ها */
+  tuber: (c: string) =>
+    `<path d="M5 13.6c-.4-3.6 2.6-6.8 6.6-7.2 4.4-.4 8.2 1.8 8.4 5.4.2 3.8-3 6.8-7.4 7-4.2.2-7.2-1.8-7.6-5.2z" fill="${c}" ${S}/>` +
+    [[9, 11], [13.6, 9.6], [16.4, 13.4], [11.4, 15.4], [7.6, 14.4]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx=".8" ry=".55" fill="#8d6e3f"/>`).join("") +
+    `<ellipse cx="9.6" cy="9.4" rx="2" ry="1.1" transform="rotate(-18 9.6 9.4)" ${HL}/>`,
+  /** پیاز و سیر: سوخ با دمِ نوک‌تیز، خط‌های پوسته و ریشه‌های ریز؛ cloves = حبه‌های سیر */
+  bulb: (c: string, line: string, cloves = false) =>
+    `<path d="M12 3.2c.6 2.2 1.4 3.4 3 4.6 3 2 4.6 4.6 4.2 7.6-.5 3.6-3.6 5.6-7.2 5.6s-6.7-2-7.2-5.6c-.4-3 1.2-5.6 4.2-7.6 1.6-1.2 2.4-2.4 3-4.6z" fill="${c}" ${S}/>` +
+    (cloves
+      ? `<path d="M12 8.6v11.8M8.6 10.4c-1.6 2.6-1.8 6 0 9M15.4 10.4c1.6 2.6 1.8 6 0 9" stroke="${line}" stroke-width=".9" fill="none"/>`
+      : `<path d="M9.6 9.4c-1.4 2.8-1.4 6.8.6 10.6M14.4 9.4c1.4 2.8 1.4 6.8-.6 10.6M12 7.6v12.6" stroke="${line}" stroke-width=".8" fill="none"/>`) +
+    `<path d="M10.6 20.6l-.8 1.4M12 20.8v1.6M13.4 20.6l.8 1.4" stroke="#8d6e63" stroke-width=".8" stroke-linecap="round"/>` +
+    `<ellipse cx="9" cy="13" rx="1.1" ry="2.4" ${HL}/>`,
+  /** تپه‌ی دانه (نخود، عدس، کنجد، زیره) در کاسه‌ی چوبی: هرمِ ۷، ۵، ۴، ۳ دانه */
+  seedPile: (c: string, rx: number, ry: number) =>
+    `<path d="M3.4 14h17.2l-1.6 5c-.3.9-1.1 1.5-2 1.5H7c-.9 0-1.7-.6-2-1.5z" fill="#a1887f" ${S}/><path d="M4.4 16.4h15.2" stroke="#6d4c41" stroke-width=".7"/>` +
+    [7, 5, 4, 3]
+      .flatMap((inRow, row) =>
+        Array.from({ length: inRow }, (_, k) => {
+          const x = 12 + (k - (inRow - 1) / 2) * rx * 2.1;
+          const y = 13.2 - row * Math.max(ry * 1.9, 1.5);
+          return `<ellipse cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" rx="${rx}" ry="${ry}" fill="${c}" stroke="${OL}" stroke-width=".55"/>`;
+        }),
+      )
+      .join(""),
+  /** توت: خوشه‌ی کشیده‌ی دانه‌دانه روی دمبرگ */
+  mulberryFruit: (c: string) =>
+    `<path d="M12 7.4c.4-2 1.6-3.4 3.4-4" stroke="#6d4c41" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="15.8" cy="4.6" rx="2.8" ry="1.4" transform="rotate(-20 15.8 4.6)" fill="#66bb6a" ${S}/>` +
+    [[12, 8.6], [10.4, 10.4], [13.6, 10.4], [12, 12.2], [10.2, 13.8], [13.8, 13.8], [12, 15.6], [10.6, 17.2], [13.4, 17.2], [12, 18.8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.9" fill="${c}" ${S}/>`).join("") +
+    `<ellipse cx="10.8" cy="10" rx=".8" ry="1.3" ${HL}/>`,
+  /** به: گلابی‌شکلِ کُرک‌دار با دمبرگ */
+  pear: (c: string) =>
+    `<path d="M12 5.6c1.6 0 2.6 1.2 2.8 2.8.2 1.4 1.2 2 2.4 3 1.6 1.4 2.2 3.4 1.6 5.4-.8 2.6-3.6 3.8-6.8 3.8s-6-1.2-6.8-3.8c-.6-2 0-4 1.6-5.4 1.2-1 2.2-1.6 2.4-3 .2-1.6 1.2-2.8 2.8-2.8z" fill="${c}" ${S}/>` +
+    `<path d="M12 5.6c0-1.2.4-2.2 1.2-3" stroke="#5d4037" stroke-width="1.3" fill="none" stroke-linecap="round"/><ellipse cx="15" cy="3.6" rx="2.4" ry="1.2" transform="rotate(-25 15 3.6)" fill="#7cb342" ${S}/>` +
+    `<ellipse cx="9.4" cy="13" rx="1.6" ry="2.8" ${HL}/>`,
+  /** زیتون: شاخه با برگ‌های باریکِ نقره‌ای و سه دانه */
+  olives: (c: string) =>
+    `<path d="M4 19.5C8 15 12 11 20 4.5" stroke="#6d4c41" stroke-width="1.3" fill="none" stroke-linecap="round"/>` +
+    [[7.6, 14.6, -60], [11.4, 10.4, 35], [14.6, 8.6, -55], [17.6, 5.6, 30]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="1.1" transform="rotate(${r} ${x} ${y})" fill="#9aa97c" ${S}/>`).join("") +
+    [[9.4, 16.6], [13.6, 13.4], [16.4, 10.8]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2.2" ry="2.8" transform="rotate(-30 ${x} ${y})" fill="${c}" ${S}/><ellipse cx="${x - 0.6}" cy="${y - 0.9}" rx=".5" ry=".9" ${HL}/>`).join(""),
+  /** نیشکر: سه ساقه‌ی بندبند با برگِ باریک */
+  caneStalks: (c: string) =>
+    [[8, -8], [12, 0], [16, 8]].map(([x, r]) => `<g transform="rotate(${r} ${x} 20)"><rect x="${x - 1.4}" y="4" width="2.8" height="17" rx="1.2" fill="${c}" ${S}/><path d="M${x - 1.4} 8.5h2.8M${x - 1.4} 13h2.8M${x - 1.4} 17.5h2.8" stroke="#8a9a3a" stroke-width=".9"/></g>`).join("") +
+    `<path d="M12 4c-2.6-1.4-4.8-1.2-6.6.4M12 4c2.4-1.8 4.8-1.8 6.8-.2" stroke="#7cb342" stroke-width="1.3" fill="none" stroke-linecap="round"/>`,
 };
 
 export const ITEM_SVG: Record<string, string> = {
@@ -201,6 +252,23 @@ export const ITEM_SVG: Record<string, string> = {
     `<path d="M12 20V8" stroke="#00897b" stroke-width="1.4" ${S}/>` +
     [[12, 8, 0], [8.6, 11, -35], [15.4, 11, 35], [8, 15, -45], [16, 15, 45]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="2" transform="rotate(${r} ${x} ${y})" fill="#26a69a" ${S}/>`).join("") +
     `<ellipse cx="12" cy="5.6" rx="2" ry="2.6" fill="#4db6ac" ${S}/>`,
+  // ── W.1: بسته‌ی محصولاتِ ۲
+  cucumber: shp.longFruit("#43a047", "#2e7d32", true),
+  potato: shp.tuber("#c8a165"),
+  onion: shp.bulb("#d19a45", "#9c6a2a"),
+  eggplant: shp.longFruit("#4a148c", "#558b2f"),
+  chickpea: shp.seedPile("#e0c38c", 1.3, 1.2),
+  lentil: shp.seedPile("#c1813d", 1.15, 0.8),
+  garlic: shp.bulb("#f3efe6", "#bdb6a6", true),
+  sesame: shp.seedPile("#f5ecd0", 0.95, 0.6),
+  sugar_beet: shp.root("#f1d4d4"),
+  mulberry: shp.mulberryFruit("#efe4b0"),
+  cumin: shp.seedPile("#8d6e4a", 1.2, 0.45),
+  apricot: shp.round("#ffa726") + `<ellipse cx="15.2" cy="15.4" rx="3" ry="2.4" fill="#ef6c00" fill-opacity=".45"/>`,
+  sugarcane: shp.caneStalks("#c5d86d"),
+  olive: shp.olives("#556b2f"),
+  quince: shp.pear("#fdd835"),
+  orange: shp.round("#fb8c00") + [[9.6, 15.6], [12.4, 17.4], [15.4, 15], [13.6, 12.6], [10.4, 12.2], [15.8, 17.8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".4" fill="#e65100"/>`).join(""),
   melon_juice: shp.teaGlass("#f48fb1"),
   ab_albaloo: shp.teaGlass("#8e2444"),
   mint_tea: shp.teaGlass("#66bb6a"),

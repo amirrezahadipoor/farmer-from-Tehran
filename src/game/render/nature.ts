@@ -9,6 +9,7 @@
 import { CMAP } from "../data";
 import type { Tile } from "../logic";
 import { A, B, clamp, ellipse, hash, makeCanvas, poly, shade, tileCenter, type Walker } from "./core";
+import { drawGenericPlant } from "./plants";
 
 interface Sprite { cv: HTMLCanvasElement; x0: number; y0: number; w: number; h: number }
 const sprites = new Map<string, Sprite>();
@@ -224,43 +225,6 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
       drawGenericPlant(ctx, c.look ?? "bush", c.color, leaf, x, y, g, sc, sw, seed, seasonId);
   }
 }
-
-/** ظاهرهای عمومی برای محصول‌های سطح بالا (P6.1): درختِ میوه، بوته، شالیزار، پنبه */
-function drawGenericPlant(ctx: CanvasRenderingContext2D, look: string, color: string, leaf: string, x: number, y: number, g: number, sc: number, sw: number, seed: number, seasonId: string) {
-  const ripe = g >= 1;
-  const autumn = seasonId === "autumn", winter = seasonId === "winter";
-  if (look === "tree") {
-    const h = 20 + 26 * sc;
-    ctx.fillStyle = "#5d4037"; ctx.fillRect(x - 2.4, y - h * 0.55, 4.8, h * 0.55);
-    const canopy = winter ? "#b0bec5" : autumn ? "#c0a030" : leaf;
-    ellipse(ctx, x + sw * 0.4, y - h * 0.72, 13 * sc + 4, 10 * sc + 3, canopy);
-    ellipse(ctx, x - 5 * sc + sw * 0.4, y - h * 0.8, 7 * sc + 2, 5 * sc + 2, shade(canopy, 0.18));
-    if (g > 0.55) for (let i = 0; i < 6; i++) {
-      const fx = x + (hash(seed, i) - 0.5) * 22 * sc + sw * 0.4, fy = y - h * 0.72 + (hash(i, seed) - 0.5) * 14 * sc;
-      ellipse(ctx, fx, fy, 2.6 * sc + 0.6, 2.6 * sc + 0.6, ripe ? color : shade(color, 0.45));
-    }
-    return;
-  }
-  if (look === "paddy") {
-    ellipse(ctx, x, y + 1, 9, 3.5, "rgba(79,195,247,0.45)");
-    const col = ripe ? "#e0c060" : leaf;
-    ctx.strokeStyle = col; ctx.lineWidth = 1.4;
-    for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(x + i * 1.6, y); ctx.quadraticCurveTo(x + i * 2, y - 10 * sc, x + i * 3.2 + sw, y - 20 * sc); ctx.stroke(); }
-    if (g > 0.6) for (let i = -1; i <= 1; i++) ellipse(ctx, x + i * 5 + sw, y - 20 * sc, 1.8, 3.6 * sc, ripe ? "#f5e6a8" : "#c5e1a5");
-    return;
-  }
-  if (look === "boll") {
-    ctx.strokeStyle = "#6d4c41"; ctx.lineWidth = 1.5;
-    for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 3, y); ctx.lineTo(x + i * 4 + sw * 0.4, y - 18 * sc); ctx.stroke(); }
-    for (let i = -1; i <= 1; i++) ellipse(ctx, x + i * 5 + sw * 0.4, y - 12 * sc, 4 * sc, 2.4 * sc, leaf);
-    if (g > 0.55) for (let i = -1; i <= 1; i++) { const px = x + i * 4 + sw * 0.4, py = y - 19 * sc; ellipse(ctx, px, py, (ripe ? 4 : 2.5) * sc + 0.6, (ripe ? 3.4 : 2) * sc + 0.6, ripe ? color : "#dcedc8"); }
-    return;
-  }
-  // bush
-  for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + seed; ellipse(ctx, x + Math.cos(a) * 6 * sc + sw * 0.3, y - 7 * sc + Math.sin(a) * 3 * sc, 6 * sc + 1, 4.5 * sc + 1, i % 2 ? leaf : shade(leaf, 0.15)); }
-  if (g > 0.5) for (let i = 0; i < 5; i++) ellipse(ctx, x + (hash(seed, i + 2) - 0.5) * 14 * sc, y - 6 * sc - hash(i + 5, seed) * 8 * sc, 1.9, 1.9, ripe ? color : shade(color, 0.5));
-}
-
 
 /** کاشیِ محصول: همه‌ی بوته‌ها در یک اسپرایت (رشد در ۲۰ پله، ۳ گونه‌ی چینش)؛ درخششِ «رسیده» به مسیرِ مشترک اضافه می‌شود */
 export function drawCropTile(ctx: CanvasRenderingContext2D, t: Tile, gx: number, gy: number, now: number, seasonId: string, sparkle: Path2D, sway = true) {

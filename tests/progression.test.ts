@@ -109,7 +109,8 @@ describe("بازکردنی‌ها در هر سطح (P6.1)", () => {
   it("«بازکردنیِ بعدی» همیشه جلوتر را نشان می‌دهد", () => {
     expect(nextUnlock(11)?.level).toBe(12);
     expect(nextUnlock(24)?.level).toBe(25);
-    expect(nextUnlock(25)).toBeNull();
+    expect(nextUnlock(25)?.level).toBe(26); // W.1: به
+    expect(nextUnlock(28)).toBeNull(); // پرتقال (۲۸) آخرین بازکردنی است
   });
 });
 

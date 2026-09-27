@@ -6,7 +6,7 @@ export interface CropDef {
   /** کالای برداشتی اگر با شناسه‌ی محصول فرق کند (صنوبر ← الوار) */
   out?: string;
   /** ظاهرِ عمومی برای محصول‌هایی که نقاشیِ اختصاصی ندارند */
-  look?: "tree" | "bush" | "paddy" | "boll";
+  look?: "tree" | "bush" | "paddy" | "boll" | "tuber" | "cane" | "pod" | "vine" | "umbel";
 }
 export interface ItemDef { id: string; name: string; base: number; tier?: number; }
 export interface Recipe { out: string; n: number; inp: Record<string, number>; time: number; xp: number; /** سطحِ لازم (اگر از خودِ کارگاه بالاتر باشد) */ lvl?: number; /** P6.3: نسلِ لازم (دستورِ خانوادگی) */ gen?: number; }
@@ -64,6 +64,23 @@ export const CROPS: CropDef[] = [
   { id: "apple", name: "سیب", seed: 95, time: 300, yield: 3, lvl: 9, xp: 20, color: "#e53935", leaf: "#43a047", look: "tree" },
   { id: "cherry", name: "آلبالو", seed: 160, time: 380, yield: 3, lvl: 16, xp: 35, color: "#880e4f", leaf: "#2e7d32", look: "tree" },
   { id: "mint", name: "نعنا", seed: 45, time: 120, yield: 3, lvl: 18, xp: 14, color: "#26a69a", leaf: "#00897b", look: "bush" },
+  // ── W.1: بسته‌ی محصولاتِ ۲ — صیفی، حبوبات، دانه‌ها، صنعتی، درختی و معطر
+  { id: "cucumber", name: "خیار", seed: 11, time: 70, yield: 2, lvl: 3, xp: 3, color: "#43a047", leaf: "#2e7d32", look: "vine" },
+  { id: "potato", name: "سیب‌زمینی", seed: 16, time: 100, yield: 3, lvl: 4, xp: 5, color: "#c8a165", leaf: "#558b2f", look: "tuber" },
+  { id: "onion", name: "پیاز", seed: 20, time: 120, yield: 3, lvl: 5, xp: 5, color: "#d19a45", leaf: "#7cb342", look: "tuber" },
+  { id: "eggplant", name: "بادمجان", seed: 30, time: 170, yield: 2, lvl: 6, xp: 8, color: "#4a148c", leaf: "#33691e", look: "vine" },
+  { id: "chickpea", name: "نخود", seed: 34, time: 190, yield: 3, lvl: 7, xp: 10, color: "#e0c38c", leaf: "#689f38", look: "pod" },
+  { id: "lentil", name: "عدس", seed: 36, time: 200, yield: 3, lvl: 8, xp: 11, color: "#c1813d", leaf: "#7cb342", look: "pod" },
+  { id: "garlic", name: "سیر", seed: 50, time: 240, yield: 3, lvl: 9, xp: 15, color: "#f3efe6", leaf: "#9ccc65", look: "tuber" },
+  { id: "sesame", name: "کنجد", seed: 55, time: 230, yield: 3, lvl: 10, xp: 14, color: "#f8e1e7", leaf: "#558b2f", look: "umbel" },
+  { id: "sugar_beet", name: "چغندرقند", seed: 60, time: 260, yield: 3, lvl: 11, xp: 16, color: "#f1d4d4", leaf: "#2e7d32", look: "tuber" },
+  { id: "mulberry", name: "توت", seed: 110, time: 330, yield: 3, lvl: 12, xp: 24, color: "#efe4b0", leaf: "#4caf50", look: "tree" },
+  { id: "cumin", name: "زیره", seed: 80, time: 280, yield: 3, lvl: 14, xp: 20, color: "#fafafa", leaf: "#9ccc65", look: "umbel" },
+  { id: "apricot", name: "زردآلو", seed: 190, time: 430, yield: 3, lvl: 18, xp: 36, color: "#ffa726", leaf: "#43a047", look: "tree" },
+  { id: "sugarcane", name: "نیشکر", seed: 140, time: 360, yield: 4, lvl: 22, xp: 34, color: "#c5d86d", leaf: "#7cb342", look: "cane" },
+  { id: "olive", name: "زیتون", seed: 280, time: 540, yield: 3, lvl: 24, xp: 50, color: "#556b2f", leaf: "#8d9f6f", look: "tree" },
+  { id: "quince", name: "به", seed: 300, time: 560, yield: 3, lvl: 26, xp: 54, color: "#fdd835", leaf: "#558b2f", rare: true, look: "tree" },
+  { id: "orange", name: "پرتقال", seed: 320, time: 600, yield: 3, lvl: 28, xp: 58, color: "#fb8c00", leaf: "#2e7d32", look: "tree" },
 ];
 
 export const ITEMS: Record<string, ItemDef> = {
@@ -102,6 +119,23 @@ export const ITEMS: Record<string, ItemDef> = {
   apple: { id: "apple", name: "سیب", base: 130, tier: 1 },
   cherry: { id: "cherry", name: "آلبالو", base: 260, tier: 1 },
   mint: { id: "mint", name: "نعنا", base: 90, tier: 1 },
+  // W.1
+  cucumber: { id: "cucumber", name: "خیار", base: 18, tier: 1 },
+  potato: { id: "potato", name: "سیب‌زمینی", base: 18, tier: 1 },
+  onion: { id: "onion", name: "پیاز", base: 20, tier: 1 },
+  eggplant: { id: "eggplant", name: "بادمجان", base: 52, tier: 1 },
+  chickpea: { id: "chickpea", name: "نخود", base: 38, tier: 1 },
+  lentil: { id: "lentil", name: "عدس", base: 40, tier: 1 },
+  garlic: { id: "garlic", name: "سیر", base: 62, tier: 1 },
+  sesame: { id: "sesame", name: "کنجد", base: 60, tier: 1 },
+  sugar_beet: { id: "sugar_beet", name: "چغندرقند", base: 70, tier: 1 },
+  mulberry: { id: "mulberry", name: "توت", base: 120, tier: 1 },
+  cumin: { id: "cumin", name: "زیره", base: 95, tier: 1 },
+  apricot: { id: "apricot", name: "زردآلو", base: 215, tier: 1 },
+  sugarcane: { id: "sugarcane", name: "نیشکر", base: 130, tier: 1 },
+  olive: { id: "olive", name: "زیتون", base: 290, tier: 1 },
+  quince: { id: "quince", name: "به", base: 320, tier: 1 },
+  orange: { id: "orange", name: "پرتقال", base: 345, tier: 1 },
   melon_juice: { id: "melon_juice", name: "آب‌هندوانه", base: 95, tier: 2 },
   ab_albaloo: { id: "ab_albaloo", name: "آب‌آلبالو", base: 560, tier: 2 },
   lavashak: { id: "lavashak", name: "لواشک", base: 850, tier: 2 },
