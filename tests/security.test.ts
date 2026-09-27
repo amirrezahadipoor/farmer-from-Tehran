@@ -33,6 +33,8 @@ describe("هدرهای امنیتی", () => {
       expect(keys).toContain(k);
     }
     expect(nextConfig.poweredByHeader).toBe(false);
+    // COOP عمداً نیست: سند را در فرآیندِ سرد باز می‌کرد و اولین نقاشی ~۶۰ms دیرتر می‌شد (توضیح در src/security.ts)
+    expect(keys).not.toContain("Cross-Origin-Opener-Policy");
     const all = (await nextConfig.headers?.()) ?? [];
     expect(all.find((h) => h.source === DOCUMENT_ROUTES)?.headers.map((h) => h.key)).toEqual(keys);
     expect(all.find((h) => h.source === STATIC_ROUTES)?.headers).toEqual([{ key: "X-Content-Type-Options", value: "nosniff" }]);

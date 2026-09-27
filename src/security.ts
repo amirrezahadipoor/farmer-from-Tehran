@@ -36,6 +36,12 @@ export const PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), pay
 
 export const REFERRER_POLICY = "strict-origin-when-cross-origin";
 
+/**
+ * چرا Cross-Origin-Opener-Policy نه: COOP=same-origin مرورگر را وادار می‌کند سند را در فرآیندِ تازه و سردی
+ * باز کند (گروهِ پنجره عوض می‌شود). روی CI دقیقاً از کامیتی که آن را افزود، اولین نقاشی از ~۹۰ به ~۱۵۰ms و
+ * اولین درخواستِ اسکریپت از ~۴۰ به ~۷۵ms رفت و Lighthouseِ موبایل از ۹۸ِ پایدار به ۹۳ تا ۹۹ِ دوقطبی رسید.
+ * بازی پنجره‌ی بازشو ندارد و داده‌ی حساسی میانِ پنجره‌ها رد و بدل نمی‌کند، پس سودِ امنیتی‌اش ناچیز بود.
+ */
 export function securityHeaders(dev = false): { key: string; value: string }[] {
   return [
     { key: "Content-Security-Policy", value: cspDirectives({ dev }) },
@@ -43,7 +49,6 @@ export function securityHeaders(dev = false): { key: string; value: string }[] {
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "Referrer-Policy", value: REFERRER_POLICY },
     { key: "Permissions-Policy", value: PERMISSIONS_POLICY },
-    { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
     { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   ];
 }
