@@ -36,13 +36,17 @@ describe("مجوزها", () => {
     }
   });
 
-  it("هر فایلِ صوتی نامش در CREDITS.md آمده و مجوزش آزاد است", () => {
+  it("هر فایلِ صوتی در CREDITS.md ثبت شده (سطرِ خودش یا پوشه‌اش) و مجوزش آزاد است", () => {
     const dir = join(ROOT, "public/audio");
     const files = existsSync(dir) ? readdirSync(dir, { recursive: true }).map(String).filter((f) => /\.(mp3|m4a|ogg|opus|wav)$/.test(f)) : [];
+    expect(files.length, "صداهای واقعی (مورد ۱۰)").toBeGreaterThan(50);
+    const lines = credits.split("\n");
     for (const f of files) {
       const name = f.split("/").pop() as string;
-      const line = credits.split("\n").find((l) => l.includes(name));
-      expect(line, `فایلِ صوتیِ ${name} در CREDITS.md ثبت نشده`).toBeTruthy();
+      const folder = `public/audio/${f.slice(0, f.length - name.length)}`;
+      // سطرِ خاصِ همان فایل مقدم است؛ وگرنه سطرِ پوشه
+      const line = lines.find((l) => l.includes(`public/audio/${f}`)) ?? lines.find((l) => l.includes(`\`${folder}\``));
+      expect(line, `فایلِ صوتیِ ${f} در CREDITS.md ثبت نشده`).toBeTruthy();
       expect(line, `مجوزِ ${name} آزاد نیست`).toMatch(/CC0|CC-BY|CC BY|Public Domain|OGA-BY/);
       expect(line, `مجوزِ ${name} غیرتجاری یا بی‌اشتقاق است`).not.toMatch(/NC|ND/);
     }
