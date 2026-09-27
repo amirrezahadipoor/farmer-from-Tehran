@@ -49,7 +49,11 @@ await page.evaluate(() => {
 await page.waitForTimeout(1500);
 const data = await page.evaluate(() => {
   const cv = [...document.querySelectorAll("canvas")].sort((a, b) => b.width * b.height - a.width * a.height)[0];
-  return cv.toDataURL("image/png");
+  const c2 = document.createElement("canvas");
+  c2.width = 768;
+  c2.height = 1024;
+  c2.getContext("2d").drawImage(cv, 0, 0, 768, 1024);
+  return c2.toDataURL("image/png");
 });
 writeFileSync(out, Buffer.from(data.split(",")[1], "base64"));
 console.log("base saved", out);
