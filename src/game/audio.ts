@@ -11,6 +11,9 @@
 import type { SfxKey } from "./logic";
 import { loadAudioSettings, saveAudioSettings, type AmbientEnv, type AudioSettings } from "./sound/mix";
 import { Engine } from "./sound/engine";
+import { SETAR_NOTES, SFX_SAMPLES, BED_SAMPLES } from "./sound/samples.gen";
+
+const SAMPLE_TOTAL = Object.values(SFX_SAMPLES).reduce((a, x) => a + x.files.length, 0) + SETAR_NOTES.length + Object.keys(BED_SAMPLES).length;
 
 export type { AudioSettings, AmbientEnv } from "./sound/mix";
 
@@ -100,6 +103,8 @@ export function armAudio(): () => void {
 /** فقط برای تست/اشکال‌زدایی (window.__game.audio در مرورگر) */
 export const audioDebug = () => ({
   engine: !!engine,
+  /** مورد ۱۰: شمارِ فایل‌هایی که بانک پیش از میان‌پرده بارگذاری می‌کند */
+  samplesTotal: SAMPLE_TOTAL,
   state: engine?.state ?? null,
   layers: engine?.layers ?? null,
   level: engine ? engine.level() : 0,

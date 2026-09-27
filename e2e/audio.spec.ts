@@ -1,18 +1,20 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * e2e/audio.spec.ts — شاهدِ P5.12 «صدای زنده، بدون یک فایل صوتی»
+ * e2e/audio.spec.ts — شاهدِ P5.12 (موتورِ صدا) و مورد ۱۰ِ نقشه‌ی راه (صداهای واقعیِ آزاد)
  *
  *  ۱. پیش از اولین لمس هیچ AudioContextی ساخته نمی‌شود (سیاستِ پخشِ خودکار؛ بدون هشدارِ کنسول).
  *  ۲. بعد از لمس: موتور «running»، لایه‌های محیط و موسیقی فعال، و خروجیِ واقعی (RMS) صفر نیست.
  *  ۳. پنل تنظیمات چهار اسلایدر دارد؛ خاموش کردنِ صدا خروجی را صفر می‌کند و بعد از بارگذاریِ دوباره می‌ماند.
  *  ۴. تبِ پنهان موتور را معلق می‌کند (باتری).
+ *  ۵. صداهای واقعی بعد از لمس دانلود و رمزگشایی می‌شوند و سه‌تار و محیطِ ضبط‌شده جای سنتز را می‌گیرند.
  */
 
 type AudioDebug = {
   engine: boolean;
   state: string | null;
-  layers: { ambient: boolean; music: boolean; running: boolean } | null;
+  layers: { ambient: boolean; music: boolean; running: boolean; samples: number; ambience: string | null; pluck: string } | null;
+  samplesTotal: number;
   level: number;
   settings: { on: boolean; master: number; music: number; sfx: number; ambient: number };
 };
@@ -79,6 +81,23 @@ test.describe("صدا (P5.12)", () => {
       });
       await expect.poll(async () => (await audio(page)).state).toBe("suspended");
       expect(warnings, warnings.join("\n")).toHaveLength(0);
+    });
+
+    test("صداهای واقعی: بعد از لمس همه رمزگشایی و سه‌تار و محیطِ ضبط‌شده جایگزینِ سنتز می‌شوند", async ({ page }) => {
+      const failed: string[] = [];
+      page.on("response", (r) => {
+        if (r.url().includes("/audio/") && r.status() >= 400) failed.push(`${r.status()} ${r.url()}`);
+      });
+      await boot(page);
+      await page.mouse.click(200, 420);
+      await expect.poll(async () => (await audio(page)).state).toBe("running");
+      const total = (await audio(page)).samplesTotal;
+      expect(total).toBeGreaterThan(70);
+      await expect.poll(async () => (await audio(page)).layers?.samples ?? 0, { timeout: 30_000 }).toBe(total);
+      await expect.poll(async () => (await audio(page)).layers?.ambience, { timeout: 5_000 }).toBe("samples");
+      expect((await audio(page)).layers?.pluck).toBe("setar");
+      await expect.poll(async () => (await audio(page)).level, { timeout: 15_000 }).toBeGreaterThan(0.001);
+      expect(failed).toEqual([]);
     });
   });
 });

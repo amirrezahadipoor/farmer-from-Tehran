@@ -27,9 +27,9 @@ export interface SettingsProps extends PanelProps {
 /** اسلایدرهای حجم (P5.12) — برچسب همان aria-label است تا تست و صفحه‌خوان پیدایش کنند */
 const VOLUMES: { key: "master" | "music" | "sfx" | "ambient"; icon: string; title: string; hint: string }[] = [
   { key: "master", icon: "sound", title: "حجم کل", hint: "همه‌ی صداهای بازی" },
-  { key: "music", icon: "music", title: "موسیقی", hint: "سنتورِ زاینده روی ماهور، شور و اصفهان" },
+  { key: "music", icon: "music", title: "موسیقی", hint: "سه‌تارِ واقعی روی ماهور، شور و اصفهان، گاهی بداهه‌ی سه‌گاه" },
   { key: "sfx", icon: "sparkle", title: "جلوه‌های صوتی", hint: "کاشت، برداشت، فروش و ساخت" },
-  { key: "ambient", icon: "bird", title: "صدای محیط", hint: "باد، باران، پرنده‌ها و جیرجیرکِ شب" },
+  { key: "ambient", icon: "bird", title: "صدای محیط", hint: "پرنده، جیرجیرک، باران و باد، ضبطِ واقعی" },
 ];
 
 function VolumeSlider({ icon, title, hint, value, disabled, onChange }: { icon: string; title: string; hint: string; value: number; disabled: boolean; onChange: (v: number) => void }) {
@@ -79,7 +79,7 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
 
   return (
     <div className="space-y-3">
-      <SettingRow icon={audio.on ? "sound" : "mute"} title="صدا" hint="همه‌چیز سنتزی و آفلاین؛ در تبِ پنهان خاموش می‌شود">
+      <SettingRow icon={audio.on ? "sound" : "mute"} title="صدا" hint="صداهای واقعی با مجوزِ آزاد؛ در تبِ پنهان خاموش می‌شود">
         <Toggle
           on={audio.on}
           label="روشن/خاموش کردن صدا"

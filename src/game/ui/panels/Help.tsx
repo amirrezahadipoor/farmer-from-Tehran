@@ -6,6 +6,10 @@
 
 import { Icon } from "../../icons";
 
+/** اعتبارِ صداها (مورد ۱۰؛ CC-BY می‌خواهد نامِ سازنده دیده شود). جزئیات و نشانی‌ها در CREDITS.md */
+const AUDIO_CREDITS =
+  "Sound effects: Kenney (CC0). Setar notes: Jacqke, Wikimedia Commons (CC BY-SA 4.0). Segah improvisation on setar: Leyth, Wikimedia Commons (CC BY-SA 3.0). Crickets: dklon, OpenGameArt (CC BY 3.0). Forest: TinyWorlds; rain: Ylmir; wind: Luke.RUSTLTD, OpenGameArt (CC0).";
+
 export function HelpPanel() {
   return (
     <div className="space-y-2.5 text-sm font-medium leading-7 text-amber-950">
@@ -46,8 +50,12 @@ export function HelpPanel() {
         <Icon name="rain" size={18} /> <b>فصل‌ها و آب‌وهوا:</b> هر ۵ روز فصل عوض می‌شود؛ باران آبیاری رایگان است و زمستان رشد را کند می‌کند.
       </p>
       <p>
-        <Icon name="cloud" size={18} /> <b>ذخیره:</b> خودکار هر ۱۲ ثانیه روی دستگاه (و اگر اینترنت باشد، روی سرور)؛ مزرعه تا ۲ ساعت در غیاب تو کار می‌کند.
+        <Icon name="cloud" size={18} /> <b>ذخیره:</b> خودکار هر ۱۲ ثانیه روی دستگاه (و اگر اینترنت باشد، روی سرور)؛ مزرعه تا ۲ ساعت در غیاب تو کار می‌کند. برای بردنِ مزرعه به گوشیِ دیگر: منو، «انتقال و پشتیبان».
       </p>
+      <div className="rounded-xl bg-white/70 p-2 text-[11px] leading-5 text-slate-600">
+        <b className="text-slate-700">منابعِ صدا (مجوزِ آزاد):</b>
+        <p dir="ltr" className="text-left">{AUDIO_CREDITS}</p>
+      </div>
     </div>
   );
 }

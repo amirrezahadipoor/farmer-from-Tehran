@@ -96,7 +96,7 @@ export type Ctx = Pick<BaseAudioContext, "currentTime" | "sampleRate" | "createO
 export interface PlayKit {
   noise: AudioBuffer;
   /** بافرِ زخمه برای یک بسامد + نرخِ پخشِ لازم برای کوکِ دقیق */
-  pluck: (freq: number) => { buffer: AudioBuffer; rate: number };
+  pluck: (freq: number) => { buffer: AudioBuffer; rate: number; gain?: number; single?: boolean };
 }
 
 /** یک جلوه را روی گذرگاهِ dest پخش می‌کند. detune = ضریبِ کوچکِ تصادفی تا تکرار خسته‌کننده نباشد. */

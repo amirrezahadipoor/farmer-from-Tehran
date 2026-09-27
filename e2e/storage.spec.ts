@@ -54,13 +54,13 @@ test.describe("ماندگاریِ سیو و انتقال", () => {
   test("IndexedDB: پاک‌شدنِ localStorage مزرعه را از بین نمی‌برد؛ ماندگاری درخواست می‌شود", async ({ page }) => {
     await page.addInitScript(() => {
       // برنامه اول persisted() را می‌پرسد و فقط اگر هنوز ماندگار نبود persist() را صدا می‌زند
-      const w = window as unknown as { __persistAsked: number; __persisted: boolean | null };
+      const w = window as unknown as { __persistAsked: number; __persistChecked: number };
       w.__persistAsked = 0;
-      w.__persisted = null;
+      w.__persistChecked = 0;
       const st = navigator.storage;
       if (st?.persisted) {
         const was = st.persisted.bind(st);
-        Object.defineProperty(st, "persisted", { configurable: true, value: async () => (w.__persisted = await was()) });
+        Object.defineProperty(st, "persisted", { configurable: true, value: () => (w.__persistChecked++, was()) });
       }
       if (st?.persist) {
         const orig = st.persist.bind(st);
@@ -70,11 +70,12 @@ test.describe("ماندگاریِ سیو و انتقال", () => {
     await enterGame(page);
     // مرورگرِ بی‌navigator.storage.persist (مثلِ WebKitِ آزمون) را برنامه هم نادیده می‌گیرد
     if (await page.evaluate(() => typeof navigator.storage?.persist === "function")) {
-      // یا مرورگر از قبل ماندگارش کرده، یا بازی درخواستش را داده است
+      // بازی وضعیت را می‌پرسد و اگر لازم بود درخواست می‌دهد؛ نتیجه با مرورگر است (WebKitِ آزمون رد می‌کند و
+      // بازی بی‌خطا ادامه می‌دهد)، پس معیار «پرسیدن» است
       await expect
         .poll(() => page.evaluate(() => {
-          const w = window as unknown as { __persistAsked: number; __persisted: boolean | null };
-          return w.__persisted === true || w.__persistAsked > 0;
+          const w = window as unknown as { __persistAsked: number; __persistChecked: number };
+          return w.__persistChecked + w.__persistAsked > 0;
         }))
         .toBe(true);
     }

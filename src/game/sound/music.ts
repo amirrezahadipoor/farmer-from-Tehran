@@ -1,7 +1,8 @@
 /**
  * src/game/sound/music.ts — موسیقیِ زاینده با صدای سنتور (P5.12): جمله‌های تازه روی
  * دستگاهِ متناسب با حالِ دره (ماهور/شور/اصفهان)، با واخوانِ بم در آغازِ هر جمله و
- * سکوتِ نفس‌گیر بینِ جمله‌ها. هیچ حلقه‌ی ضبط‌شده‌ای در کار نیست؛ هر بار تازه است.
+ * سکوتِ نفس‌گیر بینِ جمله‌ها؛ هر بار تازه است. از مورد ۱۰ نت‌ها صدای ضبط‌شده‌ی سه‌تارِ واقعی‌اند (همان
+ * جمله‌سازی، با کوکِ دقیق از نرخِ پخش) و تا رمزگشایی نشده‌اند زخمه‌ی سنتزی جایگزین است.
  */
 import { degreeFreq, makePhrase, rng, type ModeId, type Note } from "./mix";
 import type { Ctx, PlayKit } from "./sfx";
@@ -15,6 +16,8 @@ export class Music {
   private level = 1;
   /** شمارِ نت‌های زمان‌بندی‌شده (برای تست) */
   notes = 0;
+  /** تا این لحظه جمله‌ی تازه‌ای شروع نمی‌شود (میان‌پرده‌ی سه‌تار در حالِ پخش است) */
+  holdUntil = 0;
 
   constructor(
     private readonly ac: Ctx,
@@ -37,6 +40,11 @@ export class Music {
 
   schedule(until: number) {
     const now = this.ac.currentTime;
+    if (this.holdUntil > now) {
+      this.queue = [];
+      this.next = this.holdUntil;
+      return;
+    }
     if (this.next < now) this.next = now + 0.25;
     while (this.next < until) {
       if (!this.queue.length) {
@@ -65,13 +73,16 @@ export class Music {
 
   /** یک ضربه‌ی مضراب: دو سیمِ کمی ناکوک مثلِ سیم‌های چهارتاییِ سنتور */
   private play(f: number, t: number, vel: number, d: number) {
+    const first = this.pluck(f);
     const g = this.ac.createGain();
-    const peak = Math.max(0.0002, vel * 1.8 * this.level);
+    const peak = Math.max(0.0002, vel * 1.8 * this.level * (first.gain ?? 1));
     g.gain.setValueAtTime(peak, t);
     g.gain.setTargetAtTime(0.0001, t + d * 0.75, d * 0.12);
     g.connect(this.dest);
-    for (const [mul, amp] of [[1, 1], [1.0025, 0.55]] as const) {
-      const p = this.pluck(f * mul);
+    // سیم‌های جفتِ کمی ناکوکِ سنتور؛ نتِ ضبط‌شده‌ی سه‌تار تک‌سیم است (single)
+    const voices = first.single ? ([[1, 1]] as const) : ([[1, 1], [1.0025, 0.55]] as const);
+    for (const [mul, amp] of voices) {
+      const p = mul === 1 ? first : this.pluck(f * mul);
       const src = this.ac.createBufferSource();
       src.buffer = p.buffer;
       src.playbackRate.value = p.rate;
