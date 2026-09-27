@@ -9,7 +9,8 @@ import type { Events } from "./logic";
 import { tileCenter } from "./render/core";
 import { stripEmoji } from "./icons";
 import { sound } from "./audio";
-import { rt } from "./store";
+import { game, rt } from "./store";
+import { spawnGuest } from "./guests";
 import { celebrate, flyCoins, shake } from "./juice";
 
 export type ToastFn = (raw: string, t?: string) => void;
@@ -36,6 +37,11 @@ export function makeEvents(toast: ToastFn): Events {
             max: 0.95,
             color: i % 3 ? burst : "#fffde7",
           });
+    },
+    // V.6: مهمانِ سپاسگزار پس از هر تحویل
+    guest: (npc) => {
+      const s = game.get();
+      if (s) spawnGuest(s, npc, performance.now() / 1000);
     },
     // V.3: حس رضایت — جشن، لرزش و سکه‌ی پرنده
     celebrate,

@@ -20,7 +20,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
-import { addXp, setStoryShown, type State } from "./logic";
+import { addXp, fulfill, setStoryShown, type State } from "./logic";
 import { lineageVisible } from "./lineageStory";
 import { readLS, writeLS, dropLS } from "./persist";
 import { registerServiceWorker, prefetchStoryArt, STORY_ART_URLS } from "./net";
@@ -141,6 +141,14 @@ export default function Game() {
         rt.dprLock = d;
       },
       save: () => save(),
+      guests: () => rt.guests,
+      fulfill: (i: number) => {
+        const st = game.get();
+        if (!st) return null;
+        fulfill(st, i, ev);
+        game.bump();
+        return { guests: rt.guests.length, say: rt.guests[0]?.w.say ?? null };
+      },
       openPanel: (p: Panel) => setPanel(p),
       audio: audioDebug,
       crash: () => raiseFatal(new Error("آزمونِ مرزِ خطا (تستِ خودکار)")),

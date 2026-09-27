@@ -18,6 +18,7 @@ import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
 import { stepHero } from "./hero";
+import { stepGuests } from "./guests";
 import { stepSfx, drawSfx } from "./juice";
 import { raiseFatal, reportError } from "./errors";
 
@@ -201,6 +202,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       stepSfx(dt);
       stepWalkers(s, dt);
       stepHero(s, dt);
+      stepGuests(dt, t / 1000);
       if (!rt.view.covered) {
         // V.3: لرزش ملایم دوربین — آفست موقت روی دوربین، بدون تغییر در render
         const sh = rt.shakeT;
@@ -212,7 +214,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
         }
         const r0 = renderStats().rebuilds;
         const t0 = performance.now();
-        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values(), rt.hero]);
+        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values(), ...rt.guests.map((g) => g.w), rt.hero]);
         rt.view.cam.x = ox;
         rt.view.cam.y = oy;
         rt.stats.renders++;
