@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { preload } from "react-dom";
 import "./globals.css";
-import { asset } from "@/game/base";
+import { STATIC_BUILD, asset } from "@/game/base";
+import { REFERRER_POLICY, cspDirectives } from "@/security";
 
 export const metadata: Metadata = {
   title: "مزرعه طلایی | Golden Valley Farm",
@@ -59,6 +60,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <head>
+        {/* دموی ایستا (GitHub Pages) هدر نمی‌پذیرد؛ همان سیاست به‌صورتِ meta (مورد ۶) */}
+        {STATIC_BUILD && <meta httpEquiv="Content-Security-Policy" content={cspDirectives({ meta: true })} />}
+        {STATIC_BUILD && <meta name="referrer" content={REFERRER_POLICY} />}
         <style dangerouslySetInnerHTML={{ __html: FONT_FACES }} />
         <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>

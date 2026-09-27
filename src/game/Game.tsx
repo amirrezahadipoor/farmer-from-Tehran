@@ -99,8 +99,9 @@ export default function Game() {
   const { ready, online, saveState, save, saveIssue, dismissIssue, canRestore, recoverFromBackup, away, dismissAway } = usePersistence(toast);
   useGameVersion(); // هر تغییر وضعیت (حداکثر ۴ بار در ثانیه) UI را تازه می‌کند
 
-  // ── قلاب تست خودکار (E2E): وضعیت بازی برای Playwright قابل‌خواندن است
+  // ── قلاب تست خودکار (E2E): وضعیت بازی برای Playwright قابل‌خواندن است؛ فقط در توسعه و بیلدِ تست (مورد ۶)
   useEffect(() => {
+    if (process.env.GVF_TEST_HOOKS !== "1") return;
     (window as unknown as { __game?: unknown }).__game = {
       version: 2,
       getState: () => game.get(),

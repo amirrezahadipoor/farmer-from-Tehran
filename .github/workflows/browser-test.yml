@@ -14,6 +14,9 @@ jobs:
   mobile-playtest:
     name: اجرای بازی در مرورگر موبایل (۳۹۰×۸۴۴)
     runs-on: ubuntu-latest
+    # قلابِ window.__game فقط در بیلدِ تست وجود دارد؛ نسخه‌ی منتشرشده آن را ندارد (مورد ۶)
+    env:
+      NEXT_PUBLIC_E2E: "1"
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

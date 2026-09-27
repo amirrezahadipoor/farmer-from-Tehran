@@ -2,6 +2,8 @@
 
 > بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی · **آفلاین‌فِرست، فول‌تاچ، مخصوص موبایل**
 > ساخته‌شده با Next.js 16 + React 19 + TypeScript · موتور گرافیکی دست‌نویس روی Canvas 2D
+>
+> **دموی زنده:** [amirrezahadipoor.github.io/farmer-from-Tehran](https://amirrezahadipoor.github.io/farmer-from-Tehran/) — روی گوشی باز کنید و «افزودن به صفحه‌ی اصلی» را بزنید تا مثلِ اپ و بدونِ اینترنت اجرا شود. دمو ایستاست و سیو فقط روی همان دستگاه می‌ماند.
 
 <p align="center">
   <img src="public/images/story_farm.webp" alt="دره زرین — مزرعه طلایی" width="100%">
@@ -26,6 +28,15 @@
 npm install
 npm run dev          # http://localhost:3000
 ```
+
+برای کلونِ سبک (حدودِ ۱۱ مگابایت، بدونِ تاریخچه‌ی قدیمیِ اسکرین‌شات‌ها): `git clone --depth 1 https://github.com/amirrezahadipoor/farmer-from-Tehran.git`
+
+### انتشار
+
+| نسخه | چطور | ویژگی |
+|---|---|---|
+| دموی عمومی | خودکار با هر push به main (`.github/workflows/pages.yml`)؛ بعد از انتشار تستِ دود روی همان آدرس اجرا می‌شود | ایستا روی GitHub Pages، بدونِ API؛ ذخیره روی دستگاه |
+| نسخه‌ی کامل | [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Famirrezahadipoor%2Ffarmer-from-Tehran) یا `npm run build && npm start` روی هر سرورِ Node | همگام‌سازیِ ابری وقتی `DATABASE_URL` تنظیم شود |
 
 **بدون هیچ متغیر محیطی اجرا می‌شود.** پایگاه‌داده اختیاری است:
 

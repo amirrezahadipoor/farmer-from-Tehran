@@ -19,7 +19,15 @@ test("دموی عمومی: دارایی‌ها، اسپلش، ورود به با
     if (r.url().startsWith(base.origin) && r.status() >= 400) bad.push(`${r.status()} ${r.url()}`);
   });
 
+  await page.addInitScript(() => {
+    const w = window as unknown as { __csp: string[] };
+    w.__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) => w.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
   await page.goto("./");
+  // مورد ۶: نسخه‌ی منتشرشده نه قلابِ تست دارد و نه بی‌CSP است (Pages هدر نمی‌پذیرد، پس meta)
+  expect(await page.evaluate(() => "__game" in window), "قلابِ تست در نسخه‌ی منتشرشده").toBe(false);
+  expect(await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content")).toContain("object-src 'none'");
   const start = page.getByRole("button", { name: "آغاز داستان" });
   await expect(start).toBeEnabled({ timeout: 30_000 });
   await start.tap();
@@ -55,5 +63,7 @@ test("دموی عمومی: دارایی‌ها، اسپلش، ورود به با
   });
   expect(scope, "سرویس‌ورکر روی مسیرِ پایه").toBe(base.href);
   expect(bad, "درخواستِ شکست‌خورده زیرِ دامنه‌ی دمو").toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp), "نقضِ CSP").toEqual([]);
+  expect(await page.evaluate(() => "__game" in window), "قلابِ تست بعد از ورود به بازی").toBe(false);
   await page.screenshot({ path: "docs/shots/demo-pages-412.png" });
 });
