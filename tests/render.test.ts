@@ -208,10 +208,11 @@ describe("A.5 — نورِ بلادرنگ: سایه از جایِ خورشید �
   });
   it("ساعتِ طلایی: گرادیانِ گرم فقط نزدیکیِ افق رسم می‌شود", () => {
     const s = newState();
+    const dv = { ...view(), w: 900 };
     s.time = 67;
-    const dusk = frameOf(s, 1);
+    const dusk = frameOf(s, 1, dv);
     s.time = 120;
-    const noon = frameOf(s, 1);
+    const noon = frameOf(s, 1, dv);
     expect(dusk.createRadialGradient || 0).toBeGreaterThan(noon.createRadialGradient || 0);
   });
 });
