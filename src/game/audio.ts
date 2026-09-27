@@ -10,10 +10,28 @@
 
 import type { SfxKey } from "./logic";
 import { loadAudioSettings, saveAudioSettings, type AmbientEnv, type AudioSettings } from "./sound/mix";
-import { Engine } from "./sound/engine";
-import { SETAR_NOTES, SFX_SAMPLES, BED_SAMPLES } from "./sound/samples.gen";
+import type { Engine } from "./sound/engine";
 
-const SAMPLE_TOTAL = Object.values(SFX_SAMPLES).reduce((a, x) => a + x.files.length, 0) + SETAR_NOTES.length + Object.keys(BED_SAMPLES).length;
+/**
+ * موتور و فهرستِ ۷۹ فایلِ صوتی در بارِ اولِ صفحه نیستند: هیچ صدایی پیش از اولین لمس پخش نمی‌شود، پس
+ * ماژول در زمانِ بیکاری بعد از بارگذاری (یا با همان لمس) می‌آید. جلوه‌ای که در این فاصله خواسته شود
+ * در صف می‌ماند و بعد از آماده‌شدن پخش می‌شود.
+ */
+type EngineMod = typeof import("./sound/engine");
+let mod: EngineMod | null = null;
+let loading: Promise<EngineMod | null> | null = null;
+let pendingSfx: SfxKey | null = null;
+
+function loadEngine(): Promise<EngineMod | null> {
+  loading ??= import("./sound/engine").then(
+    (m) => (mod = m),
+    () => {
+      loading = null; // شبکه‌ی قطع در بارِ اول: لمسِ بعدی دوباره تلاش می‌کند
+      return null;
+    },
+  );
+  return loading;
+}
 
 export type { AudioSettings, AmbientEnv } from "./sound/mix";
 
@@ -40,8 +58,17 @@ function ensure(): Engine | null {
   if (!settings.on || !userActive()) return null;
   const AC = ctor();
   if (!AC) return null;
+  if (!mod) {
+    void loadEngine().then((m) => {
+      if (!m) return;
+      const e = ensure();
+      if (e && pendingSfx) e.sfx(pendingSfx);
+      pendingSfx = null;
+    });
+    return null;
+  }
   try {
-    engine = new Engine(AC, settings);
+    engine = new mod.Engine(AC, settings);
     if (env) engine.setEnv(env);
     if (typeof document === "undefined" || !document.hidden) engine.resume();
   } catch {
@@ -69,7 +96,9 @@ export const setSoundOn = (v: boolean) => setAudioSettings({ on: v });
 /** یک جلوه‌ی صوتی (فقط کلیدهای تعریف‌شده در SFX_KEYS) */
 export function sound(k: SfxKey) {
   if (!settings.on || settings.master <= 0 || settings.sfx <= 0) return;
-  ensure()?.sfx(k);
+  const e = ensure();
+  if (e) e.sfx(k);
+  else if (loading && !mod) pendingSfx = k;
 }
 
 /** حالِ دره برای صدای محیط و انتخابِ دستگاهِ موسیقی (حلقه‌ی بازی هر ثانیه صدا می‌زند) */
@@ -93,7 +122,17 @@ export function armAudio(): () => void {
   window.addEventListener("pointerdown", unlock, { passive: true });
   window.addEventListener("keydown", unlock);
   document.addEventListener("visibilitychange", vis);
+  // پیش‌بارِ موتور بعد از بارگذاریِ صفحه و در زمانِ بیکاری، تا اولین لمس معمولاً آن را آماده ببیند
+  const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void };
+  let idle = 0;
+  const warm = () => {
+    if (settings.on) idle = w.requestIdleCallback ? w.requestIdleCallback(() => void loadEngine(), { timeout: 5000 }) : window.setTimeout(() => void loadEngine(), 1500);
+  };
+  if (document.readyState === "complete") warm();
+  else window.addEventListener("load", warm, { once: true });
   return () => {
+    window.removeEventListener("load", warm);
+    if (idle) (w.cancelIdleCallback ?? window.clearTimeout)(idle);
     window.removeEventListener("pointerdown", unlock);
     window.removeEventListener("keydown", unlock);
     document.removeEventListener("visibilitychange", vis);
@@ -104,7 +143,7 @@ export function armAudio(): () => void {
 export const audioDebug = () => ({
   engine: !!engine,
   /** مورد ۱۰: شمارِ فایل‌هایی که بانک پیش از میان‌پرده بارگذاری می‌کند */
-  samplesTotal: SAMPLE_TOTAL,
+  samplesTotal: mod?.SAMPLE_TOTAL ?? 0,
   state: engine?.state ?? null,
   layers: engine?.layers ?? null,
   level: engine ? engine.level() : 0,
