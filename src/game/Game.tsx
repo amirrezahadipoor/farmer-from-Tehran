@@ -28,6 +28,7 @@ import { haptic, isFullscreen, useAppViewportVar, useFullscreenState, useNativeG
 import { armAudio, audioDebug, sound } from "./audio";
 import { makeEvents } from "./events";
 import { game, rt, useGameVersion } from "./store";
+import { celebrate, flyCoins, shake } from "./juice";
 import { usePersistence } from "./usePersistence";
 import { useCanvasInput } from "./useCanvasInput";
 import type { Panel, UiApi } from "./ui/common";
@@ -129,6 +130,11 @@ export default function Game() {
       view: () => rt.view,
       /** V.1: موقعیت و کنشِ آواتارِ قهرمان برای تست خودکار */
       hero: () => ({ x: rt.hero.x, y: rt.hero.y, tx: rt.hero.tx, ty: rt.hero.ty, act: rt.hero.act, actT: rt.hero.actT, look: rt.hero.look, init: rt.hero.init }),
+      /** V.3: وضعیت لایه‌ی حس رضایت و تریگرهای آن برای تست خودکار */
+      juice: () => ({ sfx: rt.sfx.length, shake: rt.shakeT }),
+      celebrate: (k: "level" | "achievement" | "prestige") => celebrate(k),
+      shakeNow: () => shake(),
+      coinsNow: (n: number) => flyCoins(n),
       // رندررها تکه‌ی جدا هستند؛ page.evaluate قولِ برگشتی را صبر می‌کند
       perf: async () => ({ ...rt.stats, ...(await import("./render/scene")).renderStats(), dpr: rt.view.dpr }),
       lockDpr: (d: number | null) => {

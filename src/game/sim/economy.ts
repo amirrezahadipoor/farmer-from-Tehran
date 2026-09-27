@@ -149,6 +149,7 @@ export function addXp(s: State, n: number, ev: Events) {
     s.coins += bonus;
     ev.toast(`پاداش پیشرفت: +${fmt(bonus)} سکه`, "ok");
   }
+  if (lvlGained > 0) ev.celebrate?.("level"); // V.3: جشن سطح
   if (lvlGained > 0 && s.stats.skillPoints > 0) {
     ev.toast(`${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
   }
@@ -195,6 +196,7 @@ export function sell(s: State, id: string, n: number, ev: Events) {
   updateContract(s, "coins", pv.coins, ev);
   ev.toast(`فروش ${fmt(pv.n)} ${ITEMS[id]?.name || "کالا"}: +${fmt(pv.coins)} سکه`, "ok");
   ev.sound("sell");
+  ev.coins?.(Math.min(6, pv.n)); // V.3: سکه‌های پرنده به قرص سکه
 }
 
 export function fulfill(s: State, oi: number, ev: Events) {
@@ -207,6 +209,7 @@ export function fulfill(s: State, oi: number, ev: Events) {
   updateContract(s, "orders", 1, ev);
   ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${fmt(o.coins)} سکه`, "ok");
   ev.sound("order");
+  ev.coins?.(3); // V.3
   s.orders[oi] = genOrder(s);
 }
 
@@ -216,7 +219,7 @@ export function claimContract(s: State, id: string, ev: Events) {
   if (!c || !cs || cs.claimed || cs.progress < c.target) return;
   cs.claimed = true;
   s.coins += c.rewardCoins; s.rep = Math.min(100, s.rep + c.rewardRep); addXp(s, c.rewardXp, ev);
-  ev.toast(`پاداش قرارداد دولتی وصول شد: +${fmt(c.rewardCoins)} سکه`, "lvl"); ev.sound("contract");
+  ev.toast(`پاداش قرارداد دولتی وصول شد: +${fmt(c.rewardCoins)} سکه`, "lvl"); ev.sound("contract"); ev.coins?.(5);
 }
 
 export function updateContract(s: State, type: string, amount: number, _ev: Events) {
@@ -245,7 +248,7 @@ function checkAchievements(s: State, ev: Events) {
     if (ach.id === "zoo" && countB(s, "coop")>0 && countB(s, "barn")>0 && countB(s, "sheep")>0 && countB(s, "pigpen")>0 && countB(s, "beehive")>0) ok = true;
     if (ach.id === "decorator" && s.stats.decorations >= 10) ok = true;
     if (ach.id === "skill_master" && s.skills.length >= 10) ok = true;
-    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("achievement"); }
+    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("achievement"); ev.celebrate?.("achievement"); }
   }
 }
 

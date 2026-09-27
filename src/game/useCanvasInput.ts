@@ -88,6 +88,8 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
       return;
     }
     haptic("tap");
+    const tc = tileCenter(tx, ty);
+    rt.fx.push({ kind: "ring", x: tc.x, y: tc.y - 4, vx: 0, vy: 0, life: 0.45, max: 0.45, color: "rgba(255,255,255,0.9)" }); // V.3
     const r = toolAction(s, tx, ty, tool, arg, ev);
     if (r !== "open") sendHero(s, tx, ty, tool);
     if (r === "open") {

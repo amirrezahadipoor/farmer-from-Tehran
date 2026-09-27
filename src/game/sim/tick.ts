@@ -66,6 +66,7 @@ export function tick(s: State, dt: number, ev: Events) {
     };
     s.currentEvent = { type: pick, endsAt: s.time + 120, text: texts[pick] };
     if (pick === "drought" && s.weather === "rain") s.weather = "sun";
+    if (pick === "drought") ev.shake?.(); // V.3: لرزش ملایم هشدار خشکسالی
     ev.toast(s.currentEvent.text, "lvl");
   }
   if (s.currentEvent && s.time >= s.currentEvent.endsAt) { s.currentEvent = null; ev.toast("رویداد فصلی دهکده به پایان رسید"); }

@@ -10,6 +10,7 @@ import { tileCenter } from "./render/core";
 import { stripEmoji } from "./icons";
 import { sound } from "./audio";
 import { rt } from "./store";
+import { celebrate, flyCoins, shake } from "./juice";
 
 export type ToastFn = (raw: string, t?: string) => void;
 
@@ -36,6 +37,10 @@ export function makeEvents(toast: ToastFn): Events {
             color: i % 3 ? burst : "#fffde7",
           });
     },
+    // V.3: حس رضایت — جشن، لرزش و سکه‌ی پرنده
+    celebrate,
+    shake,
+    coins: flyCoins,
   };
 }
 

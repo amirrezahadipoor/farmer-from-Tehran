@@ -18,6 +18,7 @@ import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
 import { game, rt } from "./store";
 import { stepHero } from "./hero";
+import { stepSfx, drawSfx } from "./juice";
 import { raiseFatal, reportError } from "./errors";
 
 const MIN_DPR = 0.6;
@@ -100,7 +101,7 @@ function stepFx(dt: number) {
     f.life -= dt;
     f.x += f.vx * dt;
     f.y += f.vy * dt;
-    if (f.kind !== "text") f.vy += 260 * dt;
+    if (f.kind !== "text" && f.kind !== "ring") f.vy += 260 * dt;
     else f.vy *= 0.97;
     return f.life > 0;
   });
@@ -197,15 +198,27 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       const ev = getEv();
       tick(s, dt, ev);
       stepFx(dt);
+      stepSfx(dt);
       stepWalkers(s, dt);
       stepHero(s, dt);
       if (!rt.view.covered) {
+        // V.3: لرزش ملایم دوربین — آفست موقت روی دوربین، بدون تغییر در render
+        const sh = rt.shakeT;
+        if (sh > 0) rt.shakeT = Math.max(0, sh - dt);
+        const ox = rt.view.cam.x, oy = rt.view.cam.y;
+        if (sh > 0) {
+          rt.view.cam.x += Math.sin(t / 17) * 5 * sh;
+          rt.view.cam.y += Math.cos(t / 14) * 3.5 * sh;
+        }
         const r0 = renderStats().rebuilds;
         const t0 = performance.now();
         render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values(), rt.hero]);
+        rt.view.cam.x = ox;
+        rt.view.cam.y = oy;
         rt.stats.renders++;
         rt.stats.renderMs += performance.now() - t0;
         if (renderStats().rebuilds !== r0) skipGap = true;
+        drawSfx(ctx, rt.view.dpr); // V.3: سکه‌های پرنده و کاغذرنگی
         if (cv.parentElement) applyScreenFx(cv.parentElement, screenFx(s));
       }
       updateStory(s, ev); // بررسی هدف فصلِ داستان
