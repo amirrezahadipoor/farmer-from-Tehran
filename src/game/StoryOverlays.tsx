@@ -14,7 +14,8 @@ import StoryModal from "./Story";
 import LineageModal from "./LineageStory";
 import Festival from "./Festival";
 
-export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
+/** holdFestival: کارتِ «در غیابِ شما» باز است — جشن منتظر می‌ماند تا گزارشِ غیاب خوانده و بسته شود */
+export default function StoryOverlays({ s, ev, holdFestival = false }: { s: State; ev: Events; holdFestival?: boolean }) {
   const refresh = () => game.bump();
   if (s.story.shown) {
     return (
@@ -31,7 +32,7 @@ export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
     );
   }
   // V.5: پرده‌ی فستیوال فصلی — داستان و نسل اولویت دارند، فستیوال منتظر می‌ماند
-  if (s.fest && s.fest.choice === null && !s.story.shown && !lineageVisible(s)) {
+  if (s.fest && s.fest.choice === null && !s.story.shown && !lineageVisible(s) && !holdFestival) {
     return <Festival s={s} ev={ev} />;
   }
   if (lineageVisible(s)) {
