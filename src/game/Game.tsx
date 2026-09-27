@@ -272,7 +272,7 @@ export default function Game() {
       {started !== false && !s && <Loading className={boot ? "boot-back" : ""} />}
 
       {/* پرده‌های داستان: داستانِ اصلی، و پس از هر تناسخ فصلِ نسل (P6.4) */}
-      {s && started === true && <StoryOverlays s={s} ev={ev} />}
+      {s && started === true && <StoryOverlays s={s} ev={ev} holdFestival={!!away} />}
     </div>
   );
 }
