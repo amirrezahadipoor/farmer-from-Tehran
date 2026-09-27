@@ -61,7 +61,10 @@ export function Tour({ s, tool, panelOpen, marketOpen, onDone }: { s: State; too
   useEffect(() => {
     target.current = targetOf(cur, s, tool, marketOpen);
     if (!cur || base.current === null) return;
-    if (cur.metric(s) > base.current) {
+    const m = cur.metric(s);
+    // کاهشِ شاخص (موجِ گرما زمین را خشک کرد) مانع نشود؛ فقط افزایشِ تازه گام را تمام می‌کند
+    if (m < base.current) base.current = m;
+    else if (m > base.current || cur.auto?.(s)) {
       base.current = null;
       haptic("tap");
       setStep((n) => n + 1);
@@ -153,6 +156,16 @@ export function Tour({ s, tool, panelOpen, marketOpen, onDone }: { s: State; too
               <div className="min-w-0">
                 <h3 className="text-sm font-black text-slate-900">{cur.title}</h3>
                 <p className="mt-0.5 text-[12px] font-bold leading-6 text-slate-600">{cur.text}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    base.current = null;
+                    setStep((n) => n + 1);
+                  }}
+                  className="mt-1 min-h-8 text-[11px] font-black text-slate-400 underline decoration-dotted underline-offset-4"
+                >
+                  این گام را رد کن
+                </button>
                 {!panelOpen && (
                   <div className="mt-1.5 flex gap-1" aria-hidden>
                     {TOUR_STEPS.map((_, i) => (

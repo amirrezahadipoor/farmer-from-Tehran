@@ -38,3 +38,11 @@ jobs:
           path: docs/shots/
           if-no-files-found: ignore
           retention-days: 30
+      - name: آپلودِ ردِ کاملِ تست‌های شکست‌خورده (trace)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

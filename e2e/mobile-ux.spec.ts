@@ -179,29 +179,40 @@ test.describe("UI/UX موبایل", () => {
     await expect(tour).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: "docs/shots/ux-onboarding.png" });
 
-    // حلقه‌ی راهنما اول روی ابزارِ لازم و بعد روی خودِ زمینِ هدف است؛ ضربه روی مرکزش همان کارِ بازیکن است
+    // حلقه‌ی راهنما اول روی ابزارِ لازم و بعد روی خودِ زمینِ هدف است؛ ضربه روی مرکزش همان کارِ بازیکن است.
+    // گامِ آبیاری را باران ممکن است خودش تمام کند، پس هر دور گامِ جاری از خودِ کارت خوانده می‌شود.
     const ring = page.locator("[data-tour-ring]");
-    const tapRing = async () => {
-      await expect(ring).toBeVisible();
-      await page.waitForTimeout(300);
+    const fa = (n: number) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+    type St = { stats: { harvested: number; earned: number }; weather: string };
+    const state = () => page.evaluate(() => (window as unknown as { __game: { getState: () => St } }).__game.getState());
+    const stepNow = async () => {
+      const text = (await tour.textContent()) ?? "";
+      if (text.includes("پایان")) return 6;
+      for (let n = 1; n <= 5; n++) if (text.includes(`گام ${fa(n)} از ۵`)) return n;
+      return 0;
+    };
+    const before = await state();
+    const taps: string[] = [];
+    for (let guard = 0; guard < 16 && (await stepNow()) < 6; guard++) {
+      const n = await stepNow();
+      if (!(await ring.isVisible())) {
+        await page.waitForTimeout(700);
+        if ((await stepNow()) !== n || !(await ring.isVisible())) {
+          taps.push(`گام ${n}: حلقه پیدا نیست (هوا ${(await state()).weather})`);
+          if ((await stepNow()) === n) await expect(ring, taps.join(" | ")).toBeVisible({ timeout: 5_000 });
+          continue;
+        }
+      }
       const b = await ring.boundingBox();
       await page.touchscreen.tap(Math.round(b!.x + b!.width / 2), Math.round(b!.y + b!.height / 2));
-      await page.waitForTimeout(500);
-    };
-    const fa = (n: number) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
-    const before = await page.evaluate(() => (window as unknown as { __game: { getState: () => { stats: { harvested: number; earned: number } } } }).__game.getState().stats);
-    for (let n = 1; n <= 4; n++) {
-      await expect(tour).toContainText(`گام ${fa(n)} از ۵`);
-      await tapRing(); // ابزار
-      await tapRing(); // زمینِ هدف
+      taps.push(`گام ${n}: ضربه (${Math.round(b!.x)}، ${Math.round(b!.y)})`);
+      await page.waitForTimeout(550);
     }
-    await expect(tour).toContainText("گام ۵ از ۵");
-    await tapRing(); // بازار
-    await tapRing(); // «فروش یک …»
+    console.log("[tour]", taps.join(" | "));
     await expect(page.getByRole("button", { name: "بزن بریم!" })).toBeVisible({ timeout: 10_000 });
     const after = await page.evaluate(() => (window as unknown as { __game: { getState: () => { stats: { harvested: number; earned: number } } } }).__game.getState().stats);
-    expect(after.harvested, "برداشتِ واقعی").toBeGreaterThan(before.harvested);
-    expect(after.earned, "فروشِ واقعی").toBeGreaterThan(before.earned);
+    expect(after.harvested, "برداشتِ واقعی").toBeGreaterThan(before.stats.harvested);
+    expect(after.earned, "فروشِ واقعی").toBeGreaterThan(before.stats.earned);
     await page.getByRole("button", { name: "بزن بریم!" }).tap();
     await expect(tour).toBeHidden();
 

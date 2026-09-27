@@ -18,6 +18,8 @@ export interface Step {
   metric: (s: State) => number;
   /** زمینِ هدف روی نقشه */
   tile?: (s: State) => Pt | null;
+  /** گامی که جهان خودش انجام داد (مثلاً باران آبیاری کرد): پیامِ کوتاه یا null */
+  auto?: (s: State) => string | null;
 }
 
 const count = (s: State, f: (t: Tile) => boolean) => s.tiles.reduce((a, t) => a + (f(t) ? 1 : 0), 0);
@@ -67,6 +69,9 @@ export const TOUR_STEPS: Step[] = [
     tool: "water",
     metric: (s) => count(s, (t) => !!t.wet),
     tile: (s) => nearest(s, (t) => !!t.crop && !t.wet),
+    // باران و برف همه‌ی زمین‌ها را خیس می‌کنند؛ اگر کشتِ خشکی نمانده، این گام خودش تمام است
+    auto: (s) =>
+      s.weather === "rain" || s.weather === "snow" ? "باران کشت را آبیاری کرد" : !nearest(s, (t) => !!t.crop && !t.wet) ? "همه‌ی کشت‌ها خیس‌اند" : null,
   },
   {
     icon: "hand",
