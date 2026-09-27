@@ -33,7 +33,8 @@ import { useCanvasInput } from "./useCanvasInput";
 import type { Panel, UiApi } from "./ui/common";
 import Hud, { CameraControls } from "./ui/Hud";
 import Toolbar, { SeedTray } from "./ui/Toolbar";
-import { Toasts, useToasts, SaveIssueBanner, Onboarding, AwayCard, MainMenu } from "./ui/Overlays";
+import { Toasts, useToasts, SaveIssueBanner, AwayCard, MainMenu } from "./ui/Overlays";
+import { Tour } from "./ui/Tour";
 import Splash from "./ui/Splash";
 import Loading from "./ui/Loading";
 import { SkyLayers, TintLayers } from "./ui/ScreenLayers";
@@ -229,7 +230,9 @@ export default function Game() {
           <Toolbar tool={tool} seed={seed} setTool={setTool} setPanel={setPanel} />
 
           {saveIssue && inGame && <SaveIssueBanner issue={saveIssue} canRestore={canRestore} onRestore={recoverFromBackup} onDismiss={dismissIssue} />}
-          {inGame && !!s.story.name && <Onboarding onDone={() => toast("حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok")} />}
+          {inGame && !!s.story.name && (
+            <Tour s={s} tool={tool} panelOpen={!!panel} marketOpen={panel === "market"} onDone={() => toast("حالا خودت زمین را بساز؛ من همین‌جا تماشا می‌کنم", "ok")} />
+          )}
           {away && <AwayCard away={away} onClose={dismissAway} />}
 
           {menuOpen && (

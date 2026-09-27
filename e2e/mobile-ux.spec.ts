@@ -9,7 +9,7 @@ import { test, expect, type Page } from "@playwright/test";
  *  ۴. حالت افقی (landscape) بدون سرریز و قابل بازی.
  *  ۵. بازخورد لمسی (vibrate) و بصری (toast) برای عمل بازیکن.
  *  ۶. «کاهش حرکت» سیستم رعایت می‌شود.
- *  ۷. آموزش اولین‌بار یک‌بار نشان داده می‌شود و دیگر برنمی‌گردد.
+ *  ۷. آموزشِ تعاملی (مورد ۵) فقط با کارِ واقعیِ بازیکن جلو می‌رود، یک‌بار نشان داده می‌شود و دیگر برنمی‌گردد.
  */
 
 const VIEWPORTS = [
@@ -172,32 +172,44 @@ test.describe("UI/UX موبایل", () => {
     expect(reduced, "پرچم کاهش حرکت باید روشن باشد").toBe(true);
   });
 
-  test("آموزش اولین‌بار یک‌بار می‌آید و ذخیره می‌شود", async ({ page }, testInfo) => {
+  test("آموزشِ تعاملی: پنج کارِ واقعی با حلقه‌ی راهنما و فقط یک بار (مورد ۵)", async ({ page }, testInfo) => {
     testInfo.setTimeout(180_000);
-    const step = (n: string) => console.log("[onboarding]", n);
-    step("۱ ورود به بازی");
     await enterGame(page, { skipOnboarding: false });
-    step("۲ انتظار کارت آموزش");
-    await expect(page.getByText("آموزش سریع")).toBeVisible({ timeout: 15_000 });
+    const tour = page.getByRole("region", { name: "آموزشِ تعاملی" });
+    await expect(tour).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: "docs/shots/ux-onboarding.png" });
 
-    step("۳ گام ۱ → ۲");
-    await page.getByRole("button", { name: "بعدی" }).tap({ timeout: 15_000 });
-    await expect(page.getByText("نگه‌داشتن انگشت = ۳×۳")).toBeVisible();
-    step("۴ گام ۲ → ۳");
-    await page.getByRole("button", { name: "بعدی" }).tap({ timeout: 15_000 });
-    await expect(page.getByRole("button", { name: "بزن بریم!" })).toBeVisible();
-    step("۵ پایان آموزش");
-    await page.getByRole("button", { name: "بزن بریم!" }).tap({ timeout: 15_000 });
-    await expect(page.getByText("آموزش سریع")).toBeHidden();
+    // حلقه‌ی راهنما اول روی ابزارِ لازم و بعد روی خودِ زمینِ هدف است؛ ضربه روی مرکزش همان کارِ بازیکن است
+    const ring = page.locator("[data-tour-ring]");
+    const tapRing = async () => {
+      await expect(ring).toBeVisible();
+      await page.waitForTimeout(300);
+      const b = await ring.boundingBox();
+      await page.touchscreen.tap(Math.round(b!.x + b!.width / 2), Math.round(b!.y + b!.height / 2));
+      await page.waitForTimeout(500);
+    };
+    const fa = (n: number) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+    const before = await page.evaluate(() => (window as unknown as { __game: { getState: () => { stats: { harvested: number; earned: number } } } }).__game.getState().stats);
+    for (let n = 1; n <= 4; n++) {
+      await expect(tour).toContainText(`گام ${fa(n)} از ۵`);
+      await tapRing(); // ابزار
+      await tapRing(); // زمینِ هدف
+    }
+    await expect(tour).toContainText("گام ۵ از ۵");
+    await tapRing(); // بازار
+    await tapRing(); // «فروش یک …»
+    await expect(page.getByRole("button", { name: "بزن بریم!" })).toBeVisible({ timeout: 10_000 });
+    const after = await page.evaluate(() => (window as unknown as { __game: { getState: () => { stats: { harvested: number; earned: number } } } }).__game.getState().stats);
+    expect(after.harvested, "برداشتِ واقعی").toBeGreaterThan(before.harvested);
+    expect(after.earned, "فروشِ واقعی").toBeGreaterThan(before.earned);
+    await page.getByRole("button", { name: "بزن بریم!" }).tap();
+    await expect(tour).toBeHidden();
 
-    step("۶ بازگذاری مجدد");
     // بعد از شروع بازی، networkidle هرگز آرام نمی‌شود (ذخیره‌ی خودکار هر ۱۲ ثانیه)
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
     await page.waitForTimeout(4000);
-    step("۷ بررسی تکرار‌نشدن");
     expect(await page.evaluate(() => localStorage.getItem("farm_onboard")), "پرچم آموزش باید ذخیره شده باشد").toBe("1");
-    expect(await page.getByText("آموزش سریع").count(), "آموزش نباید دوباره بیاید").toBe(0);
+    expect(await page.getByRole("region", { name: "آموزشِ تعاملی" }).count(), "آموزش نباید دوباره بیاید").toBe(0);
   });
 });
