@@ -14,6 +14,12 @@ import { test, expect, type Page } from "@playwright/test";
  */
 async function ageSaveOnNextLoad(page: Page, minutesAgo: number) {
   await page.addInitScript((m: number) => {
+    // سناریوی سیوِ فقط-localStorage (بازیکنِ نسخه‌ی پیش از مورد ۳): نسخه‌ی تازه‌ترِ IndexedDB نباید برنده شود
+    try {
+      indexedDB.deleteDatabase("golden-valley");
+    } catch {
+      /* بی‌IndexedDB */
+    }
     try {
       const raw = localStorage.getItem("farm_save");
       if (!raw) return;

@@ -12,6 +12,7 @@ import { fmt } from "./data";
 import { Icon, Portrait, speakerSvg, dropEmoji } from "./icons";
 import { sound } from "./audio";
 import { asset } from "./base";
+import { GENDERS, heroAvatar, type Gender } from "./gender";
 
 const MOOD_GRADE: Record<string, string> = {
   sad: "from-slate-900/85 via-slate-800/70 to-blue-950/85",
@@ -33,11 +34,13 @@ interface StageProps {
   banner?: string;
   onAdvance: () => void;
   onClose: () => void;
+  /** چهره‌ی قهرمان به انتخابِ بازیکن (مورد ۷) */
+  gender?: Gender;
 }
 
 const same = (t: string) => t;
 
-export function StoryStage({ ch, isEnd, sceneIdx, render = same, progress, banner, onAdvance, onClose }: StageProps) {
+export function StoryStage({ ch, isEnd, sceneIdx, render = same, progress, banner, onAdvance, onClose, gender = "n" }: StageProps) {
   const scenes = isEnd ? ch.endScenes : ch.scenes;
   const scene = scenes[Math.min(sceneIdx, scenes.length - 1)];
   const full = scene ? render(scene.text) : "";
@@ -113,7 +116,7 @@ export function StoryStage({ ch, isEnd, sceneIdx, render = same, progress, banne
       <div className="absolute inset-x-0 bottom-0 p-3 md:p-6">
         <div className="mx-auto max-w-3xl rounded-3xl border-2 border-amber-300/40 bg-slate-950/75 p-4 shadow-2xl backdrop-blur-md md:p-5">
           <div className="flex items-start gap-3">
-            <Portrait html={speakerSvg(scene.av)} size={60} className="shadow-lg ring-2 ring-amber-300/70 md:!h-[72px] md:!w-[72px]" />
+            <Portrait html={speakerSvg(heroAvatar(scene.av, gender))} size={60} className="shadow-lg ring-2 ring-amber-300/70 md:!h-[72px] md:!w-[72px]" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-base font-black text-amber-200 md:text-lg">{render(scene.sp)}</span>
@@ -168,13 +171,17 @@ interface GateProps {
   button: string;
   /** برچسبِ دسترس‌پذیرِ فیلد */
   label: string;
-  onSubmit: (name: string) => void;
+  /** انتخابِ خطاب (زن / مرد / ترجیح می‌دهم نگویم) کنارِ نام — مورد ۷ */
+  withGender?: boolean;
+  initialGender?: Gender;
+  onSubmit: (name: string, gender: Gender) => void;
 }
 
 /** دروازه‌ی نام: پیش از آغاز داستان و پیش از هر فصلِ نسل */
-export function NameGate({ portrait, title, text, initial = "", placeholder, button, label, onSubmit }: GateProps) {
+export function NameGate({ portrait, title, text, initial = "", placeholder, button, label, withGender = false, initialGender = "n", onSubmit }: GateProps) {
   const [name, setName] = useState(initial);
-  const submit = () => { if (name.trim()) onSubmit(name.trim()); };
+  const [gender, setGender] = useState<Gender>(initialGender);
+  const submit = () => { if (name.trim()) onSubmit(name.trim(), gender); };
   return (
     <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-950/95 p-6 backdrop-blur-md" dir="rtl">
       <div className="w-full max-w-md rounded-3xl border-4 border-amber-400/70 bg-gradient-to-b from-amber-50 to-orange-100 p-7 text-center shadow-2xl">
@@ -190,6 +197,25 @@ export function NameGate({ portrait, title, text, initial = "", placeholder, but
           placeholder={placeholder}
           className="mt-4 w-full rounded-2xl border-2 border-amber-300 bg-white px-4 py-3 text-center text-lg font-black text-amber-950 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200"
         />
+        {withGender && (
+          <div className="mt-3">
+            <p className="text-xs font-bold text-amber-900">اهالی دهکده چطور صدایت کنند؟</p>
+            <div role="radiogroup" aria-label="خطاب" className="mt-1.5 grid grid-cols-3 gap-2">
+              {GENDERS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={gender === g.id}
+                  onClick={() => setGender(g.id)}
+                  className={`min-h-11 rounded-2xl px-1.5 py-2 text-sm font-black leading-5 ring-2 transition active:scale-95 ${gender === g.id ? "bg-emerald-600 text-white ring-emerald-700" : "bg-white text-amber-950 ring-amber-300"}`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <button
           disabled={!name.trim()}
           onClick={submit}

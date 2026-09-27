@@ -9,11 +9,12 @@ import { currentChapter, sceneText, goalProgress, isStoryFinished } from "./stor
 import type { State } from "./logic";
 import { Icon } from "./icons";
 import { NameGate, StoryStage } from "./StoryStage";
+import type { Gender } from "./gender";
 
 interface Props {
   s: State;
   onAdvance: () => void;
-  onName: (n: string) => void;
+  onName: (n: string, g: Gender) => void;
   onClose: () => void;
   refresh: () => void;
 }
@@ -35,7 +36,9 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
         placeholder="مثلاً: امید"
         label="نامِ تو"
         button="آغاز داستان"
-        onSubmit={(n) => { onName(n); refresh(); }}
+        withGender
+        initialGender={st.gender}
+        onSubmit={(n, g) => { onName(n, g); refresh(); }}
       />
     );
   }
@@ -60,7 +63,8 @@ export default function Story({ s, onAdvance, onName, onClose, refresh }: Props)
       ch={ch}
       isEnd={isEnd}
       sceneIdx={st.sceneIdx}
-      render={(t) => sceneText(t, st.name)}
+      render={(t) => sceneText(t, st.name, st.gender)}
+      gender={st.gender}
       progress={ch.goal ? goalProgress(s, ch) : null}
       banner={isStoryFinished(s) ? "پایانِ باز — داستان با هر تناسخ ادامه دارد" : undefined}
       onAdvance={() => { onAdvance(); refresh(); }}

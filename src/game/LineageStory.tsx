@@ -8,11 +8,12 @@
 import { currentHeir, lineageChain, joinFa, prevName, suggestHeirName, type State } from "./logic";
 import { lineageChapter, lineageProgress, ordinalFa } from "./lineageStory";
 import { NameGate, StoryStage } from "./StoryStage";
+import type { Gender } from "./gender";
 
 interface Props {
   s: State;
   onAdvance: () => void;
-  onName: (n: string) => void;
+  onName: (n: string, g: Gender) => void;
   onClose: () => void;
   refresh: () => void;
 }
@@ -34,7 +35,9 @@ export default function LineageStory({ s, onAdvance, onName, onClose, refresh }:
         placeholder={`مثلاً: ${suggestHeirName(h.gen)}`}
         label="نامِ وارث"
         button="سپردنِ کلید"
-        onSubmit={(n) => { onName(n); refresh(); }}
+        withGender
+        initialGender="n"
+        onSubmit={(n, g) => { onName(n, g); refresh(); }}
       />
     );
   }
@@ -49,6 +52,7 @@ export default function LineageStory({ s, onAdvance, onName, onClose, refresh }:
       banner={isEnd ? undefined : `نسلِ ${ordinalFa(h.gen + 1)} دره زرین`}
       onAdvance={() => { onAdvance(); refresh(); }}
       onClose={onClose}
+      gender={s.story.gender}
     />
   );
 }

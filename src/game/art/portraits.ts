@@ -42,6 +42,12 @@ export function portraitSvg(p: PortraitSpec) {
 
 const SPK: Record<string, PortraitSpec> = {
   hero: { skin: "#f1c29c", hair: "#3e2a1e", cloth: "#eceff1", bg: "#90caf9", tie: "#5b6ee1" },
+  // مورد ۷: قهرمانِ زن و خنثی، و خودِ قهرمان در پیری (صحنه‌ی آخر) — همان رنگِ آبیِ شاخصِ قهرمان
+  hero_f: { skin: "#f1c29c", hair: "#3e2a1e", cloth: "#eceff1", bg: "#90caf9", hat: "scarf", hatColor: "#5b6ee1" },
+  hero_n: { skin: "#f1c29c", hair: "#3e2a1e", cloth: "#eceff1", bg: "#90caf9", hat: "cap", hatColor: "#5b6ee1" },
+  hero_old_m: { skin: "#e6ad84", hair: "#e0e0e0", cloth: "#5b6ee1", bg: "#ffe0b2", hat: "straw", beard: "#eeeeee" },
+  hero_old_f: { skin: "#e6ad84", hair: "#e0e0e0", cloth: "#5b6ee1", bg: "#ffe0b2", hat: "scarf", hatColor: "#f5f5f5" },
+  hero_old_n: { skin: "#e6ad84", hair: "#e0e0e0", cloth: "#5b6ee1", bg: "#ffe0b2", hat: "straw", glasses: true },
   boss: { skin: "#e9b98f", hair: "#1c1c1c", cloth: "#263238", bg: "#b0bec5", tie: "#b71c1c", glasses: true },
   notary: { skin: "#e8b48a", hair: "#eeeeee", cloth: "#5d4037", bg: "#ffe0b2", glasses: true, beard: "#e0e0e0", bald: true },
   grandpa: { skin: "#e3a877", hair: "#f5f5f5", cloth: "#8d6e63", bg: "#fff59d", hat: "straw", beard: "#fafafa" },

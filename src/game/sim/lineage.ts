@@ -10,6 +10,7 @@
  */
 import type { State } from "./state";
 import { stripEmoji } from "../noEmoji";
+import { asGender, type Gender } from "../gender";
 
 export type Trait = "farmer" | "merchant" | "artisan" | "builder";
 export const TRAITS: Trait[] = ["farmer", "merchant", "artisan", "builder"];
@@ -94,9 +95,10 @@ export function joinFa(list: string[]): string {
   return `${list.slice(0, -1).join("، ")} و ${list[list.length - 1]}`;
 }
 
-export function nameHeir(s: State, name: string) {
+export function nameHeir(s: State, name: string, gender?: Gender) {
   const h = currentHeir(s);
   if (!h || !s.lineage) return;
+  if (gender) s.story.gender = asGender(gender); // مورد ۷: قهرمانِ داستان حالا وارث است
   h.name = stripEmoji(name).slice(0, MAX_NAME) || suggestHeirName(h.gen);
   s.lineage.phase = "scenes";
   s.lineage.sceneIdx = 0;
