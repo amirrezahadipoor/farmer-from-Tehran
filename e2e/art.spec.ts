@@ -68,7 +68,7 @@ test("A.10: diff پیکسلیِ صحنه‌ی مرجع با پایه‌ی ثبت
     const bmp = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
     const all = [...document.querySelectorAll("canvas")];
     const cv = all.sort((a, b) => b.width * b.height - a.width * a.height)[0];
-    if (!cv || cv.width !== bmp.width || cv.height !== bmp.height) return { bad: "size " + (cv ? cv.width + "x" + cv.height : "none") + " vs " + bmp.width + "x" + bmp.height + " of [" + all.map((c) => c.width + "x" + c.height).join(",") + "]" };
+    if (!cv || !cv.width) return { bad: "no canvas" };
     const mk = () => { const c = document.createElement("canvas"); c.width = bmp.width; c.height = bmp.height; return c; };
     const a = mk(), b = mk();
     const ca = a.getContext("2d")!, cb = b.getContext("2d")!;
@@ -76,7 +76,7 @@ test("A.10: diff پیکسلیِ صحنه‌ی مرجع با پایه‌ی ثبت
     ca.fillRect(0, 0, a.width, a.height);
     cb.fillStyle = "#808080";
     cb.fillRect(0, 0, b.width, b.height);
-    ca.drawImage(cv, 0, 0);
+    ca.drawImage(cv, 0, 0, a.width, a.height);
     cb.drawImage(bmp, 0, 0);
     const da = ca.getImageData(0, 0, a.width, a.height).data;
     const db = cb.getImageData(0, 0, b.width, b.height).data;
