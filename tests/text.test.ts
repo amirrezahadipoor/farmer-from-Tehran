@@ -206,11 +206,11 @@ describe("سفارش، حقوق و دستاوردها", () => {
     expect(s.achievements.level20).toBeFalsy();
     s.level = 20;
     addXp(s, 0, quiet);
-    expect(s.achievements.level20).toBe(true);
+    expect(s.achievements.level20).toBe(s.day); // V.8: شماره‌ی روزِ گرفتن
     expect(s.achievements.level25).toBeFalsy();
     s.level = 25;
     addXp(s, 0, quiet);
-    expect(s.achievements.level25).toBe(true);
+    expect(s.achievements.level25).toBe(s.day);
     const d20 = ACHIEVEMENTS.find((a) => a.id === "level20")!;
     const d25 = ACHIEVEMENTS.find((a) => a.id === "level25")!;
     expect(numOf(d20.desc)).toBe(20);

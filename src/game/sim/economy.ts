@@ -253,7 +253,10 @@ function checkAchievements(s: State, ev: Events) {
     if (ach.id === "zoo" && countB(s, "coop")>0 && countB(s, "barn")>0 && countB(s, "sheep")>0 && countB(s, "pigpen")>0 && countB(s, "beehive")>0) ok = true;
     if (ach.id === "decorator" && s.stats.decorations >= 10) ok = true;
     if (ach.id === "skill_master" && s.skills.length >= 10) ok = true;
-    if (ok) { s.achievements[ach.id] = true; s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("achievement"); ev.celebrate?.("achievement"); }
+    if (ok) {
+      s.achievements[ach.id] = s.day; // V.8: تاریخِ گرفتن = شماره‌ی روز
+      s.coins += ach.reward; ev.toast(`دستاورد جدید: ${ach.title} (+${fmt(ach.reward)} سکه)`, "lvl"); ev.sound("achievement"); ev.celebrate?.("achievement");
+    }
   }
 }
 

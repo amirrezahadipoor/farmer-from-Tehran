@@ -127,8 +127,13 @@
           "id": "8",
           "title": "دیوار دستاوردها: پنل پیشرفت با مدال‌های SVG متحرک، نوار پیشرفت زنده برای هر دستاورد و تاریخِ گرفتن",
           "dod": "پنل achievements به دیوار مدال تبدیل شود؛ مدال نگرفته خاکستری با نوار پیشرفتِ درصدی از آمار واقعی؛ گرفتن دستاورد انیمیشن چرخش مدال دارد؛ e2e باز شدن پنل و دیدن نوارها",
-          "status": "todo",
-          "evidence": ""
+          "status": "done",
+          "evidence": [
+            "e2e: e2e/achievements.spec.ts دو مرورگر — مدال گرفته‌شده «روز ۲»، نگرفته نوار پیشرفت + shots/v8-medals.png",
+            "unit: tests/achievements.test.ts — ذخیره‌ی شماره‌ی روز، sanitize سازگار با true قدیمی، achievementProgress",
+            "رنر: keyframes مدال نو در globals.css"
+          ],
+          "push": 40
         },
         {
           "id": "9",
