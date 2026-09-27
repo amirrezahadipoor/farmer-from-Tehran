@@ -55,11 +55,29 @@ function rectOf(t: Target): { x: number; y: number; w: number; h: number; round:
   return { x: c.x * z + v.w / 2 + v.cam.x - w / 2, y: c.y * z + v.h / 2 + v.cam.y - h / 2, w, h, round: true };
 }
 
+/**
+ * نوارِ آزادِ صفحه برای زمینِ هدف: زیرِ کارتِ آموزش و بالای نوارِ ابزار. روی صفحه‌های کوتاه (iPhone با نوارِ
+ * مرورگر ~۶۶۴px) زمینِ وسطِ مزرعه زیرِ خودِ کارت می‌افتاد؛ حلقه دیده می‌شد ولی ضربه به کارت می‌خورد.
+ */
+function freeBand(card: HTMLElement | null): { top: number; bottom: number } {
+  const h = window.innerHeight;
+  const c = card?.getBoundingClientRect();
+  const bar = document.querySelector('[data-tour="toolbar"]')?.getBoundingClientRect();
+  let top = c && c.height > 0 && c.bottom < h / 2 + 80 ? c.bottom + 10 : 10;
+  let bottom = bar && bar.height > 0 ? bar.top - 10 : h - 10;
+  if (bottom - top < 80) (top = 10), (bottom = h - 10); // صفحه‌ی خیلی کوتاه (افقی): کلِ ارتفاع
+  return { top, bottom };
+}
+
 export function Tour({ s, tool, panelOpen, marketOpen, onDone }: { s: State; tool: string; panelOpen: boolean; marketOpen: boolean; onDone: () => void }) {
   const [step, setStep] = useState(() => (readLS(TOUR_KEY) === "1" ? -1 : 0));
   const base = useRef<number | null>(null);
   const target = useRef<Target>(null);
   const ring = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLElement>(null);
+  /** زمینی که برایش یک بار تصمیمِ جابه‌جاییِ دوربین گرفته شد (با کشیدنِ دستیِ بازیکن نمی‌جنگیم) */
+  const panned = useRef("");
+  const pan = useRef<{ dx: number; dy: number } | null>(null);
   const cur = step >= 0 ? TOUR_STEPS[step] : undefined;
 
   // پیشرفت فقط با عملِ واقعی: شاخصِ گام از مقدارِ آغازش بالاتر رفت (مقدارِ آغاز با شروعِ هر گام گرفته می‌شود)
@@ -86,7 +104,32 @@ export function Tour({ s, tool, panelOpen, marketOpen, onDone }: { s: State; too
     let raf = 0;
     const loop = () => {
       const el = ring.current;
-      const r = rectOf(target.current);
+      const t = target.current;
+      if (t && "tile" in t) {
+        const key = `${t.tile.x},${t.tile.y}`;
+        const tr = rectOf(t);
+        if (tr && panned.current !== key) {
+          // اگر زمینِ هدف زیرِ کارت یا نوارِ ابزار یا بیرونِ صفحه است، دوربین نرم تا وسطِ نوارِ آزاد می‌رود
+          panned.current = key;
+          const band = freeBand(card.current);
+          const cx = tr.x + tr.w / 2;
+          const cy = tr.y + tr.h / 2;
+          const hidden = tr.y < band.top || tr.y + tr.h > band.bottom || tr.x < 0 || tr.x + tr.w > window.innerWidth;
+          pan.current = hidden ? { dx: window.innerWidth / 2 - cx, dy: (band.top + band.bottom) / 2 - cy } : null;
+        }
+        const p = pan.current;
+        if (p) {
+          const cam = rt.view.cam;
+          const kx = Math.abs(p.dx) < 1 ? p.dx : p.dx * 0.25;
+          const ky = Math.abs(p.dy) < 1 ? p.dy : p.dy * 0.25;
+          cam.x += kx;
+          cam.y += ky;
+          p.dx -= kx;
+          p.dy -= ky;
+          if (p.dx === 0 && p.dy === 0) pan.current = null;
+        }
+      }
+      const r = rectOf(t);
       if (el) {
         el.style.display = r ? "block" : "none";
         if (r) {
@@ -132,6 +175,7 @@ export function Tour({ s, tool, panelOpen, marketOpen, onDone }: { s: State; too
         className="pointer-events-none fixed left-0 top-0 z-[46] hidden shadow-[0_0_0_4px_rgba(251,191,36,0.95),0_0_22px_6px_rgba(251,191,36,0.55)] motion-safe:animate-pulse"
       />
       <section
+        ref={card}
         role="region"
         aria-label="آموزشِ تعاملی"
         className={`absolute inset-x-3 z-[45] mx-auto max-w-[440px] rounded-3xl bg-white/95 p-3 shadow-2xl ring-1 ring-emerald-200 ${panelOpen ? "top-[max(0.4rem,env(safe-area-inset-top))]" : "top-[calc(env(safe-area-inset-top)+7.2rem)]"}`}
