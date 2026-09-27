@@ -19,8 +19,8 @@ test.describe("دارایی‌ها — هیچ تصویر/آیکون/فونتی �
     const paths = [...new Set(listed)];
     expect(paths.length, "سرویس‌ورکر باید دارایی‌های اصلی را پیش‌کش کند").toBeGreaterThan(15);
 
-    // لوگو، آسمان پس‌زمینه و آیکون‌ها حتماً باید در فهرست باشند
-    for (const must of ["/images/logo_badge.png", "/images/logo_badge.webp", "/images/bg_sky.webp", "/icons/icon-192.png", "/icons/maskable-512.png"]) {
+    // لوگو (از P6.5 فقط WebPِ ۲۵۶ پیکسلیِ بُرش‌خورده)، آسمان پس‌زمینه و آیکون‌ها حتماً باید در فهرست باشند
+    for (const must of ["/images/logo_badge.webp", "/images/bg_sky.webp", "/icons/icon-192.png", "/icons/maskable-512.png"]) {
       expect(paths, `دارایی حیاتی ${must} در پیش‌کش نیست`).toContain(must);
     }
 

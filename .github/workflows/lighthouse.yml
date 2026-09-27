@@ -41,7 +41,10 @@ jobs:
         env:
           CHROME_PATH: /usr/bin/google-chrome
       - name: میانه و بررسیِ آستانه
-        run: node tools/lighthouse-median.mjs lh 95 | tee lh/summary.md >> "$GITHUB_STEP_SUMMARY"
+        # shell: bash یعنی `-eo pipefail`؛ بدونِ آن کدِ خروجیِ ۱ِ ابزار پشتِ tee گم می‌شد و آستانه هیچ‌وقت شکست نمی‌خورد.
+        # جدول هم در لاگ چاپ می‌شود، هم در خلاصه‌ی اجرا و هم در آرتیفکت.
+        shell: bash
+        run: node tools/lighthouse-median.mjs lh 95 | tee lh/summary.md | tee -a "$GITHUB_STEP_SUMMARY"
       - name: آپلود گزارش‌ها
         if: always()
         uses: actions/upload-artifact@v4
