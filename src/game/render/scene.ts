@@ -16,6 +16,7 @@ import { A, B, clamp, diamond, ellipse, glowSprite, hash, lightInfo, makeCanvas,
 import { GroundLayer, drawGroundAnim, drawGroundTile } from "./ground";
 import { drawCropTile, drawRock, drawTree, drawWalker, objectShadow, setSpriteScale, spriteCount } from "./nature";
 import { drawBuilding } from "./buildings";
+import { drawAmbient, drawSmoke } from "./ambient";
 
 const ground = new GroundLayer();
 /** کاشی‌های دیده‌شده به ترتیبِ عمق (قطر به قطر)، یک بار در هر فریم؛ آرایه‌ی ازپیش‌ساخته (بی‌زباله) */
@@ -181,7 +182,15 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
       if (t.k === "tree") drawTree(ctx, x, y, t.v, sway ? now : -1, season);
       else if (t.k === "rock") drawRock(ctx, x, y, t.v, season === "winter");
       else if (t.crop) { drawCropTile(ctx, t, gx, gy, now, season, sparkle, sway); ripe ||= (t.g || 0) >= 1; }
-      else if (t.k === "bld") drawBuilding(ctx, t, x, y, now, L.dark, sdx);
+      else if (t.k === "bld") {
+        drawBuilding(ctx, t, x, y, now, L.dark, sdx);
+        // V.2: دودِ آرام از دودکشِ خانه/آسیاب/نانوایی (در زومِ خیلی دور خاموش)
+        if (k >= 0.5) {
+          if (t.b === "house") drawSmoke(ctx, x + 7, y, now, i, 42);
+          else if (t.b === "mill") drawSmoke(ctx, x + 8, y, now, i, 74);
+          else if (t.b === "bakery") drawSmoke(ctx, x + 6, y, now, i, 48);
+        }
+      }
       if (hv && hv.x === gx && hv.y === gy && v.tool === "build" && v.arg && !locked(s, gx, gy) && (t.k === "grass" || (t.k === "soil" && !t.crop))) {
         ctx.globalAlpha = 0.65 + 0.15 * Math.sin(now * 4); drawBuilding(ctx, { k: "bld", v: 0, b: v.arg } as Tile, x, y, now, 0, 0, true); ctx.globalAlpha = 1;
       }
@@ -190,6 +199,9 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     }
   }
   if (ripe) { ctx.fillStyle = `rgba(255,250,200,${0.75 + 0.25 * Math.sin(now * 6)})`; ctx.fill(sparkle); }
+  // V.2: پروانه/شب‌تاب/برگ/برگ‌گل/پرنده — تراکم با کیفیتِ خودکارِ دستگاه و زوم
+  // (k<۰٫۵ یعنی موجودیت‌ها زیرِ یک پیکسل‌اند یا دستگاه ضعیف است: خاموشِ خودکار)
+  drawAmbient(ctx, s, now, k >= 0.9 ? 1 : k >= 0.6 ? 0.6 : k >= 0.5 ? 0.4 : 0);
 
   // تابلوهای فروشِ زمین
   const NCH = Math.ceil(N / CH);
