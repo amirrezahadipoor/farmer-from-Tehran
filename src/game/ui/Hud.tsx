@@ -109,6 +109,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
           icon="box"
           label={`انبار ${fmt(used)}/${fmt(cap)}`} // نامِ دسترس‌پذیر متنِ دیدنی را در بر دارد (WCAG 2.5.3)
           onClick={() => setPanel("market")}
+          tour="market"
           className={used >= cap ? "animate-pulse !bg-red-100 !text-red-800 ring-red-400" : ""}
         >
           <span className="flex flex-col items-start leading-none">

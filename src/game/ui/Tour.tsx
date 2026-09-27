@@ -17,15 +17,23 @@ import { readLS, writeLS } from "../persist";
 import { UI } from "./common";
 import { TOUR_KEY, TOUR_STEPS, type Pt, type Step } from "../tourSteps";
 
-type Target = { el: string } | { tile: Pt } | null;
+/** el: فهرستِ انتخاب‌گرها به ترتیبِ اولویت؛ اولین عنصرِ دیده‌شده هدف است */
+type Target = { el: string[] } | { tile: Pt } | null;
 
 /** انتخاب‌گر با برچسبِ دسترس‌پذیرِ دکمه (op: «=» دقیق، «^=» آغازِ برچسب) */
 const byLabel = (label: string, op = "=") => `[aria-label${op}"${label}"]`;
 
+/**
+ * هدفِ گامِ فروش: قرصِ انبار با نشانگرِ پایدارِ data-tour (برچسبِ دیدنی‌اش «انبار ۱۸/۱۲۰» است و با
+ * موجودی عوض می‌شود)، و وقتی بازار باز است دکمه‌ی فروشِ همان گندمِ برداشت‌شده، وگرنه اولین «فروش یک …».
+ */
+const MARKET_TARGET = ['[data-tour="market"]'];
+const SELL_TARGET = [byLabel("فروش یک گندم"), byLabel("فروش یک", "^=")];
+
 function targetOf(step: Step | undefined, s: State, tool: string, marketOpen: boolean): Target {
   if (!step) return null;
-  if (!step.tool) return { el: marketOpen ? byLabel("فروش یک", "^=") : byLabel("بازار و انبار") };
-  if (tool !== step.tool) return { el: byLabel(UI[step.tool]) };
+  if (!step.tool) return { el: marketOpen ? SELL_TARGET : MARKET_TARGET };
+  if (tool !== step.tool) return { el: [byLabel(UI[step.tool])] };
   const p = step.tile?.(s);
   return p ? { tile: p } : null;
 }
@@ -33,10 +41,11 @@ function targetOf(step: Step | undefined, s: State, tool: string, marketOpen: bo
 function rectOf(t: Target): { x: number; y: number; w: number; h: number; round: boolean } | null {
   if (!t) return null;
   if ("el" in t) {
-    const el = document.querySelector(t.el);
-    const r = el?.getBoundingClientRect();
-    if (!r || r.width === 0) return null;
-    return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, round: false };
+    for (const sel of t.el) {
+      const r = document.querySelector(sel)?.getBoundingClientRect();
+      if (r && r.width > 0) return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, round: false };
+    }
+    return null;
   }
   const v = rt.view;
   const c = tileCenter(t.tile.x, t.tile.y);
