@@ -113,6 +113,16 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   // بومِ شفاف: آسمان و رنگ‌های صفحه‌ای لایه‌ی CSS زیر/روی بوم هستند (ui/ScreenLayers.tsx)
   const ctx = cv.getContext("2d");
   if (!ctx) return () => {};
+  // ── انجینِ آرت، فازِ ۱: پست‌پردازشِ GPU (PixiJS/WebGL2) — اختیاری؛ نبودنش = مسیرِ ۲بعدیِ خالص
+  const srcCv = document.createElement("canvas");
+  const sctx2d = srcCv.getContext("2d");
+  let postFX: { canvas: HTMLCanvasElement; present: () => void; destroy: () => void } | null = null;
+  void (async () => {
+    try {
+      const m = await import("./render/postfx");
+      if (m.webgl2Available()) postFX = (await m.createPostFX(srcCv)) ?? null;
+    } catch { /* مسیرِ ۲بعدی می‌ماند */ }
+  })();
   let raf = 0,
     last = performance.now(),
     uiAcc = 0,
@@ -214,7 +224,15 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
         }
         const r0 = renderStats().rebuilds;
         const t0 = performance.now();
-        render(ctx, s, rt.view, t / 1000, rt.fx, [...rt.walkers.values(), ...rt.guests.map((g) => g.w), rt.hero]);
+        const walkers = [...rt.walkers.values(), ...rt.guests.map((g) => g.w), rt.hero];
+        if (postFX && sctx2d && srcCv.width !== cv.width) { srcCv.width = cv.width; srcCv.height = cv.height; }
+        if (postFX && sctx2d && srcCv.width === cv.width && srcCv.height === cv.height) {
+          render(sctx2d, s, rt.view, t / 1000, rt.fx, walkers); // دنیا روی بومِ آفلاین
+          postFX.present(); // texture ← مسیرِ GPU (گرید + دیدِ جوی + وینیت)
+          ctx.drawImage(postFX.canvas, 0, 0); // فریمِ پردازش‌شده روی بومِ نمایش
+        } else {
+          render(ctx, s, rt.view, t / 1000, rt.fx, walkers);
+        }
         rt.view.cam.x = ox;
         rt.view.cam.y = oy;
         rt.stats.renders++;
@@ -242,5 +260,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   return () => {
     cancelAnimationFrame(raf);
     window.removeEventListener("resize", resize);
+    postFX?.destroy();
+    postFX = null;
   };
 }

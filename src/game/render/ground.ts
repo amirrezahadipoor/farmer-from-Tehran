@@ -14,6 +14,7 @@
 import { N, SEASONS } from "../data";
 import { idx, locked, type State } from "../logic";
 import { A, B, diamond, ellipse, fence, hash, makeCanvas, poly, shade, tileCenter } from "./core";
+import { contactEdges, drawBlades, drawContact, drawDapples, drawFlowers, drawSandSpeckle, drawSnowDetail, drawSoilDetail, drawWaterDetail, pal, softBlob, tileVar } from "./artlab";
 
 /** لبه‌هایی از کاشیِ آب که به خشکی (یا لبه‌ی نقشه) می‌رسند: ۱ بالا-چپ، ۲ بالا-راست، ۴ پایین-راست، ۸ پایین-چپ */
 function waterEdges(s: State, gx: number, gy: number) {
@@ -43,86 +44,73 @@ function snowCover(ctx: CanvasRenderingContext2D, gx: number, gy: number, x: num
 }
 
 /** زمینِ یک کاشی، بدون انیمیشن (برای کش و رسمِ مستقیم) + پرچینِ مرزِ زمینِ خریده‌شده */
-export function drawGroundTile(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: number, season: string, snow: boolean) {
+export function drawGroundTile(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: number, season: string, snow: boolean, d = 1) {
   const { x, y } = tileCenter(gx, gy);
   const lk = locked(s, gx, gy);
-  groundBase(ctx, s, gx, gy, x, y, lk, season, snow);
+  groundBase(ctx, s, gx, gy, x, y, lk, season, snow, d);
   if (lk) return;
   if (gy === 0 || locked(s, gx, gy - 1)) fence(ctx, [x, y - B], [x + A, y]);
   if (gx === 0 || locked(s, gx - 1, gy)) fence(ctx, [x - A, y], [x, y - B]);
   if (gx === N - 1 || locked(s, gx + 1, gy)) fence(ctx, [x + A, y], [x, y + B]);
   if (gy === N - 1 || locked(s, gx, gy + 1)) fence(ctx, [x, y + B], [x - A, y]);
 }
-function groundBase(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: number, x: number, y: number, lk: boolean, season: string, snow: boolean) {
+/** رسمِ پایه‌ی یک کاشی با انجینِ ArtLab؛ d>1 = جزئیاتِ کامل (برای وصله‌ی نزدیک) */
+export function groundBase(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: number, x: number, y: number, lk: boolean, season: string, snow: boolean, d = 1) {
   const t = s.tiles[idx(gx, gy)];
+  const P = pal(season);
+  const seed = gx * 7.31 + gy * 13.17;
   if (t.k === "water") {
     const lake = t.v > 0.5;
     const e = waterEdges(s, gx, gy);
     const g = ctx.createLinearGradient(x, y - B, x, y + B);
-    if (lake) { g.addColorStop(0, e ? "#5cc6e8" : "#1d7fb4"); g.addColorStop(1, e ? "#2a9dc8" : "#0d5a86"); }
-    else { g.addColorStop(0, e ? "#3fb0dc" : "#11639b"); g.addColorStop(1, e ? "#1c7fb0" : "#063f6b"); }
+    g.addColorStop(0, e ? P.water[0] : P.water[1]);
+    g.addColorStop(1, e ? P.water[1] : P.water[2]);
     diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
+    drawWaterDetail(ctx, x, y, A, B, lake, seed);
     if (e) { ctx.strokeStyle = "rgba(240,225,180,0.55)"; ctx.lineWidth = 3.5; ctx.stroke(); } // لبه‌ی شنیِ خیس
     if (lake && hash(gx, gy) > 0.72) { ellipse(ctx, x + 9, y + 4, 7, 3.4, "#2e7d32"); ellipse(ctx, x + 11, y + 3, 2.2, 1.6, "#f48fb1"); }
     return;
   }
   if (t.k === "soil") {
     diamond(ctx, x, y, A, B); ctx.fillStyle = "#558b2f"; ctx.fill();
-    const base = t.wet ? "#3e261a" : "#6b3f24";
+    const base = t.wet ? P.soilWet : P.soilDry;
     const g = ctx.createLinearGradient(x - A, y, x + A, y);
-    g.addColorStop(0, shade(base, -0.08)); g.addColorStop(1, shade(base, 0.14));
+    g.addColorStop(0, shade(base[0], -0.08)); g.addColorStop(1, shade(base[1], 0.14));
     diamond(ctx, x, y + 1, A * 0.93, B * 0.93); ctx.fillStyle = g; ctx.fill();
-    ctx.strokeStyle = t.wet ? "rgba(20,10,0,0.6)" : "rgba(60,32,12,0.55)"; ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    for (let i = 1; i < 5; i++) {
-      const u = i / 5, p0x = x - A * 0.93 + A * 0.93 * u, p0y = y + 1 - B * 0.93 * u;
-      ctx.moveTo(p0x, p0y); ctx.lineTo(p0x + A * 0.93, p0y + B * 0.93);
+    drawSoilDetail(ctx, x, y, A, B, seed, d);
+    if (t.wet) { // براقیتِ خیس: هاله‌ی آبیِ نرم
+      const s2 = A * 1.15;
+      ctx.drawImage(softBlob("rgba(130,205,255,0.24)"), x - A * 0.55, y - s2 * 0.18, s2 * 0.75, s2 * 0.42);
     }
-    ctx.stroke();
-    if (t.wet) ellipse(ctx, x - 12, y + 4, 9, 3.5, "rgba(120,200,255,0.4)");
-    if (snow && (t.g || 0) < 0.3) snowCover(ctx, gx, gy, x, y, 0.93, 0.7);
-  } else {
-    const touchesWater =
-      (gy > 0 && s.tiles[idx(gx, gy - 1)].k === "water") || (gy < N - 1 && s.tiles[idx(gx, gy + 1)].k === "water") ||
-      (gx > 0 && s.tiles[idx(gx - 1, gy)].k === "water") || (gx < N - 1 && s.tiles[idx(gx + 1, gy)].k === "water");
-    if (touchesWater && season !== "winter") { // ساحلِ شنی هرجا خشکی به آب می‌رسد
-      const sg = ctx.createLinearGradient(x, y - B, x, y + B);
-      sg.addColorStop(0, "#f2e2b8"); sg.addColorStop(1, "#d9c08a");
-      diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = sg; ctx.fill();
-      for (let i = 0; i < 4; i++) {
-        const px = x + (hash(gx * 7 + i, gy) - 0.5) * 46, py = y + (hash(gy, gx + i) - 0.5) * 20;
-        ellipse(ctx, px, py, 1.6, 1.1, "rgba(190,160,110,0.55)");
-      }
-      if (lk) { diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = "rgba(10,25,20,0.52)"; ctx.fill(); }
-      return;
-    }
-    let hue = 92 + t.v * 14, sat = 60, l = 44 + t.v * 7 + ((gx + gy) % 2) * 2.5;
-    if (season === "autumn") { hue = 38 + t.v * 20; sat = 60; l = 50 + t.v * 6; }
-    else if (season === "winter") { hue = 150 + t.v * 25; sat = 18; l = 78 + t.v * 10; }
-    else if (season === "summer") { hue = 80 + t.v * 10; sat = 70; }
-    const g = ctx.createLinearGradient(x, y - B, x, y + B);
-    g.addColorStop(0, `hsl(${hue},${sat}%,${l + 5}%)`); g.addColorStop(1, `hsl(${hue},${sat}%,${l - 4}%)`);
-    diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
-    ctx.strokeStyle = `hsl(${hue},${sat}%,${l - 14}%)`; ctx.lineWidth = 1.3;
-    ctx.beginPath(); // دسته‌های علف (در کش ثابت‌اند)
-    for (let i = 0; i < 5; i++) {
-      const ux = (hash(gx * 3 + i, gy) - 0.5) * 60, uy = (hash(gy * 5 + i, gx) - 0.5) * 26;
-      if (Math.abs(ux) / A + Math.abs(uy) / B > 0.85) continue;
-      ctx.moveTo(x + ux - 2, y + uy); ctx.lineTo(x + ux - 3, y + uy - 6);
-      ctx.moveTo(x + ux, y + uy); ctx.lineTo(x + ux, y + uy - 8);
-      ctx.moveTo(x + ux + 2, y + uy); ctx.lineTo(x + ux + 3, y + uy - 5);
-    }
-    ctx.stroke();
-    if (t.v > 0.78 && t.k === "grass" && season !== "winter") {
-      const cols = season === "autumn" ? ["#ef6c00", "#fbc02d", "#ad1457", "#8d6e63"] : ["#ff80ab", "#fff176", "#ffffff", "#ce93d8", "#80d8ff"];
-      for (let i = 0; i < 4; i++) {
-        const fx = x + (hash(i, gx + gy * 7) - 0.5) * 50, fy = y + (hash(gy + i, gx) - 0.5) * 20;
-        ctx.strokeStyle = "#558b2f"; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - 6); ctx.stroke();
-        ellipse(ctx, fx, fy - 7, 2.4, 2.0, cols[(gx + i) % cols.length]);
-      }
-    }
-    if (snow) snowCover(ctx, gx, gy, x, y, 1, 0.62);
+    if (snow && (t.g || 0) < 0.3) { snowCover(ctx, gx, gy, x, y, 0.93, 0.7); drawSnowDetail(ctx, x, y, A, B, seed, season, d); }
+    drawContact(ctx, x, y, A, B, contactEdges(s, gx, gy));
+    return;
   }
+  const touchesWater =
+    (gy > 0 && s.tiles[idx(gx, gy - 1)].k === "water") || (gy < N - 1 && s.tiles[idx(gx, gy + 1)].k === "water") ||
+    (gx > 0 && s.tiles[idx(gx - 1, gy)].k === "water") || (gx < N - 1 && s.tiles[idx(gx + 1, gy)].k === "water");
+  if (touchesWater && season !== "winter") { // ساحلِ شنی هرجا خشکی به آب می‌رسد
+    const sg = ctx.createLinearGradient(x, y - B, x, y + B);
+    sg.addColorStop(0, P.sand[0]); sg.addColorStop(1, P.sand[1]);
+    diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = sg; ctx.fill();
+    drawSandSpeckle(ctx, x, y, A, B, seed, d);
+    if (lk) { diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = "rgba(10,25,20,0.52)"; ctx.fill(); }
+    return;
+  }
+  // چمن: متغیرِ پیوسته‌ی FBM (نه شطرنجی) + گرادیانِ سه‌پله + نورِ لکه‌لکه + علف + گل
+  const [h0, s0, l0] = P.grass;
+  const tv = tileVar(gx, gy);
+  const hue = h0 + tv.dh, sat = s0, l = l0 + tv.dl + (t.v || 0) * 5;
+  const g = ctx.createLinearGradient(x, y - B, x, y + B);
+  g.addColorStop(0, `hsl(${hue},${sat}%,${l + 5}%)`);
+  g.addColorStop(0.55, `hsl(${hue},${sat}%,${l}%)`);
+  g.addColorStop(1, `hsl(${hue},${sat + 4}%,${l - 5}%)`);
+  diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
+  drawDapples(ctx, x, y, A, B, seed, d);
+  drawBlades(ctx, x, y, A, B, seed, d, season);
+  if ((t.v || 0) > 0.55 && t.k === "grass" && season !== "winter") drawFlowers(ctx, x, y, A, B, seed + 3, season, d);
+  if (snow) { snowCover(ctx, gx, gy, x, y, 1, 0.62); drawSnowDetail(ctx, x, y, A, B, seed, season, d); }
+  drawContact(ctx, x, y, A, B, contactEdges(s, gx, gy));
   if (lk) { diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = "rgba(10,25,20,0.52)"; ctx.fill(); }
 }
 
@@ -229,7 +217,7 @@ export class GroundLayer {
       for (let xx = Math.max(0, gx - 5); xx <= Math.min(N - 1, gx + 5); xx++) {
         const p = tileCenter(xx, yy);
         if (p.x + A + 2 < wx0 || p.x - A - 2 > wx1 || p.y + B + 1 < wy0 || p.y - B - 16 > wy1) continue;
-        drawGroundTile(cx, s, xx, yy, season, snow);
+        drawGroundTile(cx, s, xx, yy, season, snow, 2); // وصله‌ی نزدیک = جزئیاتِ کامل
       }
     }
     cx.restore();

@@ -181,15 +181,18 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   if (v.hover) drawHover(ctx, s, v, now);
 
   setSpriteScale(k);
-  // سایه‌ی همه‌ی درخت‌ها و سنگ‌ها در یک fill
-  const shadows = new Path2D();
+  // سایه‌ی نرم: دو گذار — هاله‌ی بیرونیِ کم‌رنگ + هسته‌ی تیره ≈ فالloffِ گاوسی (هنوز ۲ fill برای همه)
+  const shadows = new Path2D(), shadowsSoft = new Path2D();
   for (let n = 0; n < nVis; n++) {
     const i = visList[n], t = s.tiles[i];
     if (t.k !== "tree" && t.k !== "rock") continue;
     const gx = i % N, gy = (i / N) | 0;
-    objectShadow(shadows, t, (gx - gy) * A, (gx + gy + 1) * B - N * B, sdx);
+    const x = (gx - gy) * A, y = (gx + gy + 1) * B - N * B;
+    objectShadow(shadowsSoft, t, x, y, sdx, 1.4);
+    objectShadow(shadows, t, x, y, sdx);
   }
-  ctx.fillStyle = "rgba(10,20,8,0.26)"; ctx.fill(shadows);
+  ctx.fillStyle = "rgba(10,20,8,0.11)"; ctx.fill(shadowsSoft);
+  ctx.fillStyle = "rgba(10,20,8,0.22)"; ctx.fill(shadows);
 
   const byTile = new Map<number, Walker[]>();
   for (const wk of walkers) { const key = idx(Math.floor(wk.x), Math.floor(wk.y)); byTile.set(key, [...(byTile.get(key) ?? []), wk]); }

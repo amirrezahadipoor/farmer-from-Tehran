@@ -10,6 +10,7 @@ import { CMAP } from "../data";
 import type { Tile } from "../logic";
 import { A, B, clamp, ellipse, hash, makeCanvas, poly, shade, tileCenter, type Walker } from "./core";
 import { drawGenericPlant } from "./plants";
+import { drawRockShape, drawTreeShape } from "./flora";
 
 interface Sprite { cv: HTMLCanvasElement; x0: number; y0: number; w: number; h: number }
 const sprites = new Map<string, Sprite>();
@@ -45,29 +46,7 @@ function blit(ctx: CanvasRenderingContext2D, sp: Sprite, x: number, y: number, s
 
 /* ------------------------------------------------------------ درخت و سنگ */
 function treeShape(ctx: CanvasRenderingContext2D, x: number, y: number, v: number, seasonId: string) {
-  const sw = 0;
-  ctx.fillStyle = "#3e2723"; ctx.fillRect(x - 3.5, y - 26, 7, 26);
-  ctx.fillStyle = "#5d4037"; ctx.fillRect(x - 3.5, y - 26, 3.5, 26);
-  if (v > 0.55) {
-    for (let i = 0; i < 3; i++) {
-      const w = 28 - i * 7, yy = y - 18 - i * 18;
-      const leafColor = seasonId === "winter" ? "#ffffff" : seasonId === "autumn" ? "#ff7043" : "#1b5e20";
-      poly(ctx, [[x + sw * (i + 1) * 0.4, yy - 28], [x - w, yy], [x, yy + 6]], leafColor);
-      poly(ctx, [[x + sw * (i + 1) * 0.4, yy - 28], [x, yy + 6], [x + w, yy]], shade(leafColor === "#ffffff" ? "#ffffff" : leafColor === "#ff7043" ? "#ef6c00" : "#2e7d32", 0.2));
-      if (seasonId === "winter") { ellipse(ctx, x + sw * (i + 1) * 0.4, yy - 28, 10, 5, "#fff"); }
-    }
-  } else {
-    const blobs = [[-14, -36, 17], [14, -38, 17], [0, -54, 19], [0, -34, 18]];
-    for (const [bx, by, r] of blobs) {
-      let c1 = "#9ccc65", c2 = "#2e7d32", c3 = "#1b5e20";
-      if (seasonId === "autumn") { c1 = "#ffcc80"; c2 = "#ef6c00"; c3 = "#bf360c"; }
-      if (seasonId === "winter") { c1 = "#ffffff"; c2 = "#cfd8dc"; c3 = "#b0bec5"; }
-      const g = ctx.createRadialGradient(x + bx - r * 0.4 + sw, y + by - r * 0.4, 2, x + bx + sw, y + by, r);
-      g.addColorStop(0, c1); g.addColorStop(0.6, c2); g.addColorStop(1, c3);
-      ellipse(ctx, x + bx + sw, y + by, r, r * 0.92, g);
-    }
-    if (v > 0.35 && seasonId !== "winter") for (let i = 0; i < 5; i++) ellipse(ctx, x + (hash(v, i) - 0.5) * 36 + sw, y - 32 - hash(i, v) * 28, 2.8, 2.8, seasonId === "autumn" ? "#d84315" : "#d32f2f");
-  }
+  drawTreeShape(ctx, x, y, v, seasonId);
 }
 /** now < 0 = بدونِ تکانِ باد (دور از دوربین) */
 export function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, v: number, now: number, seasonId: string) {
@@ -78,19 +57,15 @@ export function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, v:
   blit(ctx, sp, x, y, now < 0 ? 0 : (Math.sin(now * 1.3 + v * 10) * 2) / 55);
 }
 function rockShape(ctx: CanvasRenderingContext2D, x: number, y: number, v: number, snow: boolean) {
-  poly(ctx, [[x - 20, y + 2], [x - 15, y - 14], [x - 2, y - 20], [x + 14, y - 16], [x + 21, y], [x + 7, y + 8], [x - 9, y + 8]], "#607d8b");
-  poly(ctx, [[x - 15, y - 14], [x - 2, y - 20], [x + 14, y - 16], [x + 2, y - 7], [x - 9, y - 6]], "#b0bec5");
-  poly(ctx, [[x + 2, y - 7], [x + 14, y - 16], [x + 21, y], [x + 7, y + 8]], "#455a64");
-  if (snow) ellipse(ctx, x - 3, y - 18, 10, 4, "rgba(255,255,255,0.9)");
-  if (v > 0.5 && !snow) ellipse(ctx, x - 7, y - 11, 6, 3, "#8bc34a");
+  drawRockShape(ctx, x, y, v, snow);
 }
 export function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number, v: number, snow: boolean) {
   const moss = v > 0.5 && !snow;
   blit(ctx, sprite(`r|${snow ? 1 : 0}|${moss ? 1 : 0}`, -24, -24, 48, 36, (c) => rockShape(c, 0, 0, moss ? 1 : 0, snow)), x, y);
 }
 /** سایه‌ی درخت‌ها و سنگ‌های دیده‌شده، همه در یک مسیر و یک fill (پیش از این یک fill برای هر کدام) */
-export function objectShadow(p: Path2D, t: Tile, x: number, y: number, sdx: number) {
-  const rx = t.k === "tree" ? 28 : 22, dx = t.k === "tree" ? sdx : sdx * 0.5;
+export function objectShadow(p: Path2D, t: Tile, x: number, y: number, sdx: number, scale = 1) {
+  const rx = (t.k === "tree" ? 28 : 22) * scale, dx = (t.k === "tree" ? sdx : sdx * 0.5) * scale;
   p.moveTo(x + dx + rx, y + 2);
   p.ellipse(x + dx, y + 2, rx, rx * 0.45, 0, 0, Math.PI * 2);
 }
@@ -111,12 +86,26 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
   const leaf = c.leaf;
   switch (id) {
     case "wheat": {
+      // انجین: ساقه‌های خمیده + دانه‌ی واقعی (زنجیرِ دانه‌ها + ساقه‌های سبوس)
       const col = ripe ? "#f59e0b" : g > 0.6 ? "#b5c24a" : "#7fb33a";
-      ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+      const colHi = ripe ? "#fcd34d" : g > 0.6 ? "#d6df7d" : "#a9c765";
+      ctx.lineCap = "round";
       for (let i = -2; i <= 2; i++) {
-        const h = (22 + Math.abs(i) * -2) * sc, tx = x + i * 2.5 + sw;
-        ctx.beginPath(); ctx.moveTo(x + i, y); ctx.quadraticCurveTo(x + i, y - h * 0.6, tx, y - h); ctx.stroke();
-        if (g > 0.55) { ctx.save(); ctx.translate(tx, y - h - 3); ctx.rotate(sw * 0.06); ellipse(ctx, 0, 0, 2, 5 * sc, ripe ? "#fbbf24" : "#c6cf5a"); ctx.restore(); }
+        const h = (24 - Math.abs(i) * 2.5) * sc, tx = x + i * 2.6 + sw * 0.8;
+        ctx.strokeStyle = i % 2 ? col : shade(col, -0.15); ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(x + i * 0.9, y);
+        ctx.quadraticCurveTo(x + i * 1.3, y - h * 0.6, tx, y - h); ctx.stroke();
+        if (g > 0.4) {
+          for (let k = 0; k < 5; k++) {
+            const gy2 = y - h - 1 - k * 2.1 * sc, go = (k % 2 ? 1 : -1) * 1.3 * sc * 0.8;
+            ellipse(ctx, tx + go * 0.75, gy2, 1.25 * sc + 0.45, 1.85 * sc + 0.45, k % 2 ? colHi : col);
+          }
+          ctx.strokeStyle = "rgba(255,244,190,0.5)"; ctx.lineWidth = 0.7;
+          for (let k = 0; k < 4; k++) {
+            ctx.beginPath(); ctx.moveTo(tx, y - h - 2 * sc);
+            ctx.lineTo(tx + (k - 1.5) * 1.7 * sc, y - h - (4.5 + 3 * sc) * sc); ctx.stroke();
+          }
+        }
       } break; }
     case "carrot": {
       ctx.strokeStyle = leaf; ctx.lineWidth = 2.0;
