@@ -71,6 +71,7 @@ export function dropLS(key: string): void {
 
 // P5.13: پاک‌سازِ سیو به ماژولِ خالصِ مشترک رفت تا سرور (api/save) هم دقیقاً همان را اجرا کند
 import { sanitizeSave } from "./sim/sanitize";
+import { STATIC_BUILD, asset } from "./base";
 export { sanitizeSave };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -204,10 +205,11 @@ export function restoreQuarantined(): LoadOutcome {
 
 /** سیوِ ابری را با مهلت زمانی می‌خواند؛ هر خطا (آفلاین، ۵۰۰، JSON خراب) = `null`. */
 export async function fetchCloudSave(id: string, timeoutMs = 7000): Promise<LoadOutcome> {
+  if (STATIC_BUILD) return { state: null, corrupt: false, source: null, note: "نسخه‌ی دمو: ذخیره فقط روی همین دستگاه" };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`/api/save?id=${encodeURIComponent(id)}`, {
+    const res = await fetch(asset(`/api/save?id=${encodeURIComponent(id)}`), {
       signal: controller.signal,
       headers: { [TOKEN_HEADER]: ensureFarmToken() },
     });

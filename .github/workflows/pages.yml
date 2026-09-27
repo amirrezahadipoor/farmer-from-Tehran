@@ -1,0 +1,80 @@
+name: pages
+
+# مورد ۲ِ نقشه‌ی راه: دموی عمومی روی GitHub Pages
+# https://amirrezahadipoor.github.io/farmer-from-Tehran/
+# نسخه‌ی ایستا (output: export) زیرِ مسیرِ پایه، بدونِ API: ذخیره فقط روی دستگاهِ بازیکن است.
+# بعد از انتشار، تستِ دود روی همان آدرسِ عمومی اجرا می‌شود (e2e-demo/demo.spec.ts).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: بیلدِ ایستا
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: بیلد برای GitHub Pages
+        # مسیرهای API در نسخه‌ی ایستا وجود ندارند (output: export از route handlerِ پویا پشتیبانی نمی‌کند)
+        run: |
+          rm -rf src/app/api
+          npm run build
+          touch out/.nojekyll
+        env:
+          NEXT_PUBLIC_STATIC: "1"
+          NEXT_PUBLIC_BASE_PATH: /farmer-from-Tehran
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    name: انتشار
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  smoke:
+    name: تستِ دود روی آدرسِ عمومی
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c playwright.demo.config.ts
+        env:
+          DEMO_URL: https://amirrezahadipoor.github.io/farmer-from-Tehran/
+      - name: آپلودِ اسکرین‌شاتِ دمو
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-shots
+          path: docs/shots/
+          if-no-files-found: ignore
+          retention-days: 30

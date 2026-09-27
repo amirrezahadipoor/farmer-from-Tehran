@@ -9,6 +9,7 @@
  * می‌نویسد (render/scene.ts → applyScreenFx). هیچ‌کدام لمس را نمی‌گیرد.
  */
 import { memo } from "react";
+import { asset } from "../base";
 
 const LAYER = "pointer-events-none absolute inset-0";
 
@@ -22,7 +23,7 @@ const SKY_GRADIENT = "linear-gradient(#64c3eb, #1c73af)";
 export const SkyLayers = memo(function SkyLayers({ withImage = true }: { withImage?: boolean }) {
   return (
     <>
-      <div aria-hidden className={`${LAYER} bg-cover bg-center`} style={{ backgroundImage: withImage ? `url(/images/bg_sky.webp), ${SKY_GRADIENT}` : SKY_GRADIENT }} />
+      <div aria-hidden className={`${LAYER} bg-cover bg-center`} style={{ backgroundImage: withImage ? `url(${asset("/images/bg_sky.webp")}), ${SKY_GRADIENT}` : SKY_GRADIENT }} />
       <div aria-hidden data-fx="sky" className={LAYER} style={{ background: "rgb(5,15,40)", opacity: 0 }} />
     </>
   );

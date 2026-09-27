@@ -38,7 +38,8 @@ test.describe("دارایی‌ها — هیچ تصویر/آیکون/فونتی �
     const icons = ((await man.json()) as { icons?: { src: string }[] }).icons ?? [];
     expect(icons.length).toBeGreaterThanOrEqual(4);
     for (const ic of icons) {
-      const r = await request.get(ic.src);
+      // آدرسِ آیکون نسبت به خودِ manifest است (نسبی از مورد ۲ تا زیرِ مسیرِ پایه‌ی GitHub Pages هم درست باشد)
+      const r = await request.get(new URL(ic.src, man.url()).href);
       expect(r.status(), `آیکون مانیفست ${ic.src}`).toBe(200);
     }
   });

@@ -24,7 +24,8 @@
     "key": "آسیب‌پذیریِ بحرانی/بالا در وابستگی‌های production",
     "from": "۱ بحرانی + ۲ بالا",
     "to": "۰",
-    "current": "۱ بحرانی + ۲ بالا (next 16.2.6)"
+    "current": "۰ (next 16.3.6؛ npm audit در CI بلاک‌کننده)",
+    "met": true
    },
    {
     "key": "لینکِ دموی عمومی",
@@ -81,8 +82,9 @@
      "id": "1",
      "title": "به‌روزرسانیِ Next.js به 16.3.6، بررسیِ امنیتیِ واقعی و به‌روزرسانیِ خودکارِ وابستگی‌ها",
      "dod": "Next.js 16.3.6؛ npm audit روی وابستگی‌های production بدونِ موردِ بالا یا بحرانی و بلاک‌کننده در CI (بدونِ || true)؛ Dependabot هفتگی برای npm و GitHub Actions",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 29,
+     "evidence": "next و eslint-config-next از 16.2.6 به 16.3.6 (و postcss 8.5.28): npm audit روی production از «۱ بحرانی + ۲ بالا» به صفر. security.yml دیگر نه continue-on-error دارد نه «|| true» و دو گامِ بلاک‌کننده دارد (production و همه‌ی وابستگی‌ها، از سطحِ بالا) — اجرای سبزِ ۳۶۳۰۹۳۰۹۹۶۴. .github/dependabot.yml برای npm و GitHub Actions (هر شنبه) و هشدار و رفعِ امنیتیِ خودکارِ مخزن روشن شد. ۷ موردِ متوسطِ باقی‌مانده فقط در ابزارهای توسعه است (vitest 3 و drizzle-kit) و ارتقای major می‌خواهد که به Dependabot سپرده شد"
     },
     {
      "id": "2",
@@ -130,8 +132,9 @@
      "id": "8",
      "title": "فایلِ LICENSE و متنِ مجوزِ فونت",
      "dod": "LICENSE (MIT) در ریشه، متنِ OFLِ وزیرمتن کنارِ فونت‌ها و CREDITS.md برای همه‌ی دارایی‌های بیرونی",
-     "status": "todo",
-     "push": null
+     "status": "done",
+     "push": 29,
+     "evidence": "LICENSE (MIT، ۲۰۲۶ amirrezahadipoor) در ریشه؛ متنِ کاملِ OFL 1.1ِ وزیرمتن در public/fonts/OFL.txt و tools/fonts-src/OFL.txt (وزیرمتن نامِ رزروشده ندارد، پس زیرمجموعه با همان نام مجاز است و جدولِ name دست‌نخورده می‌ماند)؛ CREDITS.md برای همه‌ی دارایی‌های بیرونی؛ tests/licenses.test.ts با ۴ تست (LICENSE، OFL، ثبتِ هر فونت و مجوزِ آزادِ هر فایلِ صوتی) — CI سبز روی 97769d7"
     },
     {
      "id": "9",

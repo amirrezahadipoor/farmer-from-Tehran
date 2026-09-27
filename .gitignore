@@ -11,3 +11,6 @@ save*.json
 *.tsbuildinfo
 test-results/
 playwright-report/
+
+# مورد ۹ِ نقشه‌ی راه: اسکرین‌شات‌ها فقط آرتیفکتِ CI هستند (playtest-shots)، نه بخشی از مخزن
+docs/shots/

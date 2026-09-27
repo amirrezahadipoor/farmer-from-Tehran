@@ -1,0 +1,5 @@
+{
+  "//": "مورد ۲: بیلدِ ایستای GitHub Pages بدونِ src/app/api است؛ این پیکربندی فقط کدِ برنامه را بررسی می‌کند. کلِ پروژه، از جمله تست‌ها، در ورک‌فلوی quality با tsconfig.json بررسی می‌شود.",
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "tests", "e2e", "e2e-demo", "tools", "playwright.config.ts", "playwright.demo.config.ts", "vitest.config.ts", "drizzle.config.ts"]
+}

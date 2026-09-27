@@ -10,10 +10,11 @@ import { preload } from "react-dom";
 import { BUILDINGS, SKILLS, fmt } from "../data";
 import type { State } from "../logic";
 import { Icon } from "../icons";
+import { asset } from "../base";
 
 const DECOR_COUNT = BUILDINGS.filter((b) => b.isDecor).length;
 /** WebPِ آماده‌ی ۲۵۶ (tools/prepare-assets.py) — بهینه‌سازِ next/image اینجا فقط جاوااسکریپت اضافه می‌کرد */
-const LOGO = "/images/logo_badge.webp";
+const LOGO = asset("/images/logo_badge.webp");
 
 export default function Splash({ s, onStart, className = "" }: { s: State | null; onStart?: () => void; className?: string }) {
   // عنصرِ LCP: در HTMLِ ایستا پیش‌بارگذاری با اولویتِ بالا (React آن را به <head> می‌برد)

@@ -34,4 +34,4 @@ jobs:
           name: playtest-shots
           path: docs/shots/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30

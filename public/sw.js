@@ -8,7 +8,13 @@
  *   • /api/*                       → شبکه‌ی مستقیم (صف آفلاین سمت اپ است)
  * پیام‌ها: SKIP_WAITING | PREFETCH (لیست URL برای گرم‌کردن کش تصاویر داستان)
  */
-const VERSION = "v2"; // v2 (P6.5): فونت‌های زیرمجموعه + نشانِ WebP
+const VERSION = "v3"; // v3 (مورد ۲): مسیرِ پایه‌ی انتشار؛ v2 (P6.5): فونت‌های زیرمجموعه + نشانِ WebP
+/**
+ * مسیرِ پایه (مورد ۲): روی GitHub Pages این فایل در /farmer-from-Tehran/sw.js است و همه‌ی مسیرها زیرِ
+ * همان پیشوندند؛ روی سرورِ خودمان پیشوند خالی است. فهرست‌ها با مسیرِ استاندارد نوشته و با P() پیشوند می‌گیرند.
+ */
+const BASE = new URL("./", self.location.href).pathname.replace(/\/$/, "");
+const P = (p) => BASE + p;
 const CORE = `gvf-core-${VERSION}`;
 const RUNTIME = `gvf-rt-${VERSION}`;
 const IMAGES = `gvf-img-${VERSION}`;
@@ -37,12 +43,12 @@ async function warmAppShell() {
   const core = await caches.open(CORE);
   const rt = await caches.open(RUNTIME);
   try {
-    const res = await fetch("/", { cache: "reload" });
+    const res = await fetch(P("/"), { cache: "reload" });
     if (!res.ok) return;
-    await core.put("/", res.clone());
+    await core.put(P("/"), res.clone());
     const html = await res.text();
     const urls = new Set();
-    const re = /\/_next\/static\/[^\s"'\)]+/g;
+    const re = new RegExp(BASE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/_next/static/[^\\s\"'\\)]+", "g");
     let m;
     while ((m = re.exec(html))) urls.add(m[0]);
     await Promise.all(
@@ -56,7 +62,7 @@ async function warmAppShell() {
 /** تصاویر داستان/آسمان/لوگو را مستقل از صفحه گرم می‌کند (برای بازی آفلاین). */
 async function warmImages() {
   const cache = await caches.open(IMAGES);
-  await Promise.all(STORY_IMAGES.map((u) => cache.add(new Request(u, { cache: "reload" })).catch(() => undefined)));
+  await Promise.all(STORY_IMAGES.map((u) => cache.add(new Request(P(u), { cache: "reload" })).catch(() => undefined)));
 }
 
 /** مهلت‌دار کردن کارهای پس‌زمینه تا نصب SW الکی طول نکشد. */
@@ -98,7 +104,7 @@ self.addEventListener("install", (event) => {
       // هر دارایی جداگانه تا یک خطا کل نصب را خراب نکند
       await Promise.all(
         CORE_ASSETS.map((url) =>
-          cache.add(new Request(url, { cache: "reload" })).catch(() => undefined)
+          cache.add(new Request(P(url), { cache: "reload" })).catch(() => undefined)
         )
       );
       // گرم‌کردن پوسته‌ی Next و تصاویر داستان (از نصب، نه از بازدید دوم)
@@ -124,7 +130,7 @@ self.addEventListener("activate", (event) => {
       }
       await self.clients.claim();
       const core = await caches.open(CORE);
-      if (!(await core.match("/", { ignoreVary: true }))) await withTimeout(warmAppShell(), 6000);
+      if (!(await core.match(P("/"), { ignoreVary: true }))) await withTimeout(warmAppShell(), 6000);
     })()
   );
 });
@@ -161,10 +167,10 @@ async function networkFirstNavigation(request) {
     const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(request, { signal: controller.signal });
     clearTimeout(timer);
-    if (isCacheable(res)) cache.put("/", res.clone()).catch(() => undefined);
+    if (isCacheable(res)) cache.put(P("/"), res.clone()).catch(() => undefined);
     return res;
   } catch {
-    const cached = (await cache.match("/", { ignoreVary: true })) || (await cache.match(request, { ignoreVary: true }));
+    const cached = (await cache.match(P("/"), { ignoreVary: true })) || (await cache.match(request, { ignoreVary: true }));
     if (cached) return cached;
     return new Response(
       `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
@@ -189,7 +195,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // API: هرگز کش نمی‌شود
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith(P("/api/"))) return;
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirstNavigation(request));
