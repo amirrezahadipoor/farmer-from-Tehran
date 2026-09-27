@@ -108,6 +108,26 @@ for (const p of data.phases) {
   if (nextUp.length >= 3) break;
 }
 
+/* ---------- registryِ دارایی‌های آرت: چه چیزی ساخته شده است ---------- */
+let assetRegistry = "";
+if (Array.isArray(data.meta.assets) && data.meta.assets.length) {
+  const groups = {};
+  for (const a of data.meta.assets) (groups[a.type] ??= []).push(a);
+  assetRegistry = `## registryِ دارایی‌های آرت (حقیقتِ «چه ساخته شده»)
+
+هر داراییِ تولیدشده همین‌جا ثبت می‌شود تا فراموش نشود: کلیدِ بازی، فایلِ نهایی، اطلس و وضعیت.
+تولید: مدلِ تصویرِ Arena.ai (۲۰۲۶/۰۹/۲۷) · پردازش: \`tools/align-assets.py\` (کلیدِ خودکار) · بسته‌بندی: \`tools/pack-atlas.py\`
+
+`;
+  for (const [type, list] of Object.entries(groups)) {
+    assetRegistry += `### ${type}\n\n| کلیدِ بازی | فایلِ اسپرایت | اطلس | وضعیت | توضیح |\n|---|---|:--:|:--:|---|\n`;
+    for (const a of list) {
+      assetRegistry += `| \`${a.key || "—"}\` | \`${a.file}\` | ${a.atlas ?? "—"} | ${a.status} | ${clean(a.note ?? "")} |\n`;
+    }
+    assetRegistry += `\n`;
+  }
+}
+
 /* ---------- مارک‌داون ---------- */
 let md = `# ROADMAP — ${data.meta.project}
 
@@ -149,6 +169,7 @@ ${data.meta.kpis
   })
   .join("\n")}
 
+${assetRegistry}
 ## قواعد پروژه
 
 ${data.meta.rules.map((r) => `- ${r}`).join("\n")}

@@ -21,9 +21,27 @@ import sys
 from PIL import Image
 
 
-def chroma_key(im, key=(255, 0, 255), tol_low=60, tol_high=150):
-    """آلفای نرم: دورِ کلید → ۰، دورتر → ۲۵۵؛ despill هم‌زمان."""
+def auto_key(im):
+    """رنگِ پس‌زمینه از حاشیه‌ی فریم (مدیانِ حلقه‌ی لبه) — مدل همیشه سبزِ خالص نمی‌دهد"""
     im = im.convert("RGB")
+    w, h = im.size
+    px = im.load()
+    ring = []
+    step = max(1, w // 64)
+    for x in range(0, w, step):
+        ring.append(px[x, 1]); ring.append(px[x, h - 2])
+    for y in range(0, h, step):
+        ring.append(px[1, y]); ring.append(px[w - 2, y])
+    rs = sorted(p[0] for p in ring); gs = sorted(p[1] for p in ring); bs = sorted(p[2] for p in ring)
+    m = len(ring) // 2
+    return (rs[m], gs[m], bs[m])
+
+
+def chroma_key(im, key=None, tol_low=35, tol_high=110):
+    """آلفای نرم: دورِ کلید → ۰، دورتر → ۲۵۵؛ despillِ عمومی هم‌زمان."""
+    im = im.convert("RGB")
+    if key is None:
+        key = auto_key(im)
     px = im.load()
     w, h = im.size
     kr, kg, kb = key
@@ -41,10 +59,11 @@ def chroma_key(im, key=(255, 0, 255), tol_low=60, tol_high=150):
                 a = int(255 * (d - tol_low) / (tol_high - tol_low))
             if a > 0:
                 if a < 255:
-                    # despillِ مجانتا: R و B را به سمت G بکش (درزِ بنفش حذف شود)
-                    t = (255 - a) / 255
-                    r = int(g + (r - g) * (1 - 0.6 * t))
-                    b = int(g + (b - g) * (1 - 0.6 * t))
+                    # despillِ عمومی: بیشازحدِ هر کانال نسبت به کلید را به سمت خنثی بکش
+                    t = (255 - a) / 255 * 0.7
+                    r = int(r - (r - kr) * t) if r > kr else r
+                    g = int(g - (g - kg) * t) if g > kg else g
+                    b = int(b - (b - kb) * t) if b > kb else b
                 opx[x, y] = (r, g, b, a)
     return out
 
@@ -103,14 +122,14 @@ def main():
     ap.add_argument("--h", type=int, required=True)
     ap.add_argument("--fit", choices=["contain", "fill"], default="contain")
     ap.add_argument("--anchor", choices=["center", "bottom", "top"], default="center")
-    # پیش‌فرض: کلیدِ سبز (پس‌زمینه‌ی #00FF00) — پالتِ گرمِ آرت با سبزِ خالص فاصله‌ی زیادی دارد
-    ap.add_argument("--key", default="0,255,0")
-    ap.add_argument("--tol-low", type=int, default=50)
-    ap.add_argument("--tol-high", type=int, default=130)
+    # پیش‌فرض: auto — کلید از حاشیه‌ی فریم تشخیص داده می‌شود (مدل سبزِ یکدست نمی‌دهد)
+    ap.add_argument("--key", default="auto")
+    ap.add_argument("--tol-low", type=int, default=35)
+    ap.add_argument("--tol-high", type=int, default=110)
     ap.add_argument("--report", action="store_true")
     args = ap.parse_args()
 
-    key = tuple(int(v) for v in args.key.split(","))
+    key = None if args.key == "auto" else tuple(int(v) for v in args.key.split(","))
     im = Image.open(args.src)
     raw_w, raw_h = im.size
     keyed = chroma_key(im, key, args.tol_low, args.tol_high)

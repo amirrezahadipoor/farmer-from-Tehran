@@ -1,0 +1,54 @@
+{
+  "atlases": {
+    "world": [
+      "art-src/sprites/grass_spring.png",
+      "art-src/sprites/grass_summer.png",
+      "art-src/sprites/grass_autumn.png",
+      "art-src/sprites/grass_winter.png",
+      "art-src/sprites/soil.png",
+      "art-src/sprites/soilwet.png",
+      "art-src/sprites/water.png",
+      "art-src/sprites/wheat_kf0.png",
+      "art-src/sprites/wheat_kf1.png",
+      "art-src/sprites/wheat_kf2.png",
+      "art-src/sprites/wheat_kf3.png",
+      "art-src/sprites/wheat_kf4.png",
+      "art-src/sprites/barn.png"
+    ]
+  },
+  "entries": {
+    "g|grass|spring": "grass_spring.png",
+    "g|grass|summer": "grass_summer.png",
+    "g|grass|autumn": "grass_autumn.png",
+    "g|grass|winter": "grass_winter.png",
+    "g|soil": "soil.png",
+    "g|soilwet": "soilwet.png",
+    "g|water": "water.png",
+    "b|barn": "barn.png"
+  },
+  "crops": {
+    "wheat": [
+      "art-src/sprites/wheat_kf0.png",
+      "art-src/sprites/wheat_kf1.png",
+      "art-src/sprites/wheat_kf2.png",
+      "art-src/sprites/wheat_kf3.png",
+      "art-src/sprites/wheat_kf4.png"
+    ]
+  },
+  "crop-keys": {
+    "wheat": [
+      "spring|0",
+      "spring|1",
+      "spring|2",
+      "summer|0",
+      "summer|1",
+      "summer|2",
+      "autumn|0",
+      "autumn|1",
+      "autumn|2",
+      "winter|0",
+      "winter|1",
+      "winter|2"
+    ]
+  }
+}
