@@ -13,7 +13,7 @@
 import { ambience, type AmbientEnv } from "./audio";
 import { DAY_LEN, N, SEASONS } from "./data";
 import { tick, locked, idx, ensureQuests, type Events, type State } from "./logic";
-import { applyScreenFx, render, renderStats, screenFx, waterMaskCanvas } from "./render";
+import { applyScreenFx, lightInfo, render, renderStats, screenFx, waterMaskCanvas } from "./render";
 import type { PostFX } from "./render/postfx";
 import { updateStory } from "./story";
 import { updateLineage } from "./lineageStory";
@@ -234,7 +234,9 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
           const wm = waterMaskCanvas();
           if (wm && wm !== maskSeen) { postFX.setWaterMask(wm); maskSeen = wm; }
           const vv = rt.view, kk = vv.dpr * vv.cam.z;
-          postFX.update({ time: t / 1000, rain: s.weather === "rain" ? 1 : 0, ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height });
+          const li = lightInfo(s);
+          const cl = s.weather === "rain" ? 1 : s.weather === "fog" ? 0.9 : s.weather === "snow" ? 0.8 : s.weather === "heatwave" ? 0.15 : 0.35;
+          postFX.update({ time: t / 1000, rain: s.weather === "rain" ? 1 : 0, ox: vv.dpr * (vv.w / 2 + vv.cam.x), oy: vv.dpr * (vv.h / 2 + vv.cam.y), k: kk, sw: srcCv.width, sh: srcCv.height, dark: li.dark, dusk: li.dusk, cloud: cl, skyT: vv.reduced ? 0 : t / 1000 });
           postFX.present(); // texture ← مسیرِ GPU (گرید + دیدِ جوی + وینیت)
           ctx.drawImage(postFX.canvas, 0, 0); // فریمِ پردازش‌شده روی بومِ نمایش
         } else {
