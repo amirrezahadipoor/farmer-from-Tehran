@@ -73,6 +73,16 @@ export function lightInfo(s: State) {
   return { p, e, dark, dusk, hour: (p * 24) % 24 };
 }
 
+export function sunLight(p: number, e: number, dark: number) {
+  const az = p * Math.PI * 2 - Math.PI / 2;
+  if (dark > 0.25) {
+    return { sdx: Math.cos(az) * 9, alpha: 0.05 + 0.06 * (1 - dark), night: true };
+  }
+  const alt = clamp(e * 1.3);
+  const len = 10 + 20 * Math.pow(1 - alt, 1.5);
+  return { sdx: -Math.cos(az) * len, alpha: 0.15 + 0.15 * alt, night: false };
+}
+
 
 export function box(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, b: number, h: number, col: string, woodplanks = false) {
   const L = ctx.createLinearGradient(x - a, y, x, y + b); L.addColorStop(0, shade(col, -0.22)); L.addColorStop(1, shade(col, -0.38));
