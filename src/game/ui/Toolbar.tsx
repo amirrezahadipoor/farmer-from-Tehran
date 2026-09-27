@@ -80,6 +80,7 @@ interface ToolbarProps {
 export default function Toolbar({ tool, seed, setTool, setPanel }: ToolbarProps) {
   return (
     <div
+      data-tour="toolbar"
       className="absolute left-1/2 z-30 flex w-[calc(100vw-8px)] max-w-[520px] -translate-x-1/2 gap-1 overflow-x-auto overscroll-contain rounded-[22px] bg-gradient-to-b from-amber-100 to-amber-200 p-1.5 shadow-2xl ring-1 ring-amber-900/20"
       style={{ bottom: "max(8px, env(safe-area-inset-bottom))", paddingLeft: "max(6px, env(safe-area-inset-left))", paddingRight: "max(6px, env(safe-area-inset-right))" }}
     >
