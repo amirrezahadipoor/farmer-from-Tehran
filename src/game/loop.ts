@@ -136,6 +136,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     // شروع از ≤ ۱.۵: دستگاهِ قوی در چند ثانیه به سقف می‌رسد، دستگاهِ ضعیف چند ثانیه‌ی اول را
     // با کشِ زمینِ غول‌آسا و فریم‌های نیم‌ثانیه‌ای شروع نمی‌کند
     v.dpr = Math.min(1.5, maxDpr());
+    v.maxDpr = maxDpr();
     ceil = maxDpr(); // اندازه‌ی تازه = سنجشِ تازه
     v.w = window.innerWidth;
     v.h = window.innerHeight;

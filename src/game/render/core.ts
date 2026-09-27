@@ -11,7 +11,7 @@ export const A = TW / 2;
 export const B = TH / 2;
 
 export interface View {
-  w: number; h: number; dpr: number; cam: { x: number; y: number; z: number };
+  w: number; h: number; dpr: number; maxDpr?: number; cam: { x: number; y: number; z: number };
   hover: { x: number; y: number } | null; tool: string; arg: string;
   /** حالت «کاهش حرکت» سیستم: ذره‌ها و انیمیشن‌های اضافه خاموش می‌شوند. */
   reduced?: boolean;

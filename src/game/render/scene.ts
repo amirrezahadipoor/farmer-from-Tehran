@@ -181,17 +181,21 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   if (v.hover) drawHover(ctx, s, v, now);
 
   setSpriteScale(k);
-  // سایه‌ی نرم: دو گذار — هاله‌ی بیرونیِ کم‌رنگ + هسته‌ی تیره ≈ فالloffِ گاوسی (هنوز ۲ fill برای همه)
-  const shadows = new Path2D(), shadowsSoft = new Path2D();
+  // سایه‌ی نرم: دو گذار — هاله‌ی بیرونیِ کم‌رنگ + هسته‌ی تیره ≈ فالloffِ گاوسی.
+  // هاله یک «سقفِ پسماند» است: فقط در کیفیتِ کامل (dpr نزدیکِ سقف) روشن است؛ در حالتِ
+  // تنزل‌یافته‌ی رزولوشنِ خودکار، تک‌گذرِ خطِ پایه می‌ماند (قاعده‌ی ۵۵ فریمِ موبایل)
+  const soft = (v.maxDpr ?? 2) - v.dpr < 0.05;
+  const shadows = new Path2D();
+  const shadowsSoft = soft ? new Path2D() : null;
   for (let n = 0; n < nVis; n++) {
     const i = visList[n], t = s.tiles[i];
     if (t.k !== "tree" && t.k !== "rock") continue;
     const gx = i % N, gy = (i / N) | 0;
     const x = (gx - gy) * A, y = (gx + gy + 1) * B - N * B;
-    objectShadow(shadowsSoft, t, x, y, sdx, 1.4);
     objectShadow(shadows, t, x, y, sdx);
+    if (shadowsSoft) objectShadow(shadowsSoft, t, x, y, sdx, 1.4);
   }
-  ctx.fillStyle = "rgba(10,20,8,0.11)"; ctx.fill(shadowsSoft);
+  if (shadowsSoft) { ctx.fillStyle = "rgba(10,20,8,0.11)"; ctx.fill(shadowsSoft); }
   ctx.fillStyle = "rgba(10,20,8,0.22)"; ctx.fill(shadows);
 
   const byTile = new Map<number, Walker[]>();
