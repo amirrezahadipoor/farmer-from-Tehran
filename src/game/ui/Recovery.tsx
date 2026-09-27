@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { readBackupSave, writeLocalSave } from "../persist";
+import { useEffect, useState } from "react";
 import { readErrorLog } from "../errors";
+
+/**
+ * persist (و پشتِ آن sanitize، داده‌ی بازی، IndexedDB) فقط وقتی این صفحه واقعاً دیده شد بار می‌شود: error.tsx و
+ * global-error.tsx هر کدام ورودیِ جدای Next هستند و واردکردنِ مستقیم، همین کد را دو بار در بارِ اولِ صفحه می‌گذاشت.
+ */
+const loadPersist = () => import("../persist");
 
 /**
  * src/game/ui/Recovery.tsx — صفحه‌ی بازیابی به‌جای صفحه‌ی سفید (نقشه‌ی راه، مورد ۴)
@@ -10,17 +15,25 @@ import { readErrorLog } from "../errors";
  */
 export default function Recovery({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) {
   const [copied, setCopied] = useState(false);
-  const [hasBackup] = useState(() => {
-    try {
-      return !!readBackupSave().state;
-    } catch {
-      return false;
-    }
-  });
+  const [hasBackup, setHasBackup] = useState(false);
+  useEffect(() => {
+    let live = true;
+    loadPersist()
+      .then((m) => live && setHasBackup(!!m.readBackupSave().state))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
-  const restore = () => {
-    const b = readBackupSave();
-    if (b.state) writeLocalSave(JSON.stringify(b.state));
+  const restore = async () => {
+    try {
+      const m = await loadPersist();
+      const b = m.readBackupSave();
+      if (b.state) m.writeLocalSave(JSON.stringify(b.state));
+    } catch {
+      /* حتی اگر پشتیبان خوانده نشد، بارگذاریِ دوباره بهترین راه است */
+    }
     location.reload();
   };
 

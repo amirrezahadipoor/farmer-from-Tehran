@@ -13,7 +13,7 @@ import { Music } from "./music";
 import { SFX, playVoices, sfxLength, type PlayKit } from "./sfx";
 import { SampleBank, nearestSetar, type Fetcher } from "./samples";
 import { Interlude, SampleAmbience, bedFiles, nextInterludeGap } from "./beds";
-import { INTERLUDES, SETAR_NOTES, SFX_SAMPLES } from "./samples.gen";
+import { BED_SAMPLES, INTERLUDES, SETAR_NOTES, SFX_SAMPLES } from "./samples.gen";
 import { rng } from "./mix";
 
 /** نرخِ نمونه‌ی بافرهای زخمه — نصفِ حافظه با کیفیتِ کافی برای سیم */
@@ -26,6 +26,10 @@ export const SFX_MAKEUP = 2;
 export const SFX_MERGE = 0.045;
 /** بلندیِ نتِ ضبط‌شده‌ی سه‌تار نسبت به زخمه‌ی سنتزی */
 export const SETAR_GAIN = 0.6;
+
+/** شمارِ فایل‌هایی که بانک پیش از میان‌پرده بارگذاری می‌کند (برای audioDebug و آزمونِ e2e) */
+export const SAMPLE_TOTAL =
+  Object.values(SFX_SAMPLES).reduce((a, x) => a + x.files.length, 0) + SETAR_NOTES.length + Object.keys(BED_SAMPLES).length;
 
 export class Engine {
   readonly ac: AudioContext;

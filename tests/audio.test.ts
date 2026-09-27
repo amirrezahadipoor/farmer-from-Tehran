@@ -454,8 +454,13 @@ describe("درگاهِ audio.ts", () => {
     expect(A.audioDebug().engine).toBe(false);
     const off = A.armAudio();
     win.dispatchEvent(new Event("pointerdown"));
-    expect(A.audioDebug().engine).toBe(true);
+    // موتور در بارِ اولِ صفحه نیست و با همان لمس بار می‌شود؛ جلوه‌ی خواسته‌شده در این فاصله در صف می‌ماند
+    A.sound("harvest");
+    await vi.waitFor(() => expect(A.audioDebug().engine).toBe(true));
+    expect(A.audioDebug().samplesTotal).toBeGreaterThan(70);
     const ac = FakeAC.instances[0];
+    const played = ac.nodes.length;
+    expect(played, "جلوه‌ی در صف بعد از آماده‌شدنِ موتور پخش شد").toBeGreaterThan(0);
     const before = ac.nodes.length;
     A.sound("coin");
     expect(ac.nodes.length).toBeGreaterThan(before);
