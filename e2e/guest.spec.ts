@@ -20,6 +20,12 @@ async function enter(page: import("@playwright/test").Page) {
     if (st?.story) { st.story.shown = false; g.setState(st); }
   });
   await page.waitForTimeout(600);
+  // V.5: پرده‌ی فستیوال روز اول فصل — اول انتخاب تا بازی آزاد شود
+  const fest = page.getByTestId("festival-modal");
+  if (await fest.isVisible().catch(() => false)) {
+    await page.getByTestId("festival-rest").tap();
+    await expect(fest).toBeHidden({ timeout: 5_000 });
+  }
 }
 
 test("تحویل سفارش ← مهمانِ سپاسگزار با حبابِ دیالوگ", async ({ page }, testInfo) => {

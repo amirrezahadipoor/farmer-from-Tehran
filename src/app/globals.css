@@ -80,3 +80,7 @@ html[data-boot="back"] .boot-new,
 html:not([data-boot="back"]) .boot-back {
   display: none;
 }
+
+/* V.8: چرخشِ مدالِ نو — وقتی دستاورد همین حالا گرفته می‌شود */
+@keyframes medalSpin { 0% { transform: rotate(0deg) scale(0.4); opacity: 0 } 60% { transform: rotate(360deg) scale(1.25) } 100% { transform: rotate(360deg) scale(1) } }
+.medal-new { animation: medalSpin 1.1s ease-out 1; }

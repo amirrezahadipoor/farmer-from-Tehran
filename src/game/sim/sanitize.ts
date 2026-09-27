@@ -145,7 +145,12 @@ export function sanitizeSave(raw: unknown): State | null {
     const choice = ["invest", "feast", "rest"].includes(String(f.choice)) ? (f.choice as "invest" | "feast" | "rest") : null;
     s.fest = { idx: intOr(f.idx, 0, 0, 3), day: intOr(f.day, 1, 1, 1e6), choice };
   }
-  s.achievements = Object.fromEntries(Object.entries(s.achievements).filter(([, v]) => v === true));
+  // V.8: مقدار دستاورد یا true قدیمی است یا شماره‌ی روز (سازگار با هر دو)
+  s.achievements = Object.fromEntries(
+    Object.entries(s.achievements)
+      .filter(([, v]) => v === true || (typeof v === "number" && Number.isFinite(v) && v >= 1))
+      .map(([k, v]) => [k, v === true ? true : intOr(v, 1, 1, 1e6)])
+  );
 
   // ── داستان: اگر مرحله/صحنه بیرون از محدوده باشد، به ابتدای همان فصل برمی‌گردد
   if (!isObj(s.story)) s.story = newStoryState();

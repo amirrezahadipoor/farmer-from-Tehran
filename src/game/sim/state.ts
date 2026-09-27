@@ -25,7 +25,8 @@ export interface State {
   market: Record<string, { sat: number; hist: number[]; ph: number }>;
   orders: Order[]; nextId: number; workers: Worker[];
   rep: number; techs: string[]; skills: string[];
-  achievements: Record<string, boolean>; contracts: ContractState[];
+  /** V.8: true قدیمی یا شماره‌ی روزِ گرفتن */
+  achievements: Record<string, boolean | number>; contracts: ContractState[];
   stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; };
   story: { name: string; gender: Gender; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;

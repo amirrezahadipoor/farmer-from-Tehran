@@ -14,4 +14,5 @@ export * from "./sim/tick";
 export * from "./sim/quests";
 export * from "./sim/legacy";
 export * from "./sim/festival";
+export * from "./sim/achieve";
 export * from "./sim/lineage";
