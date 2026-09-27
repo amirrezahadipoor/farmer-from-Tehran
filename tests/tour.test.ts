@@ -41,4 +41,17 @@ describe("آموزشِ تعاملی", () => {
     toolAction(s, p!.x, p!.y, "water", "", quiet);
     expect(plow.metric(s)).toBe(before);
   });
+
+  it("باران گامِ آبیاری را خودش تمام می‌کند؛ هوای آفتابی با کشتِ خشک نه", () => {
+    const water = TOUR_STEPS[2];
+    const s = newState();
+    const plow = TOUR_STEPS[0].tile!(s)!;
+    toolAction(s, plow.x, plow.y, "hoe", "", quiet);
+    const soil = TOUR_STEPS[1].tile!(s)!;
+    toolAction(s, soil.x, soil.y, "seed", "wheat", quiet);
+    s.weather = "sun";
+    expect(water.auto?.(s)).toBeNull();
+    s.weather = "rain";
+    expect(water.auto?.(s)).toBeTruthy();
+  });
 });
