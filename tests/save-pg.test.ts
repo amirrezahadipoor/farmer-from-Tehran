@@ -70,4 +70,21 @@ describe.skipIf(!URL_)("Postgres واقعی", () => {
     expect((await post("p_fresh_db", A)).status).toBe(200);
     expect((await get("p_fresh_db", A)).status).toBe(200);
   });
+  it("مورد ۳: کدِ انتقال روی Postgres اتمی مصرف می‌شود (دو دریافتِ هم‌زمان، یک برنده)", async () => {
+    vi.resetModules();
+    const { PgTransferStore } = await import("../src/server/transfer/store");
+    const db = drizzle(pool);
+    await pool.query("DROP TABLE IF EXISTS farm_transfers");
+    const t = new PgTransferStore(db as never);
+    const now = new Date();
+    await t.create("PGTEST23", "p_legacy_row", new Date(now.getTime() + 60_000));
+    const [a, b] = await Promise.all([t.take("PGTEST23", now), t.take("PGTEST23", now)]);
+    const wins = [a, b].filter((r) => r && typeof r === "object");
+    expect(wins).toHaveLength(1);
+    expect([a, b]).toContain("used");
+    await t.create("PGOLD234", "p_legacy_row", new Date(now.getTime() - 1000));
+    expect(await t.take("PGOLD234", now)).toBe("expired");
+    expect(await t.take("NOPE2345", now)).toBeNull();
+    await pool.query("DROP TABLE IF EXISTS farm_transfers");
+  });
 });

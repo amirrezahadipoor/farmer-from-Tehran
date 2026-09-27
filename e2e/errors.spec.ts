@@ -30,7 +30,7 @@ test.describe("مرزِ خطا و ثبتِ خطا", () => {
     await enterGame(page);
     const res = logged(page);
     await page.evaluate(() => (window as unknown as { __game: { crash: () => void } }).__game.crash());
-    await expect(page.getByRole("alert")).toContainText("بازی به خطا خورد");
+    await expect(page.getByRole("alert").filter({ hasText: "بازی به خطا خورد" })).toBeVisible();
     const r = await res;
     expect(r.status()).toBe(204);
     expect(r.request().postData()).toContain("آزمونِ مرزِ خطا");

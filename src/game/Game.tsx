@@ -39,6 +39,7 @@ import Loading from "./ui/Loading";
 import { SkyLayers, TintLayers } from "./ui/ScreenLayers";
 import { portraitLockPref } from "./ui/panels/Settings";
 import { fatalStore, installGlobalErrorHandlers, raiseFatal } from "./errors";
+import { requestPersistence } from "./persist";
 
 // تکه‌های جدا: فقط وقتی لازم شوند بار می‌شوند (و پس از آماده‌شدن در زمانِ بیکاری پیش‌بار)
 const loadSheet = () => import("./ui/Sheet");
@@ -93,6 +94,10 @@ export default function Game() {
   const fatal = useSyncExternalStore(fatalStore.subscribe, fatalStore.get, fatalStore.server);
   if (fatal) throw fatal;
   useEffect(() => installGlobalErrorHandlers(), []);
+  // مورد ۳: بعد از «آغاز»، حافظه‌ی ماندگار درخواست می‌شود تا مرورگر سیو را خودکار پاک نکند
+  useEffect(() => {
+    if (started === true) void requestPersistence();
+  }, [started]);
 
   // ── لایه‌ی موبایل: بستن ژست‌های مرورگر، ارتفاع درست، تمام‌صفحه، بیداری صفحه
   useNativeGestureGuards();
@@ -129,7 +134,7 @@ export default function Game() {
       save: () => save(),
       openPanel: (p: Panel) => setPanel(p),
       audio: audioDebug,
-      crash: () => raiseFatal(new Error("E2E: آزمونِ مرزِ خطا")),
+      crash: () => raiseFatal(new Error("آزمونِ مرزِ خطا (تستِ خودکار)")),
     };
   }, [toast, ev, save]);
 

@@ -24,6 +24,7 @@ export type PanelId =
   | "quests"
   | "achievements"
   | "help"
+  | "transfer"
   | "settings";
 
 export type Panel = null | PanelId | { bx: number; by: number };
@@ -67,6 +68,7 @@ export const PANEL_META: Record<PanelId, { icon: string; title: string }> = {
   quests: { icon: "calendar", title: "اهداف روزانه" },
   achievements: { icon: "trophy", title: "دستاوردها" },
   help: { icon: "help", title: "راهنما" },
+  transfer: { icon: "cloud", title: "انتقال و پشتیبان" },
   settings: { icon: "settings", title: "تنظیمات" },
 };
 

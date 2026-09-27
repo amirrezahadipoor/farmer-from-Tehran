@@ -10,7 +10,7 @@ import { fmt } from "../../data";
 import { newState } from "../../logic";
 import { Icon } from "../../icons";
 import { haptic, setHaptics, hapticsEnabled, lockOrientation, unlockOrientation } from "../../mobile";
-import { dropLS, readLS, writeLS, SAVE_KEY, BACKUP_KEY } from "../../persist";
+import { clearAllSaves, readLS, writeLS } from "../../persist";
 import { getAudioSettings, setAudioSettings, sound, type AudioSettings } from "../../audio";
 import { recenter } from "../../useCanvasInput";
 import { game, resetRuntime } from "../../store";
@@ -202,8 +202,7 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
             return;
           }
           setArmReset(false);
-          dropLS(SAVE_KEY);
-          dropLS(BACKUP_KEY);
+          clearAllSaves(); // localStorage و IndexedDB (مورد ۳)
           resetRuntime();
           game.set(newState());
           onReset();
