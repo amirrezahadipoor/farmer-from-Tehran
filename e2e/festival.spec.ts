@@ -22,9 +22,22 @@ async function enter(page: import("@playwright/test").Page) {
   await page.waitForTimeout(800);
 }
 
-test("روز اول فصل ← پرده‌ی فستیوال با سه انتخاب", async ({ page }, testInfo) => {
+test("روز اول مزرعه بی‌جشن؛ روز اول تابستان ← پرده‌ی فستیوال با سه انتخاب", async ({ page }, testInfo) => {
   await enter(page);
   const modal = page.getByTestId("festival-modal");
+  // روزِ اولِ مزرعه‌ی تازه: هیچ پرده‌ای روی آموزش و بازی نمی‌نشیند
+  await page.waitForTimeout(1_500);
+  await expect(modal).toHaveCount(0);
+  // پرش به روز ۶ (آغازِ تابستان) — DAY_LEN = 240 در src/game/data.ts
+  await page.evaluate(() => {
+    const g = (window as unknown as { __game: { getState: () => Record<string, unknown> & { time: number }; setState: (s: unknown) => void } }).__game;
+    const st = g.getState();
+    st.time = 5 * 240 + (st.time % 240);
+    st.day = 6;
+    st.seasonIndex = 1;
+    st.fest = undefined;
+    g.setState(st);
+  });
   await expect(modal).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("festival-invest")).toBeVisible();
   await expect(page.getByTestId("festival-feast")).toBeVisible();

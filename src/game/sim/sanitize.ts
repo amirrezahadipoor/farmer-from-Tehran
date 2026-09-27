@@ -18,7 +18,13 @@ const NCH = Math.ceil(N / CH);
 
 /** کلیدهای مجازِ ریشه‌ی سیو: هرچه newState دارد + فیلدهای اختیاری (تنبل: ساختِ نقشه فقط یک بار) */
 let stateKeys: Set<string> | null = null;
-const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), "xpAcc", "quests", "generations", "lineage"]));
+/**
+ * کلیدهای اختیاریِ State که در newState() نیستند. هر فیلدِ اختیاریِ تازه باید این‌جا بیاید،
+ * وگرنه فیلترِ پایانی (P5.13) آن را در هر بارگذاری پاک می‌کند — همان باگی که انتخابِ جشن (fest)
+ * و پاداشِ «اولین برداشتِ روز» (bonusDay) را با هر رفرش از بین می‌برد.
+ */
+export const OPTIONAL_STATE_KEYS = ["xpAcc", "quests", "generations", "lineage", "bonusDay", "fest"] as const;
+const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), ...OPTIONAL_STATE_KEYS]));
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -144,7 +150,11 @@ export function sanitizeSave(raw: unknown): State | null {
     const f = s.fest as Record<string, unknown>;
     const choice = ["invest", "feast", "rest"].includes(String(f.choice)) ? (f.choice as "invest" | "feast" | "rest") : null;
     s.fest = { idx: intOr(f.idx, 0, 0, 3), day: intOr(f.day, 1, 1, 1e6), choice };
+    // پیشنهادِ بی‌جوابِ روزِ اول (قاعده‌ی قدیمی، روی آموزش باز می‌شد) کنار گذاشته می‌شود
+    if (s.fest.choice === null && s.fest.day <= 1) s.fest = undefined;
   }
+  // V.7: روزِ آخرین پاداشِ «اولین برداشتِ روز» — بدونِ ماندگاری، هر رفرش پاداش را دوباره می‌داد
+  if (s.bonusDay !== undefined) s.bonusDay = intOr(s.bonusDay, 0, 0, 1e6);
   // V.8: مقدار دستاورد یا true قدیمی است یا شماره‌ی روز (سازگار با هر دو)
   s.achievements = Object.fromEntries(
     Object.entries(s.achievements)
