@@ -49,18 +49,21 @@ test("حالت عکس: پنج قاب، دانلودِ PNGِ واقعی و ساخ
   });
   expect(filled, "وسطِ عکس صحنه‌ی واقعی است، نه رنگِ خالی").toBeGreaterThan(20);
 
+  // عکس با DPRِ کامل گرفته می‌شود، حتی اگر رزولوشنِ تطبیقیِ بازی روی CI پایین آمده باشد
+  const dpr = await page.evaluate(() => Math.min(2, window.devicePixelRatio || 1));
+  const wFramed = await preview.evaluate((el) => (el as HTMLCanvasElement).width);
   for (const f of ["تابستان", "پاییز", "زمستان", "بی‌قاب", "بهار"]) {
     const b = dlg.getByRole("button", { name: f, exact: true });
     await b.tap();
     await expect(b).toHaveAttribute("aria-pressed", "true");
     if (f === "بی‌قاب") {
-      const w = await preview.evaluate((el) => (el as HTMLCanvasElement).width);
-      expect(w, "بی‌قاب = دقیقاً اندازه‌ی بومِ نقشه").toBe(await page.evaluate(() => (document.querySelector("canvas[data-map]") as HTMLCanvasElement).width));
+      const w0 = await preview.evaluate((el) => (el as HTMLCanvasElement).width);
+      expect(w0, "بی‌قاب = بومِ نقشه با DPRِ کامل").toBeGreaterThanOrEqual(Math.floor(vp.width * dpr * 0.95));
+      expect(wFramed, "قاب حاشیه اضافه می‌کند").toBeGreaterThan(w0);
     }
   }
   await page.screenshot({ path: testInfo.outputPath("v10-photo-mode.png") });
 
-  const dpr = await page.evaluate(() => Math.min(2, window.devicePixelRatio || 1));
   const [dl] = await Promise.all([page.waitForEvent("download"), dlg.getByRole("button", { name: "دانلود عکس" }).tap()]);
   expect(dl.suggestedFilename()).toMatch(/^golden-valley-day-\d+-(spring|summer|autumn|winter)\.png$/);
   const file = testInfo.outputPath(dl.suggestedFilename());
