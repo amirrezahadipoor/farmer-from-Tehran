@@ -16,7 +16,12 @@ export interface SaveRow {
 
 export interface SaveStore {
   get(id: string): Promise<SaveRow | null>;
-  put(id: string, data: unknown, tokenHash: string): Promise<void>;
+  /**
+   * نوشتنِ اتمی: ردیفِ تازه یا بی‌مالک مالِ tokenHash می‌شود؛ ردیفی که مالِ توکنِ دیگری است دست نمی‌خورد و
+   * false برمی‌گردد. (خواندن و بعد نوشتن اتمی نبود: دو دستگاه که هم‌زمان اولین بار می‌نوشتند، هر دو «بی‌مالک»
+   * می‌دیدند و آخری مالکیت را از اولی می‌گرفت.)
+   */
+  put(id: string, data: unknown, tokenHash: string): Promise<boolean>;
 }
 
 export class MemorySaveStore implements SaveStore {
@@ -25,7 +30,10 @@ export class MemorySaveStore implements SaveStore {
     return this.rows.get(id) ?? null;
   }
   async put(id: string, data: unknown, tokenHash: string) {
+    const cur = this.rows.get(id);
+    if (cur?.tokenHash && cur.tokenHash !== tokenHash) return false;
     this.rows.set(id, { data, tokenHash });
+    return true;
   }
 }
 
@@ -56,12 +64,19 @@ export class PgSaveStore implements SaveStore {
     return r ? { data: r.data, tokenHash: r.tokenHash ?? null } : null;
   }
 
-  async put(id: string, data: unknown, tokenHash: string): Promise<void> {
+  async put(id: string, data: unknown, tokenHash: string): Promise<boolean> {
     await ensureSchema(this.db);
     const now = new Date();
-    await this.db
+    // یک دستورِ اتمی: درج، یا به‌روزرسانی فقط اگر ردیف بی‌مالک یا مالِ همین توکن باشد؛ وگرنه هیچ ردیفی برنمی‌گردد
+    const rows = await this.db
       .insert(saves)
       .values({ id, data, tokenHash, updatedAt: now })
-      .onConflictDoUpdate({ target: saves.id, set: { data, tokenHash, updatedAt: now } });
+      .onConflictDoUpdate({
+        target: saves.id,
+        set: { data, tokenHash, updatedAt: now },
+        setWhere: sql`${saves.tokenHash} is null or ${saves.tokenHash} = ${tokenHash}`,
+      })
+      .returning({ id: saves.id });
+    return rows.length > 0;
   }
 }
