@@ -24,6 +24,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: بیلدِ منتشرشده قلابِ تست ندارد (مورد ۶)
+        run: |
+          if grep -l "__game" .next/static/chunks/*.js; then echo "window.__game در بیلدِ منتشرشده مانده است"; exit 1; fi
+          echo "قلابِ تست در هیچ چانکی نیست"
       - name: اجرای سرورِ تولید
         run: |
           npx next start -p 3000 > /tmp/next.log 2>&1 &
