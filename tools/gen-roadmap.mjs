@@ -102,7 +102,7 @@ const kpiCurrent = (k) => {
 const nextUp = [];
 for (const p of data.phases) {
   for (const it of p.items) {
-    if (it.status !== "done") nextUp.push(`${it.id} — ${it.title}`);
+    if (it.status !== "done") nextUp.push(`${fa(it.id)} — ${it.title}`);
     if (nextUp.length >= 3) break;
   }
   if (nextUp.length >= 3) break;

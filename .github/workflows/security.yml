@@ -23,10 +23,11 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 
   audit:
-    name: npm audit
+    # مورد ۱: این بررسی دیگر خاموش نیست (قبلاً هم continue-on-error داشت و هم «|| true»).
+    # آسیب‌پذیریِ بالا یا بحرانی در وابستگی‌ها push را قرمز می‌کند؛ رفعِ خودکار با Dependabot.
+    name: npm audit (بلاک‌کننده از سطحِ بالا)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,4 +35,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high || true
+      - name: وابستگی‌های production (آنچه به کاربر می‌رسد)
+        run: npm audit --omit=dev --audit-level=high
+      - name: همه‌ی وابستگی‌ها، از جمله ابزارهای توسعه
+        run: npm audit --audit-level=high

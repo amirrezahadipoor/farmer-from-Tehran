@@ -1,0 +1,29 @@
+# مورد ۱: به‌روزرسانیِ خودکارِ وابستگی‌ها. هر PRِ Dependabot از همان CI (quality، browser-test،
+# lighthouse و security) می‌گذرد و تا سبز نشود ادغام نمی‌شود.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "06:00"
+      timezone: Asia/Tehran
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      next-react:
+        patterns: ["next", "eslint-config-next", "react", "react-dom", "@types/react", "@types/react-dom"]
+      dev-tools:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "06:00"
+      timezone: Asia/Tehran
+    commit-message:
+      prefix: "ci(deps)"

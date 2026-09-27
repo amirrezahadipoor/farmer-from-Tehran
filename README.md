@@ -112,8 +112,8 @@ tests/            تست‌های خودکار
 ## مشارکت
 
 ۱. برنچ بساز → ۲. `npm run verify` را سبز کن (typecheck + lint بدون هیچ هشدار + تست + build) → ۳. PR بزن (قالب PR خودکار پر می‌شود).
-ورک‌فلوهای گیت‌هاب اکشن: `quality`, `browser-test`, `security`.
+ورک‌فلوهای گیت‌هاب اکشن: `quality`، `browser-test`، `lighthouse` و `security` (بررسیِ امنیتی بلاک‌کننده است و Dependabot هر هفته وابستگی‌ها را به‌روز می‌کند).
 
 ## مجوز
 
-MIT — amirrezahadipoor
+کد با مجوزِ [MIT](LICENSE) — amirrezahadipoor. فونتِ وزیرمتن با [SIL Open Font License 1.1](public/fonts/OFL.txt). منبع و مجوزِ همه‌ی دارایی‌های بیرونی در [CREDITS.md](CREDITS.md).
