@@ -13,7 +13,7 @@ export interface Recipe { out: string; n: number; inp: Record<string, number>; t
 export interface BuildingDef {
   id: string; name: string; cost: number; lvl: number; desc: string;
   recipes: Recipe[]; wall: string; roof: string; limit?: number; isAuto?: boolean;
-  radius?: number; draw?: "coop"|"barn"|"sheep"|"pigpen"|"beehive"|"mill"|"silo"|"sprinkler"|"mega_sprinkler"|"harvester"|"auto_planter"|"auto_fertilizer"|"bakery"|"dairy"|"press"|"sweet_shop"|"feedmill"|"composter"|"well"|"greenhouse"|"statue"|"windmill_deco"|"pergola"|"flowerbed"|"pond_deco"|"bamboo"|"stone_wall"|"gate"|"fountain"|"gazebo"|"sawmill"|"quarry"|"stonemason"|"workshop"|"qanat"|"caravanserai"|"tiled_pool"|"windcatcher"|"tiled_portal";
+  radius?: number; draw?: "coop"|"barn"|"sheep"|"pigpen"|"beehive"|"mill"|"silo"|"sprinkler"|"mega_sprinkler"|"harvester"|"auto_planter"|"auto_fertilizer"|"bakery"|"dairy"|"press"|"sweet_shop"|"feedmill"|"composter"|"well"|"greenhouse"|"statue"|"windmill_deco"|"pergola"|"flowerbed"|"pond_deco"|"bamboo"|"stone_wall"|"gate"|"fountain"|"gazebo"|"sawmill"|"quarry"|"stonemason"|"workshop"|"qanat"|"caravanserai"|"tiled_pool"|"windcatcher"|"tiled_portal"|"scarecrow"|"seesaw"|"haystack"|"lantern"|"flower_arch"|"rock_spring";
   isDecor?: boolean; flowerColor?: string; pondColor?: string;
 }
 export interface TechItem { id: string; name: string; cost: number; desc: string; req?: string; /** سطحِ لازم برای تحقیق */ lvl?: number; }
@@ -60,6 +60,10 @@ export const CROPS: CropDef[] = [
   { id: "almond", name: "بادام", seed: 240, time: 500, yield: 2, lvl: 21, xp: 45, color: "#d7b98e", leaf: "#7cb342", look: "tree" },
   { id: "fig", name: "انجیر", seed: 260, time: 520, yield: 2, lvl: 23, xp: 48, color: "#6a1b9a", leaf: "#2e7d32", rare: true, look: "tree" },
   { id: "lavender", name: "اسطوخودوس", seed: 35, time: 130, yield: 1, lvl: 8, xp: 6, color: "#7e57c2", leaf: "#388e3c" },
+  { id: "watermelon", name: "هندوانه", seed: 26, time: 140, yield: 2, lvl: 5, xp: 7, color: "#2e7d32", leaf: "#388e3c" },
+  { id: "apple", name: "سیب", seed: 95, time: 300, yield: 3, lvl: 9, xp: 20, color: "#e53935", leaf: "#43a047", look: "tree" },
+  { id: "cherry", name: "آلبالو", seed: 160, time: 380, yield: 3, lvl: 16, xp: 35, color: "#880e4f", leaf: "#2e7d32", look: "tree" },
+  { id: "mint", name: "نعنا", seed: 45, time: 120, yield: 3, lvl: 18, xp: 14, color: "#26a69a", leaf: "#00897b", look: "bush" },
 ];
 
 export const ITEMS: Record<string, ItemDef> = {
@@ -94,6 +98,15 @@ export const ITEMS: Record<string, ItemDef> = {
   barberry: { id: "barberry", name: "زرشک", base: 190, tier: 1 },
   almond: { id: "almond", name: "بادام", base: 400, tier: 1 },
   fig: { id: "fig", name: "انجیر", base: 430, tier: 1 },
+  watermelon: { id: "watermelon", name: "هندوانه", base: 40, tier: 1 },
+  apple: { id: "apple", name: "سیب", base: 130, tier: 1 },
+  cherry: { id: "cherry", name: "آلبالو", base: 260, tier: 1 },
+  mint: { id: "mint", name: "نعنا", base: 90, tier: 1 },
+  melon_juice: { id: "melon_juice", name: "آب‌هندوانه", base: 95, tier: 2 },
+  ab_albaloo: { id: "ab_albaloo", name: "آب‌آلبالو", base: 560, tier: 2 },
+  lavashak: { id: "lavashak", name: "لواشک", base: 850, tier: 2 },
+  apple_jam: { id: "apple_jam", name: "مربای سیب", base: 300, tier: 2 },
+  mint_tea: { id: "mint_tea", name: "چای نعنا", base: 240, tier: 2 },
   roasted_pistachio: { id: "roasted_pistachio", name: "پسته‌ی بوداده", base: 700, tier: 2 },
   nut_mix: { id: "nut_mix", name: "آجیل شب یلدا", base: 1350, tier: 3 },
   shirberenj: { id: "shirberenj", name: "شیربرنج", base: 330, tier: 2 },
@@ -150,13 +163,13 @@ export const BUILDINGS: BuildingDef[] = [
   { id: "feedmill", name: "کارخانه خوراک", cost: 950, lvl: 4, desc: "از شبدر و ذرت، خوراکِ مغذیِ دام می‌سازد.", wall: "#8d6e63", roof: "#5d4037", draw: "feedmill", recipes: [{ out: "feed", n: 2, inp: { clover: 2, corn: 1 }, time: 35, xp: 3 }] },
   { id: "bakery", name: "نانوایی", cost: 1050, lvl: 4, desc: "نان، پای کدو، کیک، نان سنگک (روی سنگِ داغ) و از نسلِ دوم حلوای مادربزرگ.", wall: "#f5deb3", roof: "#d35400", draw: "bakery", recipes: [{ out: "bread", n: 1, inp: { flour: 2, egg: 1 }, time: 48, xp: 5 }, { out: "pie", n: 1, inp: { pumpkin: 1, flour: 1, egg: 1 }, time: 90, xp: 9 }, { out: "cake", n: 1, inp: { flour: 2, egg: 2, milk: 1, strawberry: 2 }, time: 125, xp: 15 }, { out: "sangak", n: 1, inp: { flour: 2, stone: 1 }, time: 60, xp: 6 }, { out: "grandma_halva", n: 1, inp: { flour: 2, honey: 1 }, time: 120, xp: 30, gen: 1 }] },
   { id: "dairy", name: "لبنیات", cost: 1300, lvl: 5, desc: "کره، پنیر و سوسیس.", wall: "#eceff1", roof: "#1e88e5", draw: "dairy", recipes: [{ out: "butter", n: 1, inp: { milk: 1, egg: 1 }, time: 50, xp: 5 }, { out: "cheese", n: 1, inp: { milk: 2 }, time: 75, xp: 7 }, { out: "sausage", n: 1, inp: { pork: 1, flour: 1 }, time: 120, xp: 10 }] },
-  { id: "press", name: "کارگاه فرآوری", cost: 1600, lvl: 6, desc: "سس گوجه، مربا، روغن، آبمیوه، رب انار و مربای انجیر.", wall: "#d7ccc8", roof: "#2e7d32", draw: "press", recipes: [{ out: "ketchup", n: 1, inp: { tomato: 3 }, time: 65, xp: 6 }, { out: "jam", n: 1, inp: { strawberry: 3 }, time: 80, xp: 7 }, { out: "oil", n: 1, inp: { sunflower: 3 }, time: 90, xp: 8 }, { out: "juice", n: 1, inp: { grape: 3 }, time: 100, xp: 9 }, { out: "pom_paste", n: 1, inp: { pomegranate: 3 }, time: 150, xp: 40, lvl: 15 }, { out: "fig_jam", n: 1, inp: { fig: 3 }, time: 170, xp: 55, lvl: 23 }] },
+  { id: "press", name: "کارگاه فرآوری", cost: 1600, lvl: 6, desc: "سس گوجه، مربا، روغن، آبمیوه، رب انار و مربای انجیر.", wall: "#d7ccc8", roof: "#2e7d32", draw: "press", recipes: [{ out: "ketchup", n: 1, inp: { tomato: 3 }, time: 65, xp: 6 }, { out: "jam", n: 1, inp: { strawberry: 3 }, time: 80, xp: 7 }, { out: "oil", n: 1, inp: { sunflower: 3 }, time: 90, xp: 8 }, { out: "juice", n: 1, inp: { grape: 3 }, time: 100, xp: 9 }, { out: "pom_paste", n: 1, inp: { pomegranate: 3 }, time: 150, xp: 40, lvl: 15 }, { out: "fig_jam", n: 1, inp: { fig: 3 }, time: 170, xp: 55, lvl: 23 }, { out: "melon_juice", n: 1, inp: { watermelon: 2 }, time: 70, xp: 10 }, { out: "ab_albaloo", n: 1, inp: { cherry: 2 }, time: 90, xp: 18, lvl: 16 }] },
   { id: "sawmill", name: "نجاری", cost: 900, lvl: 4, desc: "الوار را تخته و تخته را جعبه‌ی چوبی می‌کند.", wall: "#c8a27a", roof: "#6d4c41", draw: "sawmill", recipes: [{ out: "planks", n: 1, inp: { wood: 2 }, time: 40, xp: 3 }, { out: "crate", n: 1, inp: { planks: 2 }, time: 70, xp: 6 }] },
   { id: "quarry", name: "معدن سنگ", cost: 1100, lvl: 5, desc: "با داربستِ چوبی از دلِ کوه سنگ درمی‌آورد: هر الوار = ۲ سنگ.", wall: "#9e9e9e", roof: "#795548", draw: "quarry", recipes: [{ out: "stone", n: 2, inp: { wood: 1 }, time: 45, xp: 3 }] },
   { id: "stonemason", name: "سنگ‌تراشی", cost: 1400, lvl: 6, desc: "سنگ را می‌تراشد و با تخته، سنگ آسیاب می‌سازد.", wall: "#cfd8dc", roof: "#546e7a", draw: "stonemason", recipes: [{ out: "cut_stone", n: 1, inp: { stone: 2 }, time: 50, xp: 4 }, { out: "millstone", n: 1, inp: { cut_stone: 2, planks: 1 }, time: 110, xp: 12 }] },
   { id: "nut_roaster", name: "آجیل‌بوی", cost: 5000, lvl: 11, desc: "پسته را بو می‌دهد و آجیل شب یلدا می‌سازد.", wall: "#d7a86e", roof: "#8d3b1f", draw: "workshop", recipes: [{ out: "roasted_pistachio", n: 1, inp: { pistachio: 2 }, time: 120, xp: 28 }, { out: "nut_mix", n: 1, inp: { pistachio: 1, walnut: 1, dates: 1 }, time: 180, xp: 50, lvl: 19 }] },
   { id: "textile", name: "کارگاه نساجی", cost: 5500, lvl: 13, desc: "پنبه را می‌ریسد و پارچه می‌بافد.", wall: "#e3f2fd", roof: "#1565c0", draw: "workshop", recipes: [{ out: "fabric", n: 1, inp: { cotton: 3 }, time: 100, xp: 22 }] },
-  { id: "teahouse", name: "چایخانه", cost: 6000, lvl: 14, desc: "چای تازه‌دم و دمنوش گل‌محمدی.", wall: "#ffe0b2", roof: "#00897b", draw: "workshop", recipes: [{ out: "brewed_tea", n: 1, inp: { tea: 2 }, time: 60, xp: 16 }, { out: "herbal_tea", n: 1, inp: { tea: 1, rose: 2 }, time: 90, xp: 20 }] },
+  { id: "teahouse", name: "چایخانه", cost: 6000, lvl: 14, desc: "چای تازه‌دم و دمنوش گل‌محمدی.", wall: "#ffe0b2", roof: "#00897b", draw: "workshop", recipes: [{ out: "brewed_tea", n: 1, inp: { tea: 2 }, time: 60, xp: 16 }, { out: "herbal_tea", n: 1, inp: { tea: 1, rose: 2 }, time: 90, xp: 20 }, { out: "mint_tea", n: 1, inp: { mint: 2 }, time: 50, xp: 15, lvl: 18 }] },
   { id: "distillery", name: "گلاب‌گیری", cost: 7000, lvl: 16, desc: "گلاب ناب به رسمِ قمصر کاشان.", wall: "#fce4ec", roof: "#6a1b9a", draw: "workshop", recipes: [{ out: "rosewater", n: 1, inp: { rose: 4 }, time: 140, xp: 30 }] },
   { id: "carpet_loom", name: "دار قالی", cost: 9000, lvl: 17, desc: "با پشم و پارچه، قالیِ دستبافِ گران‌بها می‌بافد.", wall: "#efebe9", roof: "#b71c1c", draw: "workshop", recipes: [{ out: "carpet", n: 1, inp: { wool: 3, fabric: 2 }, time: 360, xp: 90 }] },
   { id: "gaz_factory", name: "گزسازی", cost: 9500, lvl: 18, desc: "گزِ پسته‌ای اصفهان و نقلِ بادامی.", wall: "#fff8e1", roof: "#0277bd", draw: "workshop", recipes: [{ out: "gaz", n: 1, inp: { honey: 1, pistachio: 2, egg: 1 }, time: 200, xp: 55 }, { out: "noghl", n: 1, inp: { almond: 2, honey: 1 }, time: 160, xp: 48, lvl: 21 }] },
@@ -169,7 +182,7 @@ export const BUILDINGS: BuildingDef[] = [
   { id: "harvester", name: "دروگر رباتیک", cost: 2800, lvl: 7, desc: "محصولِ رسیده‌ی ۸ زمینِ اطرافش را خودکار برمی‌دارد (اگر انبار جا داشته باشد).", wall: "#37474f", roof: "#e65100", draw: "harvester", recipes: [], isAuto: true, radius: 1 },
   { id: "auto_planter", name: "بذرپاش خودکار", cost: 3100, lvl: 8, desc: "۸ زمینِ اطرافش را خودکار می‌کارد و برای هر کاشت یک محصول از انبار برمی‌دارد.", wall: "#263238", roof: "#43a047", draw: "auto_planter", recipes: [], isAuto: true, radius: 1 },
   { id: "auto_fertilizer", name: "کودپاش رباتیک", cost: 3600, lvl: 9, desc: "۸ زمینِ اطرافش را خودکار کود می‌دهد (هر بار ۴ سکه).", wall: "#6a1b9a", roof: "#ab47bc", draw: "composter", recipes: [], isAuto: true, radius: 1 },
-  { id: "sweet_shop", name: "شیرینی‌پزی اشرافی", cost: 4000, lvl: 9, desc: "شکلات، بستنی زعفرانی، شربت عسل، پلیور بافتنی و شیربرنج.", wall: "#fce4ec", roof: "#ad1457", draw: "sweet_shop", recipes: [{ out: "chocolate", n: 1, inp: { butter: 1, milk: 1, flour: 1 }, time: 110, xp: 18 }, { out: "icecream", n: 1, inp: { saffron: 1, milk: 2, egg: 1 }, time: 150, xp: 25 }, { out: "mead", n: 1, inp: { honey: 2, juice: 1 }, time: 140, xp: 22 }, { out: "sweater", n: 1, inp: { wool: 3 }, time: 160, xp: 24 }, { out: "shirberenj", n: 1, inp: { rice: 2, milk: 1 }, time: 90, xp: 22, lvl: 12 }] },
+  { id: "sweet_shop", name: "شیرینی‌پزی اشرافی", cost: 4000, lvl: 9, desc: "شکلات، بستنی زعفرانی، شربت عسل، پلیور بافتنی و شیربرنج.", wall: "#fce4ec", roof: "#ad1457", draw: "sweet_shop", recipes: [{ out: "chocolate", n: 1, inp: { butter: 1, milk: 1, flour: 1 }, time: 110, xp: 18 }, { out: "icecream", n: 1, inp: { saffron: 1, milk: 2, egg: 1 }, time: 150, xp: 25 }, { out: "mead", n: 1, inp: { honey: 2, juice: 1 }, time: 140, xp: 22 }, { out: "sweater", n: 1, inp: { wool: 3 }, time: 160, xp: 24 }, { out: "shirberenj", n: 1, inp: { rice: 2, milk: 1 }, time: 90, xp: 22, lvl: 12 }, { out: "lavashak", n: 1, inp: { cherry: 3 }, time: 130, xp: 26, lvl: 17 }, { out: "apple_jam", n: 1, inp: { apple: 2 }, time: 80, xp: 12, lvl: 9 }] },
   { id: "statue", name: "مجسمه‌ی سنگی", cost: 1300, lvl: 5, desc: "نمادی باشکوه در میانه‌ی باغ.", wall: "#90a4ae", roof: "#b0bec5", draw: "statue", isDecor: true, recipes: [] },
   { id: "windmill_deco", name: "آسیابک تزئینی", cost: 900, lvl: 4, desc: "پره‌های رنگی که با نسیم می‌چرخند.", wall: "#f5f5f5", roof: "#37474f", draw: "windmill_deco", isDecor: true, recipes: [] },
   { id: "pergola", name: "داربست تاک", cost: 750, lvl: 4, desc: "کوچه‌ی سبز و سایه‌دار زیر داربستِ چوبی.", wall: "#8d6e63", roof: "#795548", draw: "pergola", isDecor: true, recipes: [] },
@@ -183,6 +196,12 @@ export const BUILDINGS: BuildingDef[] = [
   { id: "tiled_pool", name: "حوض کاشی", cost: 2500, lvl: 16, desc: "حوضِ فیروزه‌ای با کاشی‌های هفت‌رنگ.", wall: "#26a69a", roof: "#4dd0e1", draw: "tiled_pool", isDecor: true, recipes: [] },
   { id: "windcatcher", name: "بادگیر", cost: 3500, lvl: 22, desc: "برجِ خنک‌کننده‌ی یزدی با دریچه‌های بلند.", wall: "#d7b98e", roof: "#a1887f", draw: "windcatcher", isDecor: true, recipes: [] },
   { id: "tiled_portal", name: "سردر کاشی‌کاری", cost: 5000, lvl: 25, desc: "سردرِ طاق‌دار با کاشیِ لاجوردی؛ نشانِ اربابِ دره.", wall: "#1e88e5", roof: "#fdd835", draw: "tiled_portal", isDecor: true, recipes: [] },
+  { id: "scarecrow", name: "مترسک", cost: 800, lvl: 6, desc: "نگهبانِ گنجشک‌ها با کلاهِ حصیری و پیراهنِ چهارخانه.", wall: "#8d6e63", roof: "#fbc02d", draw: "scarecrow", isDecor: true, recipes: [] },
+  { id: "seesaw", name: "الاکلنگ", cost: 650, lvl: 5, desc: "برای بچه‌های دهکده؛ صدای خنده‌شان تا آسیاب می‌رسد.", wall: "#ef6c00", roof: "#ffb74d", draw: "seesaw", isDecor: true, recipes: [] },
+  { id: "haystack", name: "کندر کاه", cost: 450, lvl: 4, desc: "کاهِ طلاییِ پیچیده‌شده با طناب؛ بوی نان و آفتاب.", wall: "#e0a63c", roof: "#c68a2a", draw: "haystack", isDecor: true, recipes: [] },
+  { id: "lantern", name: "فانوس باغ", cost: 900, lvl: 7, desc: "شب‌ها مسیر جوی را روشن می‌کند و کرم‌های شب‌تاب را می‌خواند.", wall: "#37474f", roof: "#ffd54f", draw: "lantern", isDecor: true, recipes: [] },
+  { id: "flower_arch", name: "طاق گل", cost: 1400, lvl: 8, desc: "طاقِ چوبی پوشیده از رز؛ دروازه‌ی عکسِ هر عروسیِ ده.", wall: "#6d4c41", roof: "#ec407a", draw: "flower_arch", isDecor: true, recipes: [] },
+  { id: "rock_spring", name: "آب‌سنگ", cost: 2200, lvl: 10, desc: "چشمه‌ای که از دلِ سنگ می‌جهد؛ صدای آب، آرامشِ باغ.", wall: "#78909c", roof: "#4fc3f7", draw: "rock_spring", isDecor: true, recipes: [] },
 ];
 
 export const BMAP: Record<string, BuildingDef> = Object.fromEntries(BUILDINGS.map((b) => [b.id, b]));

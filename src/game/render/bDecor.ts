@@ -2,7 +2,7 @@
  * src/game/render/bDecor.ts — دکورها (مجسمه، آلاچیق، فواره، حوض، دیوار و دروازه)
  * (بخشی از drawBuilding؛ P5.14: شکستنِ render.ts به فایل‌های ≤ ۴۰۰ خط)
  */
-import { A, B, box, roofPyramid, ellipse, diamond, shadowAt, hash, type BArgs } from "./core";
+import { A, B, box, roofPyramid, ellipse, diamond, shadowAt, hash, poly, type BArgs } from "./core";
 
 /** true = این دسته این ساختمان را کشید */
 export function drawDecorBuilding(ctx: CanvasRenderingContext2D, p: BArgs): boolean {
@@ -146,6 +146,80 @@ export function drawDecorBuilding(ctx: CanvasRenderingContext2D, p: BArgs): bool
       ctx.fillStyle = "#3e2723"; ctx.beginPath(); ctx.ellipse(x, y - h - 8, 3, 1.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#8d6e63"; ctx.beginPath(); ctx.ellipse(x, y - h - 8.5, 1.5, 1, 0, 0, Math.PI * 2); ctx.fill();
       // Curtain hints
       ctx.strokeStyle = "#8d6e63"; ctx.lineWidth = 1; for (const px of [-a*0.4, a*0.4]) { ctx.beginPath(); ctx.moveTo(x + px, y - h); ctx.lineTo(x + px, y + b*0.4); ctx.stroke(); }
+      break;
+    }
+    case "scarecrow": { /* مترسک با کلاه حصیری */
+      shadowAt(ctx, x, y, 10, sdx);
+      const sw = Math.sin(now * 1.1) * 1.5;
+      ctx.strokeStyle = "#5d4037"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 30); ctx.stroke();
+      ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - 12, y - 22 + sw * 0.4); ctx.lineTo(x + 12, y - 22 - sw * 0.4); ctx.stroke();
+      ctx.fillStyle = "#e53935"; ctx.fillRect(x - 5, y - 26, 10, 12); // پیراهن چهارخانه
+      ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1;
+      for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x - 5, y - 26 + i * 4); ctx.lineTo(x + 5, y - 26 + i * 4); ctx.stroke(); }
+      for (let i = 1; i < 2; i++) { ctx.beginPath(); ctx.moveTo(x - 5 + i * 5, y - 26); ctx.lineTo(x - 5 + i * 5, y - 14); ctx.stroke(); }
+      ellipse(ctx, x + sw * 0.5, y - 30, 4.5, 4.5, "#ffcc80"); // سر کاهی
+      ctx.fillStyle = "#3e2723"; ellipse(ctx, x - 1.5 + sw * 0.5, y - 30.5, 0.8, 0.8, "#3e2723"); ellipse(ctx, x + 1.5 + sw * 0.5, y - 30.5, 0.8, 0.8, "#3e2723");
+      ctx.fillStyle = "#fbc02d"; ctx.beginPath(); ctx.ellipse(x + sw * 0.5, y - 33, 6.5, 2, 0, 0, Math.PI * 2); ctx.fill(); // لبه کلاه
+      ctx.beginPath(); ctx.ellipse(x + sw * 0.5, y - 34.5, 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case "seesaw": { /* الاکلنگ جنبان */
+      shadowAt(ctx, x, y, 16, sdx);
+      ctx.fillStyle = "#8d6e63"; poly(ctx, [[x - 4, y], [x + 4, y], [x, y - 8]], "#8d6e63");
+      const a = Math.sin(now * 2.4) * 0.16;
+      ctx.save(); ctx.translate(x, y - 8); ctx.rotate(a);
+      ctx.fillStyle = "#ef6c00"; ctx.fillRect(-16, -1.5, 32, 3);
+      ctx.fillStyle = "#ffb74d"; ctx.fillRect(-16, -4, 4, 3); ctx.fillRect(12, -4, 4, 3); // دسته‌ها
+      ellipse(ctx, -14, -6, 2.5, 2.5, "#e53935"); ellipse(ctx, 14, -6, 2.5, 2.5, "#1e88e5"); // بچه‌ها
+      ctx.restore();
+      break;
+    }
+    case "haystack": { /* کندر کاه */
+      shadowAt(ctx, x, y, 14, sdx);
+      const g = ctx.createLinearGradient(x - 12, y - 24, x + 12, y);
+      g.addColorStop(0, "#f2c14e"); g.addColorStop(1, "#c68a2a");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 13, y); ctx.quadraticCurveTo(x - 12, y - 20, x, y - 24); ctx.quadraticCurveTo(x + 12, y - 20, x + 13, y); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(120,70,10,0.5)"; ctx.lineWidth = 1;
+      for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(x + i * 4, y); ctx.quadraticCurveTo(x + i * 3.4, y - 12, x + i * 1.6, y - 22); ctx.stroke(); }
+      ctx.strokeStyle = "#795548"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x - 11, y - 8); ctx.lineTo(x + 11, y - 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 8, y - 15); ctx.lineTo(x + 8, y - 15); ctx.stroke();
+      break;
+    }
+    case "lantern": { /* فانوس باغ با سوسوی شب */
+      shadowAt(ctx, x, y, 6, sdx);
+      ctx.strokeStyle = "#37474f"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 26); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.quadraticCurveTo(x + 6, y - 27, x + 6, y - 23); ctx.stroke();
+      const fl = 0.75 + 0.25 * Math.sin(now * 7 + Math.sin(now * 13));
+      ctx.fillStyle = `rgba(255,213,79,${(0.55 + 0.35 * fl).toFixed(2)})`;
+      ctx.beginPath(); ctx.roundRect(x + 3, y - 22, 6.5, 8, 2); ctx.fill();
+      ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect(x + 3, y - 22, 6.5, 8, 2); ctx.stroke();
+      ctx.fillStyle = "#263238"; ctx.fillRect(x + 4.5, y - 24.5, 3.5, 2.5);
+      break;
+    }
+    case "flower_arch": { /* طاق گل */
+      shadowAt(ctx, x, y, 16, sdx);
+      ctx.strokeStyle = "#6d4c41"; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(x - 13, y + 2); ctx.quadraticCurveTo(x - 14, y - 26, x, y - 28); ctx.quadraticCurveTo(x + 14, y - 26, x + 13, y + 2); ctx.stroke();
+      ctx.strokeStyle = "#5d4037"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x - 10, y + 2); ctx.quadraticCurveTo(x - 11, y - 22, x, y - 24); ctx.quadraticCurveTo(x + 11, y - 22, x + 10, y + 2); ctx.stroke();
+      const fc = ["#ec407a", "#f48fb1", "#fff176", "#ef5350", "#ce93d8"];
+      for (let i = 0; i < 16; i++) {
+        const t = i / 15, ax = x - 13 + 26 * t, ay = y + 1 - Math.sin(Math.PI * t) * 27;
+        ellipse(ctx, ax + Math.sin(i * 7) * 1.5, ay + Math.cos(i * 5) * 1.5, 2.4, 2.4, fc[i % fc.length]);
+        ellipse(ctx, ax + 1, ay - 1, 1.4, 1.4, "#66bb6a");
+      }
+      break;
+    }
+    case "rock_spring": { /* آب‌سنگ با چشمه‌ی جهنده */
+      shadowAt(ctx, x, y, 16, sdx);
+      poly(ctx, [[x - 16, y + 3], [x - 11, y - 9], [x - 2, y - 14], [x + 10, y - 10], [x + 16, y + 3], [x + 5, y + 7], [x - 7, y + 7]], "#78909c");
+      poly(ctx, [[x - 11, y - 9], [x - 2, y - 14], [x + 10, y - 10], [x + 1, y - 4], [x - 7, y - 3]], "#b0bec5");
+      diamond(ctx, x, y + 4, A * 0.5, B * 0.5); ctx.fillStyle = "#4fc3f7"; ctx.fill();
+      diamond(ctx, x, y + 4, A * 0.42, B * 0.42); ctx.fillStyle = "#29b6f6"; ctx.fill();
+      ctx.strokeStyle = "rgba(200,240,255,0.8)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x - 1, y - 12); ctx.quadraticCurveTo(x + Math.sin(now * 3) * 2, y - 20, x + 2, y - 4); ctx.stroke();
+      for (let i = 0; i < 4; i++) { const t = (now * 1.4 + i / 4) % 1; ellipse(ctx, x - 1 + Math.sin(now * 3) * 2 * t + 3 * t, y - 12 + t * 14, 1.3, 1.3, `rgba(180,230,255,${(1 - t).toFixed(2)})`); }
       break;
     }
     default:
