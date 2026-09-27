@@ -211,6 +211,18 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
         for (let k = 0; k < 3; k++) { const ang = (k / 3) * Math.PI * 2 + i; ellipse(ctx, x + i * 2 + Math.cos(ang) * 3, y - 10 * sc + Math.sin(ang) * 3, 3 * sc, 3 * sc, g > 0.5 ? "#66bb6a" : "#81c784"); }
       } break;
     }
+    case "watermelon": { /* هندوانه: پیچ و برگ و توپِ راه‌راه */
+      ctx.strokeStyle = "#33691e"; ctx.lineWidth = 1.4;
+      for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + i * 6, y - 5 * sc, x + i * 9 * sc, y - 2); ctx.stroke(); }
+      for (let i = 0; i < 3; i++) ellipse(ctx, x + (i - 1) * 6 * sc, y - 3 - (i % 2) * 2, 3 * sc + 1, 2 * sc + 0.8, "#388e3c");
+      if (g > 0.35) {
+        const r = 3 + 5.5 * sc;
+        ellipse(ctx, x + 2, y - 2, r, r * 0.82, "#2e7d32");
+        ctx.strokeStyle = "#1b5e20"; ctx.lineWidth = 1;
+        for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + 2 + i * r * 0.5, y - 2 - r * 0.75); ctx.quadraticCurveTo(x + 2 + i * r * 0.7, y - 2, x + 2 + i * r * 0.5, y - 2 + r * 0.75); ctx.stroke(); }
+        if (ripe) ellipse(ctx, x + 2 - r * 0.3, y - 2 - r * 0.35, r * 0.3, r * 0.2, "rgba(255,255,255,0.35)");
+      }
+      break; }
     default:
       drawGenericPlant(ctx, c.look ?? "bush", c.color, leaf, x, y, g, sc, sw, seed, seasonId);
   }

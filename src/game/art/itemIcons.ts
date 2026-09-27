@@ -191,6 +191,23 @@ export const ITEM_SVG: Record<string, string> = {
   fabric: shp.fabricRoll("#90caf9"),
   carpet: shp.carpetRug(),
   brewed_tea: shp.teaGlass("#c1440e"),
+  watermelon:
+    `<ellipse cx="12" cy="13" rx="8.6" ry="6.8" fill="#2e7d32" ${S}/><path d="M7 7.6c-1.6 3.4-1.6 7.4 0 10.8M12 6.2v13.6M17 7.6c1.6 3.4 1.6 7.4 0 10.8" stroke="#1b5e20" stroke-width="1.4" fill="none"/><ellipse cx="9.4" cy="10" rx="2.4" ry="1.6" fill="#fff" fill-opacity=".25"/>`,
+  apple:
+    shp.round("#e53935") + `<path d="M12 7.4c.2-1.6.8-2.6 2-3.2" stroke="#5d4037" stroke-width="1.4" fill="none" ${S}/><ellipse cx="14.6" cy="5.6" rx="2.6" ry="1.4" fill="#66bb6a" ${S}/>`,
+  cherry:
+    `<path d="M10 12C9 9 10 6.4 12.6 4.6M14.6 12.6c.4-3 0-5.6-2-8" stroke="#33691e" stroke-width="1.3" fill="none" ${S}/><ellipse cx="15" cy="4.8" rx="2.6" ry="1.3" fill="#66bb6a" ${S}/><circle cx="9.6" cy="14.6" r="3.6" fill="#880e4f" ${S}/><circle cx="14.8" cy="15.4" r="3.9" fill="#ad1457" ${S}/><circle cx="13.6" cy="14.2" r="1" fill="#fff" fill-opacity=".5"/>`,
+  mint:
+    `<path d="M12 20V8" stroke="#00897b" stroke-width="1.4" ${S}/>` +
+    [[12, 8, 0], [8.6, 11, -35], [15.4, 11, 35], [8, 15, -45], [16, 15, 45]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="2" transform="rotate(${r} ${x} ${y})" fill="#26a69a" ${S}/>`).join("") +
+    `<ellipse cx="12" cy="5.6" rx="2" ry="2.6" fill="#4db6ac" ${S}/>`,
+  melon_juice: shp.teaGlass("#f48fb1"),
+  ab_albaloo: shp.teaGlass("#8e2444"),
+  mint_tea: shp.teaGlass("#66bb6a"),
+  lavashak:
+    `<rect x="5.6" y="5.6" width="12.8" height="12.8" rx="2.4" fill="#8d2f23" ${S}/><path d="M8.4 5.6v12.8M12 5.6v12.8M15.6 5.6v12.8" stroke="#5d1a10" stroke-width="1.1" opacity=".7"/><path d="M6.4 8.4c2-1 4-1 5.6 0" stroke="#fff" stroke-opacity=".28" stroke-width="1.2" fill="none"/>`,
+  apple_jam:
+    `<path d="M7 9h10v9.4c0 1.2-1 2.2-2.2 2.2H9.2c-1.2 0-2.2-1-2.2-2.2z" fill="#e53935" ${S}/><rect x="6.4" y="6" width="11.2" height="3.2" rx="1.2" fill="#fbc02d" ${S}/><rect x="8.6" y="12" width="6.8" height="4.6" rx="1" fill="#fffde7" ${S}/><path d="M10 14.4c.8-.8 1.6-.8 2 0 .4-.8 1.2-.8 2 0" stroke="#e53935" stroke-width="1" fill="none"/>`,
   herbal_tea: shp.teapot("#f48fb1"),
   pom_paste: shp.jar("#7f0000", "#5d4037"),
   fig_jam: shp.jar("#6a1b9a", "#8d6e63"),

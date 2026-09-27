@@ -8,7 +8,7 @@ import { REFERRER_POLICY, cspDirectives } from "@/security";
 export const metadata: Metadata = {
   title: "مزرعه طلایی | Golden Valley Farm",
   description:
-    "بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی با اقتصاد عمیق، داستان ۱۱ فصلی، ۴۶ ساختمان و بازار زنده — آفلاین و تمام‌لمسی",
+    "بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی با اقتصاد عمیق، داستان ۱۱ فصلی، ۵۲ ساختمان و بازار زنده — آفلاین و تمام‌لمسی",
   applicationName: "مزرعه طلایی",
   manifest: asset("/manifest.json"),
   appleWebApp: {

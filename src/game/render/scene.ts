@@ -34,7 +34,7 @@ function collectVisible(x0: number, x1: number, y0: number, y1: number) {
 /** وضعیتِ کش‌ها برای سنجش و تست (window.__game.perf) */
 export const renderStats = () => ({ ...ground.stats, cacheScale: ground.scale, direct: ground.direct, sprites: spriteCount() });
 
-const NO_GLOW = new Set(["sprinkler", "mega_sprinkler", "well", "harvester", "auto_planter", "auto_fertilizer", "composter"]);
+const NO_GLOW = new Set(["sprinkler", "mega_sprinkler", "well", "harvester", "auto_planter", "auto_fertilizer", "composter", "scarecrow", "seesaw", "haystack", "flower_arch", "rock_spring"]);
 const TOOL_OK: Record<string, (t: Tile) => boolean> = {
   hoe: (t) => t.k === "grass",
   seed: (t) => t.k === "soil" && !t.crop,
