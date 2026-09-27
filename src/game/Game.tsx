@@ -30,6 +30,9 @@ import { makeEvents } from "./events";
 import { game, rt, useGameVersion } from "./store";
 import { celebrate, flyCoins, shake } from "./juice";
 import { usePersistence } from "./usePersistence";
+import { startAtlasLoader } from "./atlasLoader";
+import { isAtlasReady } from "./render/atlas";
+import { invalidateSprites } from "./render/nature";
 import { useCanvasInput } from "./useCanvasInput";
 import type { Panel, UiApi } from "./ui/common";
 import Hud, { CameraControls } from "./ui/Hud";
@@ -96,6 +99,11 @@ export default function Game() {
   const fatal = useSyncExternalStore(fatalStore.subscribe, fatalStore.get, fatalStore.server);
   if (fatal) throw fatal;
   useEffect(() => installGlobalErrorHandlers(), []);
+  // اطلسِ آرت (نقشه‌ی راه، فاز A): لودِ تنبل؛ تا آماده‌شدن، رسمِ رویه‌ای می‌ماند.
+  // آماده‌شدن = پرچمِ artVersion → کشِ اسپرایت‌ها و امضای کشِ زمین تازه می‌شوند.
+  useEffect(() => {
+    startAtlasLoader(() => invalidateSprites());
+  }, []);
   // مورد ۳: بعد از «آغاز»، حافظه‌ی ماندگار درخواست می‌شود تا مرورگر سیو را خودکار پاک نکند
   useEffect(() => {
     if (started === true) void requestPersistence();
@@ -142,6 +150,8 @@ export default function Game() {
       },
       save: () => save(),
       guests: () => rt.guests,
+      /** آرتِ AI (نقشه‌ی راه، فاز A): آیا اطلس بارگذاری شده است */
+      atlasReady: () => isAtlasReady(),
       fulfill: (i: number) => {
         const st = game.get();
         if (!st) return null;
