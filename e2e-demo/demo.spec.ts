@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 /**
  * e2e-demo/demo.spec.ts — تستِ دود روی دموی عمومیِ GitHub Pages (نقشه‌ی راه، مورد ۲)
@@ -56,6 +57,17 @@ test("دموی عمومی: دارایی‌ها، اسپلش، ورود به با
       { timeout: 20_000 },
     )
     .toBeGreaterThan(20);
+
+  // V.10: حالتِ عکس در دموی ایستا (بدونِ هیچ API) PNGِ واقعی می‌سازد و دانلود می‌کند
+  await page.getByRole("button", { name: "حالت عکس" }).tap();
+  const photo = page.getByRole("dialog", { name: "حالت عکس" });
+  await expect(photo).toBeVisible({ timeout: 15_000 });
+  const [dl] = await Promise.all([page.waitForEvent("download"), photo.getByRole("button", { name: "دانلود عکس" }).tap()]);
+  expect(dl.suggestedFilename()).toMatch(/^golden-valley-day-\d+-[a-z]+\.png$/);
+  const png = readFileSync((await dl.path())!);
+  expect(png.subarray(0, 8).toString("hex"), "امضای PNG").toBe("89504e470d0a1a0a");
+  await photo.getByRole("button", { name: "بستن حالت عکس" }).tap();
+  await expect(photo).toBeHidden();
 
   const scope = await page.evaluate(async () => {
     const reg = await Promise.race([navigator.serviceWorker.ready, new Promise<null>((r) => setTimeout(() => r(null), 15_000))]);
