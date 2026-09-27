@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 /** W.1 — بسته‌ی محصولاتِ ۲: کاشت و برداشتِ واقعیِ سیب‌زمینی با ضربه روی نقشه + نمای شانزده محصولِ تازه */
 
 type Tile = { k: string; crop?: string; g?: number; wet?: boolean; dry?: number };
-type St = { level: number; coins: number; tiles: Tile[]; inv: Record<string, number>; stats: { harvested: number } };
+type St = { level: number; coins: number; tiles: Tile[]; chunks: boolean[]; inv: Record<string, number>; stats: { harvested: number } };
 type G = {
   getState: () => St;
   setState: (s: St) => void;
@@ -51,6 +51,7 @@ test("W.1: سیب‌زمینی با ضربه کاشته و برداشت می‌�
     });
     s.level = 30;
     s.coins = 99_999;
+    s.chunks = s.chunks.map(() => true); // کاشیِ هدف قطعاً در زمینِ خریداری‌شده است
     s.tiles[best] = { ...s.tiles[best], k: "soil", crop: undefined, g: 0 };
     g.setState(s);
     const p = g.tileScreen(best % N, Math.floor(best / N));
