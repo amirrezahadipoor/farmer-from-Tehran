@@ -222,6 +222,19 @@ export function drawDecorBuilding(ctx: CanvasRenderingContext2D, p: BArgs): bool
       for (let i = 0; i < 4; i++) { const t = (now * 1.4 + i / 4) % 1; ellipse(ctx, x - 1 + Math.sin(now * 3) * 2 * t + 3 * t, y - 12 + t * 14, 1.3, 1.3, `rgba(180,230,255,${(1 - t).toFixed(2)})`); }
       break;
     }
+    case "golden_tree": { /* درخت زرین دره (V.7) */
+      shadowAt(ctx, x, y, 26, sdx);
+      ctx.fillStyle = "#6d4c41"; ctx.fillRect(x - 3.5, y - 30, 7, 30);
+      ctx.fillStyle = "#8d6e63"; ctx.fillRect(x - 3.5, y - 30, 3.5, 30);
+      const gl = 0.75 + 0.25 * Math.sin(now * 2);
+      for (const [bx, by, r] of [[-15, -40, 15], [15, -42, 15], [0, -58, 17], [0, -38, 16]]) {
+        const g = ctx.createRadialGradient(x + bx - r * 0.4, y + by - r * 0.4, 2, x + bx, y + by, r);
+        g.addColorStop(0, "#fff59d"); g.addColorStop(0.6, "#fbc02d"); g.addColorStop(1, "#f57f17");
+        ellipse(ctx, x + bx, y + by, r, r * 0.92, g);
+      }
+      for (let i = 0; i < 6; i++) ellipse(ctx, x + (hash(i, 3) - 0.5) * 40, y - 36 - hash(3, i) * 30, 1.6, 1.6, `rgba(255,255,220,${(0.4 + 0.6 * gl).toFixed(2)})`);
+      break;
+    }
     default:
       return false;
   }
