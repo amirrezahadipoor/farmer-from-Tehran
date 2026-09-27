@@ -19,6 +19,7 @@ import { ContractsPanel, AchievementsPanel } from "./panels/Goals";
 import { QuestsPanel } from "./panels/Quests";
 import { StoryPanel } from "./panels/StoryJournal";
 import { SettingsPanel, type SettingsProps } from "./panels/Settings";
+import { TransferPanel } from "./panels/Transfer";
 import { HelpPanel } from "./panels/Help";
 import { WorkshopPanel } from "./panels/Workshop";
 
@@ -104,6 +105,7 @@ export default function Sheet({ s, panel, ui, settings }: SheetProps) {
         {panel === "achievements" && <AchievementsPanel {...p} />}
         {panel === "story" && <StoryPanel {...p} />}
         {panel === "settings" && <SettingsPanel {...p} {...settings} />}
+        {panel === "transfer" && <TransferPanel {...p} />}
         {panel === "help" && <HelpPanel />}
         {bp && bt && bt.b && <WorkshopPanel {...p} tile={bt} x={bp.bx} y={bp.by} />}
       </div>

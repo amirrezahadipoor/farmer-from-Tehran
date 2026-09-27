@@ -30,8 +30,8 @@ export interface LoadOutcome {
   state: State | null;
   /** سیوِ خراب پیدا و قرنطینه شد */
   corrupt: boolean;
-  /** منبع سیوی که برنده شد: محلی، پشتیبانِ خودکار یا ابری */
-  source: "local" | "backup" | "cloud" | null;
+  /** منبع سیوی که برنده شد: محلی، پایگاه‌داده‌ی مرورگر (IndexedDB، مورد ۳)، پشتیبانِ خودکار یا ابری */
+  source: "local" | "idb" | "backup" | "cloud" | null;
   /** توضیح خوانا برای UI/لاگ */
   note: string;
 }
@@ -72,6 +72,7 @@ export function dropLS(key: string): void {
 // P5.13: پاک‌سازِ سیو به ماژولِ خالصِ مشترک رفت تا سرور (api/save) هم دقیقاً همان را اجرا کند
 import { sanitizeSave } from "./sim/sanitize";
 import { STATIC_BUILD, asset } from "./base";
+import { IDB_BACKUP, IDB_SAVE, idbDel, idbGet, idbRotateSave } from "./idb";
 export { sanitizeSave };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -143,11 +144,57 @@ export function writeLocalSave(json: string): boolean {
   } catch {
     /* حافظه پر — پشتیبان این نوبت رد می‌شود، سیوِ اصلی مهم‌تر است */
   }
+  // مورد ۳: همین سیو در IndexedDB هم (ناهم‌زمان، با پشتیبانِ چرخشیِ خودش)
+  void idbRotateSave(json);
   try {
     localStorage.setItem(SAVE_KEY, json);
     return true;
   } catch {
     return false;
+  }
+}
+
+/** سیوِ IndexedDB (و اگر خراب بود، پشتیبانِ همان‌جا) را می‌خواند (مورد ۳). */
+export async function readIdbSave(): Promise<LoadOutcome> {
+  const tries = [
+    [IDB_SAVE, "idb", "سیوِ پایگاه‌داده‌ی مرورگر سالم"],
+    [IDB_BACKUP, "backup", "از پشتیبانِ پایگاه‌داده‌ی مرورگر بازیابی شد"],
+  ] as const;
+  for (const [key, source, note] of tries) {
+    const raw = await idbGet(key);
+    if (!raw) continue;
+    try {
+      const state = sanitizeSave(JSON.parse(raw));
+      if (state) return { state, corrupt: false, source, note };
+    } catch {
+      /* نسخه‌ی بعدی */
+    }
+  }
+  return { state: null, corrupt: false, source: null, note: "پایگاه‌داده‌ی مرورگر خالی است" };
+}
+
+/** همه‌ی نسخه‌های سیوِ این دستگاه را پاک می‌کند («شروع دوباره»). */
+export function clearAllSaves(): void {
+  dropLS(SAVE_KEY);
+  dropLS(BACKUP_KEY);
+  void idbDel(IDB_SAVE, IDB_BACKUP);
+}
+
+export type PersistState = "granted" | "denied" | "unsupported";
+
+/**
+ * درخواستِ حافظه‌ی ماندگار (مورد ۳): مرورگر زیرِ فشارِ فضا یا بعد از مدتی بی‌استفادگی سیو را پاک نمی‌کند.
+ * ask=false فقط وضعیت را می‌پرسد (بی‌پنجره‌ی اجازه).
+ */
+export async function requestPersistence(ask = true): Promise<PersistState> {
+  const s = typeof navigator !== "undefined" ? navigator.storage : undefined;
+  if (!s?.persisted) return "unsupported";
+  try {
+    if (await s.persisted()) return "granted";
+    if (!ask || !s.persist) return "denied";
+    return (await s.persist()) ? "granted" : "denied";
+  } catch {
+    return "unsupported";
   }
 }
 

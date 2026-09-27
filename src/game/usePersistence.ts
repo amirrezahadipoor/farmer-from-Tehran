@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { newState, tick, type State } from "./logic";
 import { fmt } from "./data";
-import { readLocalWithBackup, fetchCloudSave, ensurePlayerId, pickNewer, restoreQuarantined } from "./persist";
+import { readLocalWithBackup, readIdbSave, fetchCloudSave, ensurePlayerId, pickNewer, restoreQuarantined } from "./persist";
 import { saveGame, flushOutbox, useOnline, hasPendingSave, type SaveState } from "./net";
 import { SILENT, type ToastFn } from "./events";
 import { game } from "./store";
@@ -71,7 +71,9 @@ export function usePersistence(toast: ToastFn) {
       let issue = "";
       let restorable = false;
       try {
-        const picked = pickNewer(readLocalWithBackup(), await fetchCloudSave(id));
+        // مورد ۳: localStorage، IndexedDB و ابر؛ تازه‌ترینِ سالم برنده است
+        const [durable, cloud] = await Promise.all([readIdbSave(), fetchCloudSave(id)]);
+        const picked = pickNewer(pickNewer(readLocalWithBackup(), durable), cloud);
         s = picked.state;
         issue = picked.corrupt ? picked.note : "";
         // دکمه‌ی «بازیابی» فقط وقتی نشان داده می‌شود که واقعاً کار کند

@@ -243,7 +243,7 @@ export function AwayCard({ away, onClose }: { away: AwayReport; onClose: () => v
   );
 }
 
-export const MENU_ITEMS: PanelId[] = ["story", "quests", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "settings"];
+export const MENU_ITEMS: PanelId[] = ["story", "quests", "market", "orders", "biz", "skills", "tech", "decor", "contracts", "achievements", "help", "transfer", "settings"];
 
 /** منوی اصلی موبایل — گرید لمسی با برچسب. */
 export function MainMenu({ s, onPick, onClose }: { s: State; onPick: (p: PanelId) => void; onClose: () => void }) {
