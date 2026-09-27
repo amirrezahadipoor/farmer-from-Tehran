@@ -8,6 +8,7 @@ import {
   countB, hasTech, hasSkill, DROUGHT,
 } from "./state";
 
+
 /** کالاهایی که «محصول کشاورزی» حساب می‌شوند (برای قیمتِ خشکسالی) */
 const CROP_ITEMS = new Set(CROPS.map((c) => c.out ?? c.id));
 
@@ -53,6 +54,8 @@ export function priceAt(s: State, id: string, sat: number): number {
   if (hasTech(s, "export_license")) bonus += 0.20;
   if (hasSkill(s, "price_mind")) bonus += 0.10;
   if (hasSkill(s, "economist")) bonus += 0.15;
+  // V.5: فستیوال «سرمایه‌گذاری بازار» — قیمت فروشِ فصل جاری +۱۰٪ (چک این‌لاین برای پرهیز از ایمپورت حلقوی)
+  if (s.fest?.choice === "invest" && s.fest.idx === s.seasonIndex) bonus += 0.10;
   if (s.currentEvent?.type === "market_boom") bonus *= 1.35;
   if (s.currentEvent?.type === "fair") bonus *= 1.25;
   if (s.currentEvent?.type === "livestock_show") {

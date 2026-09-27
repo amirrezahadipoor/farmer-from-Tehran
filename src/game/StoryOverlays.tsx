@@ -12,6 +12,7 @@ import { advanceLineage, lineageVisible, nameHeir, setLineageShown } from "./lin
 import { game } from "./store";
 import StoryModal from "./Story";
 import LineageModal from "./LineageStory";
+import Festival from "./Festival";
 
 export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
   const refresh = () => game.bump();
@@ -28,6 +29,10 @@ export default function StoryOverlays({ s, ev }: { s: State; ev: Events }) {
         refresh={refresh}
       />
     );
+  }
+  // V.5: پرده‌ی فستیوال فصلی — داستان و نسل اولویت دارند، فستیوال منتظر می‌ماند
+  if (s.fest && s.fest.choice === null && !s.story.shown && !lineageVisible(s)) {
+    return <Festival s={s} ev={ev} />;
   }
   if (lineageVisible(s)) {
     return (

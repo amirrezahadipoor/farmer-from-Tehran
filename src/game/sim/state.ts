@@ -31,6 +31,8 @@ export interface State {
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
   /** V.7: روزِ آخرین پاداشِ اولین برداشت */
   bonusDay?: number;
+  /** V.5: فستیوال فصلی دهکده */
+  fest?: { idx: number; day: number; choice: "invest" | "feast" | "rest" | null };
   /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
   xpAcc?: number;
   /** اهداف روزانه/هفتگی، زنجیره و نشان‌ها (P6.2) — با اولین تیکِ روز ساخته می‌شود */
