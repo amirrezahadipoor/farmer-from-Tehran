@@ -215,13 +215,10 @@ function drawPlant(ctx: CanvasRenderingContext2D, id: string, x: number, y: numb
       ctx.strokeStyle = "#33691e"; ctx.lineWidth = 1.4;
       for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + i * 6, y - 5 * sc, x + i * 9 * sc, y - 2); ctx.stroke(); }
       for (let i = 0; i < 3; i++) ellipse(ctx, x + (i - 1) * 6 * sc, y - 3 - (i % 2) * 2, 3 * sc + 1, 2 * sc + 0.8, "#388e3c");
-      if (g > 0.35) {
-        const r = 3 + 5.5 * sc;
-        ellipse(ctx, x + 2, y - 2, r, r * 0.82, "#2e7d32");
+      if (g > 0.35) { const r = 3 + 5.5 * sc; ellipse(ctx, x + 2, y - 2, r, r * 0.82, "#2e7d32");
         ctx.strokeStyle = "#1b5e20"; ctx.lineWidth = 1;
         for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + 2 + i * r * 0.5, y - 2 - r * 0.75); ctx.quadraticCurveTo(x + 2 + i * r * 0.7, y - 2, x + 2 + i * r * 0.5, y - 2 + r * 0.75); ctx.stroke(); }
-        if (ripe) ellipse(ctx, x + 2 - r * 0.3, y - 2 - r * 0.35, r * 0.3, r * 0.2, "rgba(255,255,255,0.35)");
-      }
+        if (ripe) ellipse(ctx, x + 2 - r * 0.3, y - 2 - r * 0.35, r * 0.3, r * 0.2, "rgba(255,255,255,0.35)"); }
       break; }
     default:
       drawGenericPlant(ctx, c.look ?? "bush", c.color, leaf, x, y, g, sc, sw, seed, seasonId);
@@ -379,11 +376,22 @@ export function drawWalker(ctx: CanvasRenderingContext2D, w: Walker, now: number
   const moving = w.wait <= 0;
   const bob = moving ? Math.abs(Math.sin(now * 11)) * 2.5 : 0;
   ellipse(ctx, x, y, 7.5, 3.2, "rgba(0,0,0,0.3)");
-  const shirt = w.kind === "farmhand" ? "#1e88e5" : w.kind === "operator" ? "#fb8c00" : w.kind === "scientist" ? "#8e24aa" : w.kind === "vet" ? "#00796b" : "#37474f";
+  const shirt = w.kind === "farmhand" ? "#1e88e5" : w.kind === "operator" ? "#fb8c00" : w.kind === "scientist" ? "#8e24aa" : w.kind === "vet" ? "#00796b" : w.kind === "guest" ? "#7b1fa2" : "#37474f";
   ctx.fillStyle = "#3e2723"; ctx.fillRect(x - 3.5, y - 9, 2.5, 9 - (moving ? Math.sin(now * 11) * 2.5 : 0)); ctx.fillRect(x + 1, y - 9, 2.5, 9 + (moving ? Math.sin(now * 11) * 2.5 : 0) - 2);
   ellipse(ctx, x, y - 14 - bob, 6.5, 7.5, shirt);
   ellipse(ctx, x, y - 22 - bob, 4.5, 4.5, "#ffcc80");
   if (w.kind === "trader") { ctx.fillStyle = "#212121"; ctx.fillRect(x - 4, y - 30 - bob, 8, 5); ctx.fillRect(x - 7, y - 25.5 - bob, 14, 2); }
   else if (w.kind === "scientist") { ctx.fillStyle = "#00e5ff"; ctx.fillRect(x - 4, y - 23 - bob, 8, 2); }
-  else { ellipse(ctx, x, y - 25 - bob, 9, 3, w.kind === "farmhand" ? "#e6c36a" : w.kind === "vet" ? "#00acc1" : "#fbc02d"); }
+  else if (w.kind !== "guest") { ellipse(ctx, x, y - 25 - bob, 9, 3, w.kind === "farmhand" ? "#e6c36a" : w.kind === "vet" ? "#00acc1" : "#fbc02d"); }
+  if (w.kind === "guest") { // شالِ رنگیِ مهمان
+    ctx.fillStyle = "#f06292"; ctx.beginPath(); ctx.ellipse(x, y - 25 - bob, 4.6, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  if (w.say) { // حبابِ دیالوگِ سپاس (V.6)
+    ctx.font = "bold 9.5px Vazirmatn, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const tw = ctx.measureText(w.say).width, by = y - 44 - bob;
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.25)"; ctx.shadowBlur = 4; ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.beginPath(); ctx.roundRect(x - tw / 2 - 6, by - 9, tw + 12, 17, 8); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x - 3.5, by + 7); ctx.lineTo(x + 3.5, by + 7); ctx.lineTo(x, by + 12); ctx.closePath(); ctx.fill();
+    ctx.restore(); ctx.fillStyle = "#4e342e"; ctx.fillText(w.say, x, by);
+  }
 }

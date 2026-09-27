@@ -209,6 +209,7 @@ export function fulfill(s: State, oi: number, ev: Events) {
   updateContract(s, "orders", 1, ev);
   ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${fmt(o.coins)} سکه`, "ok");
   ev.sound("order");
+  ev.guest?.(o.npc);
   ev.coins?.(3); // V.3
   s.orders[oi] = genOrder(s);
 }

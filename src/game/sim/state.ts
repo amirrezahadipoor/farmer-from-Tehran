@@ -183,6 +183,8 @@ export interface Events {
   shake?: () => void;
   /** V.3: سکه‌های پرنده به قرصِ سکه‌ی HUD */
   coins?: (n: number) => void;
+  /** V.6: آمدنِ مهمانِ سپاسگزار پس از تحویل سفارش */
+  guest?: (npc: number) => void;
 }
 
 export const rnd = (a: number, b: number) => a + Math.random() * (b - a);

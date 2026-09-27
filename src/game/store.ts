@@ -68,6 +68,8 @@ export const rt = {
   walkers: new Map<number, Walker>(),
   /** V.1: آواتارِ قهرمان — زمان‌اجرا فقط؛ در سیو ذخیره نمی‌شود */
   hero: { x: -1, y: -1, tx: -1, ty: -1, kind: "hero", face: 1, wait: 0, act: "", actT: 0, look: "n" as "m" | "f" | "n", init: false },
+  /** V.6: مهمان‌های سپاسگزار (نمایش، نه سیو) */
+  guests: [] as { w: import("./render/core").Walker; npc: number; until: number; leaving: boolean }[],
   view: {
     w: 800,
     h: 600,
