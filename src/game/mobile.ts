@@ -185,11 +185,18 @@ export function useNativeGestureGuards(enabled = true) {
       if (!control && now - last.t <= 320 && Math.abs(x - last.x) < 24 && Math.abs(y - last.y) < 24) e.preventDefault();
       last = { t: now, x, y };
     };
+    /**
+     * زومِ دوانگشتیِ مرورگر روی نقشه و HUD بسته است (آنجا دو انگشت یعنی دوربینِ بازی)، اما سطوحِ
+     * متنی — پنل‌ها، داستان، منو، اسپلش — با data-zoom-ok آزادند تا متن برای کم‌بینا بزرگ شود (P6.5).
+     */
+    const zoomOk = (t: EventTarget | null) => !!(t as Element | null)?.closest?.("[data-zoom-ok]");
     const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 1) e.preventDefault(); // pinch-zoom مرورگر (pinch داخل بازی خودمان مدیریت می‌شود)
+      if (e.touches.length > 1 && !zoomOk(e.target)) e.preventDefault();
     };
     const onCtx = (e: Event) => e.preventDefault();
-    const onGesture = (e: Event) => e.preventDefault(); // iOS Safari
+    const onGesture = (e: Event) => {
+      if (!zoomOk(e.target)) e.preventDefault(); // iOS Safari
+    };
 
     document.addEventListener("touchend", onTouchEnd, { passive: false });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -212,7 +219,9 @@ export function useAppViewportVar() {
   useEffect(() => {
     const set = () => {
       const vv = window.visualViewport;
-      const h = Math.round(vv?.height ?? window.innerHeight);
+      // وقتی کاربر متنی را با دو انگشت بزرگ کرده (scale > 1)، visualViewport کوچک می‌شود اما
+      // چیدمان نباید جمع شود: ارتفاعِ دیدنی × مقیاس = ارتفاعِ واقعیِ چیدمان (کیبورد هنوز کمش می‌کند)
+      const h = Math.round(vv ? vv.height * (vv.scale || 1) : window.innerHeight);
       document.documentElement.style.setProperty("--app-h", `${h}px`);
     };
     set();

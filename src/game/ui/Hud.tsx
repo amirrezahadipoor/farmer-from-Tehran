@@ -6,7 +6,7 @@
 
 import { CONTRACTS, SEASONS, fmt, xpFor } from "../data";
 import { capacity, claimableQuests, invCount, type State } from "../logic";
-import { lightInfo } from "../render";
+import { lightInfo } from "../render/core";
 import { currentChapter, goalProgress } from "../story";
 import { Icon, stripEmoji } from "../icons";
 import { sound } from "../audio";
@@ -14,9 +14,10 @@ import { zoomBy, recenter } from "../useCanvasInput";
 import { game } from "../store";
 import type { SaveState } from "../net";
 import { LevelRing, Pill, type Panel } from "./common";
+import { faPad2 } from "../faNum";
 
 /** ساعت با ارقام فارسی و دو رقمی (۰۷:۲۲) */
-const two = (n: number) => n.toLocaleString("fa-IR", { minimumIntegerDigits: 2 });
+const two = faPad2; // بی‌ICU (P6.5)
 
 /** شمارش نشان‌های منو: سفارش آماده، امتیاز مهارت، قرارداد و هدفِ روزانه‌ی قابل‌دریافت */
 export function menuBadges(s: State) {
@@ -106,7 +107,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
 
         <Pill
           icon="box"
-          label={`انبار ${fmt(used)} از ${fmt(cap)}`}
+          label={`انبار ${fmt(used)}/${fmt(cap)}`} // نامِ دسترس‌پذیر متنِ دیدنی را در بر دارد (WCAG 2.5.3)
           onClick={() => setPanel("market")}
           className={used >= cap ? "animate-pulse !bg-red-100 !text-red-800 ring-red-400" : ""}
         >

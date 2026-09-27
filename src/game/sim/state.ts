@@ -64,8 +64,6 @@ export function generateMap(): Tile[] {
     { x: 0, y: 0, r: 1.0 }, { x: 0.85, y: 0.2, r: 0.8 }, { x: -0.7, y: 0.45, r: 0.72 },
     { x: 0.25, y: -0.8, r: 0.68 }, { x: -0.4, y: -0.55, r: 0.6 }, { x: 1.25, y: -0.25, r: 0.5 },
   ];
-  const inLake = (x: number, y: number) =>
-    lakeBlobs.some((b) => Math.hypot(x - (lakeX + b.x * lakeR), y - (lakeY + b.y * lakeR)) < b.r * lakeR);
 
   // --- A river that carries the lake eastwards to the sea (never through the farm)
   const riverPts: { x: number; y: number; r: number }[] = [];
@@ -78,7 +76,17 @@ export function generateMap(): Tile[] {
       if (rx > N + 2 || ry > N + 2 || ry < -2) break;
     }
   }
-  const inRiver = (x: number, y: number) => riverPts.some((p) => Math.hypot(x - p.x, y - p.y) < p.r);
+  // P6.5: «آب است؟» یک بار برای همسایگیِ کوچکِ هر حباب/نقطه حساب می‌شود، نه با some(Math.hypot) روی همه‌ی
+  // نقطه‌های رود برای هر کاشی: اولین اجرای سرد در مرورگر (بارِ اولِ بازیکنِ تازه) ≈ ۲۵ms فقط صرفِ همین بود.
+  // همان شرطِ hypot < r روی همان خانه‌ها و بی‌هیچ Math.random ⇒ نقشه‌ی تولیدی بیت‌به‌بیت همان است.
+  const wet = new Uint8Array(N * N);
+  const markWet = (px: number, py: number, r: number) => {
+    const x0 = Math.max(0, Math.floor(px - r)), x1 = Math.min(N - 1, Math.ceil(px + r));
+    const y0 = Math.max(0, Math.floor(py - r)), y1 = Math.min(N - 1, Math.ceil(py + r));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (Math.hypot(x - px, y - py) < r) wet[y * N + x] = 1;
+  };
+  for (const b of lakeBlobs) markWet(lakeX + b.x * lakeR, lakeY + b.y * lakeR, b.r * lakeR);
+  for (const p of riverPts) markWet(p.x, p.y, p.r);
 
   // --- Rocky highland in the south-west
   const hillX = cx - N * 0.24, hillY = cy + N * 0.24, hillR = N * 0.13;
@@ -89,7 +97,7 @@ export function generateMap(): Tile[] {
       const d = Math.hypot(x - cx, y - cy);
       const coast = coastR + noise(x, y, 0.42, 3.1) * 1.6 + noise(x, y, 1.05, 7.7) * 0.75;
       if (d > coast) { tiles.push({ k: "water", v: 0.1 + Math.random() * 0.3 }); continue; }
-      if ((inLake(x, y) || inRiver(x, y)) && !inStart(x, y, 1)) {
+      if (wet[y * N + x] && !inStart(x, y, 1)) {
         tiles.push({ k: "water", v: 0.6 + Math.random() * 0.35 });
         continue;
       }
@@ -178,7 +186,7 @@ export const NCH = Math.ceil(N / CH);
 
 export const capacity = (s: State): number => {
   let b = 120;
-  b += s.tiles.filter((t) => t.b === "silo").length * 120;
+  b += countB(s, "silo") * 120;
   if (s.techs.includes("storage1")) b += 100;
   if (s.techs.includes("storage2")) b += 250;
   if (s.techs.includes("mega_silo")) b += 600;
@@ -188,7 +196,12 @@ export const capacity = (s: State): number => {
 };
 export const invCount = (s: State) => Object.values(s.inv).reduce((a, b) => a + b, 0);
 export const has = (s: State, inp: Record<string, number>) => Object.entries(inp).every(([k, n]) => (s.inv[k] || 0) >= n);
-export const countB = (s: State, id: string) => s.tiles.filter((t) => t.b === id).length;
+/** شمارِ ساختمانِ یک نوع — حلقه‌ی ساده، بی‌ساختنِ آرایه‌ی میانی (پرتکرار در منطق و رابط؛ P6.5) */
+export const countB = (s: State, id: string) => {
+  let n = 0;
+  for (const t of s.tiles) if (t.b === id) n++;
+  return n;
+};
 export const hasTech = (s: State, id: string) => s.techs.includes(id);
 export const hasSkill = (s: State, id: string) => s.skills.includes(id);
 

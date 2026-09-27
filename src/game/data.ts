@@ -1,3 +1,5 @@
+import { faNum } from "./faNum";
+
 export interface CropDef {
   id: string; name: string; seed: number; time: number; yield: number; lvl: number; xp: number;
   color: string; leaf: string; rare?: boolean; animalFeed?: number;
@@ -280,4 +282,8 @@ export const CLEAR_COST = { tree: 20, rock: 30 } as const;
  */
 export const xpFor = (lvl: number) =>
   lvl <= 10 ? Math.round(40 * Math.pow(lvl, 1.6)) : Math.round(40 * Math.pow(10, 1.6) + 140 * Math.pow(lvl - 10, 1.25));
-export const fmt = (n: number) => Math.floor(n).toLocaleString("fa-IR");
+/**
+ * عددِ صحیحِ فارسی (کفِ عدد). بی‌ICU (faNum.ts): toLocaleString در هر فراخوانی NumberFormatِ تازه
+ * می‌ساخت و حتی یک نمونه‌ی کش‌شده هم بارِ اولش ۱۰ تا ۱۶ میلی‌ثانیه داده‌ی ICU بار می‌کرد (P6.5).
+ */
+export const fmt = (n: number) => faNum(Math.floor(n));

@@ -36,7 +36,8 @@ export function newState(): State {
     savedAt: Date.now(), wAcc: 0, histAcc: 0, eventAcc: 0,
   };
   for (let i = 0; i < 3; i++) s.orders.push(genOrder(s));
-  Object.keys(ITEMS).forEach((k) => { for (let i = 0; i < 20; i++) s.market[k].hist.push(price(s, k)); });
+  // تاریخچه‌ی آغازین: قیمت در این لحظه برای هر کالا ثابت است؛ یک بار حساب و ۲۰ بار ثبت (P6.5، همان خروجی)
+  Object.keys(ITEMS).forEach((k) => { const p = price(s, k); for (let i = 0; i < 20; i++) s.market[k].hist.push(p); });
   return s;
 }
 
@@ -80,7 +81,11 @@ export const recipeLock = (s: State, r: Recipe) =>
 
 export function unlockedItems(s: State): string[] {
   const out: string[] = CROPS.filter((c) => c.lvl <= s.level).map((c) => c.out ?? c.id);
-  BUILDINGS.forEach((b) => { if (countB(s, b.id) > 0) b.recipes.forEach((r) => { if (recipeOpen(s, r)) out.push(r.out); }); });
+  // ساختمان‌های موجود در یک گذر (P6.5): پیش‌تر برای هر نوعِ ساختمان کلِ ۱۲۹۶ کاشی فیلتر می‌شد — ۳ بار در newState
+  // و در هر سفارشِ تازه؛ همان مجموعه و همان ترتیبِ خروجی
+  const built = new Set<string>();
+  for (const t of s.tiles) if (t.b) built.add(t.b);
+  BUILDINGS.forEach((b) => { if (built.has(b.id)) b.recipes.forEach((r) => { if (recipeOpen(s, r)) out.push(r.out); }); });
   return Array.from(new Set(out));
 }
 
@@ -142,7 +147,7 @@ export function addXp(s: State, n: number, ev: Events) {
     ev.sound("lvl");
     const bonus = s.level * 45;
     s.coins += bonus;
-    ev.toast(`پاداش پیشرفت: +${bonus.toLocaleString("fa-IR")} سکه`, "ok");
+    ev.toast(`پاداش پیشرفت: +${fmt(bonus)} سکه`, "ok");
   }
   if (lvlGained > 0 && s.stats.skillPoints > 0) {
     ev.toast(`${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
@@ -200,7 +205,7 @@ export function fulfill(s: State, oi: number, ev: Events) {
   s.rep = Math.min(100, s.rep + o.repReward);
   addXp(s, o.xp, ev);
   updateContract(s, "orders", 1, ev);
-  ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${o.coins.toLocaleString("fa-IR")} سکه`, "ok");
+  ev.toast(`سفارش ${NPCS[o.npc] || "مشتری"} تحویل شد: +${fmt(o.coins)} سکه`, "ok");
   ev.sound("order");
   s.orders[oi] = genOrder(s);
 }
@@ -211,7 +216,7 @@ export function claimContract(s: State, id: string, ev: Events) {
   if (!c || !cs || cs.claimed || cs.progress < c.target) return;
   cs.claimed = true;
   s.coins += c.rewardCoins; s.rep = Math.min(100, s.rep + c.rewardRep); addXp(s, c.rewardXp, ev);
-  ev.toast(`پاداش قرارداد دولتی وصول شد: +${c.rewardCoins.toLocaleString("fa-IR")} سکه`, "lvl"); ev.sound("contract");
+  ev.toast(`پاداش قرارداد دولتی وصول شد: +${fmt(c.rewardCoins)} سکه`, "lvl"); ev.sound("contract");
 }
 
 export function updateContract(s: State, type: string, amount: number, _ev: Events) {

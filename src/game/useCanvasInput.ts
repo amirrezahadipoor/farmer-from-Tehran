@@ -10,7 +10,7 @@
 import { useRef } from "react";
 import { N, fmt } from "./data";
 import { toolAction, locked, idx, type Events } from "./logic";
-import { screenToTile, tileCenter } from "./render";
+import { screenToTile, tileCenter } from "./render/core";
 import { haptic } from "./mobile";
 import { sound } from "./audio";
 import { game, rt } from "./store";

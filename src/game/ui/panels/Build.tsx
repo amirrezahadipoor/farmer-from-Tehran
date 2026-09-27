@@ -7,7 +7,8 @@
 import { BUILDINGS, fmt, type BuildingDef } from "../../data";
 import { buildCost, countB, decorCost, canBuildDecor, type State } from "../../logic";
 import { Icon } from "../../icons";
-import { BuildingThumb, Coin, type PanelProps, type UiApi } from "../common";
+import { Coin, type PanelProps, type UiApi } from "../common";
+import { BuildingThumb } from "../BuildingThumb";
 
 function BuildCard({
   b,

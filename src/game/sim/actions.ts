@@ -111,7 +111,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
     const c = chunkOf(x, y);
     if (!canExpand(s, c)) { ev.toast("ابتدا زمین‌های مجاور را خریداری کنید", "err"); return; }
     const cost = expandCost(s);
-    if (s.coins < cost) { ev.toast(`خرید این قطعه زمین ${cost.toLocaleString("fa-IR")} سکه نیاز دارد`, "err"); return; }
+    if (s.coins < cost) { ev.toast(`خرید این قطعه زمین ${fmt(cost)} سکه نیاز دارد`, "err"); return; }
     s.coins -= cost; s.stats.spent += cost; s.chunks[c] = true; s.bought++;
     addXp(s, 25, ev);
     ev.toast("قطعه زمین جدید با موفقیت خریداری شد!", "lvl"); ev.sound("expand"); return;
@@ -239,7 +239,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
         s.coins += ref;
         s.tiles[idx(x, y)] = { k: "grass", v: t.v };
         if (s.stats.decorations > 0) s.stats.decorations--;
-        ev.toast(`دکور ${b.name} جمع‌آوری شد (+${ref.toLocaleString("fa-IR")})`);
+        ev.toast(`دکور ${b.name} جمع‌آوری شد (+${fmt(ref)})`);
       } else {
         const ref = Math.round((b?.cost || 100) * 0.5);
         s.coins += ref; ev.toast(`${b?.name || "ساختمان"} برچیده شد (+${fmt(ref)} سکه)`);

@@ -8,7 +8,8 @@ import { SKILLS, TECH_TREE, fmt } from "../../data";
 import { learnSkill, unlockTech, nextUnlock, type Unlock } from "../../logic";
 import { Icon, ItemIcon, skillIcon, techIcon } from "../../icons";
 import { game } from "../../store";
-import { BuildingThumb, Coin, btn, type PanelProps } from "../common";
+import { Coin, btn, type PanelProps } from "../common";
+import { BuildingThumb } from "../BuildingThumb";
 
 /** نمادِ SVG هر «بازکردنی» — بدون ایموجی: کالا، بندانگشتیِ ساختمان یا نمادِ تحقیق */
 function UnlockIcon({ u }: { u: Unlock }) {

@@ -2,7 +2,7 @@
  * src/game/sim/tick.ts — شبیه‌سازیِ زمان: روز و حقوق، هوا و رویداد، رشد، رطوبت، ماشین‌ها و کارگرها
  * (P5.11: logic.ts به چهار ماژول ≤ ۴۰۰ خط شکسته شد؛ همه از مسیر "./logic" صادر می‌شوند)
  */
-import { BMAP, CMAP, CROPS, N, DAY_LEN, WORKERS, FERT_COST, SEASONS, WeatherType, EventType } from "../data";
+import { BMAP, CMAP, CROPS, N, DAY_LEN, WORKERS, FERT_COST, SEASONS, WeatherType, EventType, fmt } from "../data";
 import {
   type State, type Events, idx, locked, capacity, invCount, has, hasTech, hasSkill, rnd,
   WATER_SECONDS, RAIN_SECONDS, SPRINKLER_SECONDS, DROUGHT,
@@ -34,7 +34,7 @@ export function tick(s: State, dt: number, ev: Events) {
     let wage = s.workers.reduce((a, w) => a + WORKERS[w.kind].wage, 0);
     if (hasTech(s, "automation_tech")) wage = Math.round(wage * 0.85);
     if (wage) {
-      if (s.coins >= wage) { s.coins -= wage; s.stats.spent += wage; ev.toast(`حقوق روزانه کارکنان پرداخت شد: ${wage.toLocaleString("fa-IR")} سکه`); }
+      if (s.coins >= wage) { s.coins -= wage; s.stats.spent += wage; ev.toast(`حقوق روزانه کارکنان پرداخت شد: ${fmt(wage)} سکه`); }
       else { const w = s.workers.pop()!; ev.toast(`${WORKERS[w.kind].name} به دلیل عدم پرداخت حقوق استعفا داد`, "err"); }
     }
     const rand = Math.random();

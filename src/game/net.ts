@@ -163,7 +163,10 @@ export function registerServiceWorker(onEvent?: (e: SwEvent) => void): () => voi
   let reg: ServiceWorkerRegistration | null = null;
   let cancelled = false;
 
-  (async () => {
+  // ثبت بعد از رویدادِ load (P6.5): نصبِ SW ده‌ها فایل را پیش‌کش می‌کند و نباید با منابعِ
+  // بارگذاریِ اول (HTML، CSS، نشان، فونت) بر سرِ پهنای باند رقابت کند
+  const start = () => void (async () => {
+    if (cancelled) return;
     try {
       reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
       if (cancelled) return;
@@ -188,9 +191,12 @@ export function registerServiceWorker(onEvent?: (e: SwEvent) => void): () => voi
       onEvent?.("none");
     }
   })();
+  if (document.readyState === "complete") start();
+  else window.addEventListener("load", start, { once: true });
 
   return () => {
     cancelled = true;
+    window.removeEventListener("load", start);
   };
 }
 
@@ -207,7 +213,7 @@ export function prefetchStoryArt(urls: string[]) {
 /** فهرست تصاویر داستان برای پیش‌کش (نام فایل‌ها ثابت است). */
 export const STORY_ART_URLS = [
   "/images/bg_sky.webp",
-  "/images/logo_badge.png",
+  "/images/logo_badge.webp",
   "/images/story_office.webp",
   "/images/story_will.webp",
   "/images/story_farm.webp",
