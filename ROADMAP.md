@@ -7,14 +7,14 @@
 ## وضعیت کلی
 
 ```
-░░░░░░░░░░░░░░░░░░░░  ۰٪
+█░░░░░░░░░░░░░░░░░░░  ۵٪
 ```
 
-**۰ از ۴۳ آیتم انجام شده (۰٪)** · در دست اجرا: **۰** · آخرین به‌روزرسانی: 2026-09-27 · نسخه: `0.1.0`
+**۲ از ۴۳ آیتم انجام شده (۵٪)** · در دست اجرا: **۳** · آخرین به‌روزرسانی: 2026-09-27 · نسخه: `0.1.0`
 
 | فاز | عنوان | پیشرفت | انجام/کل |
 |:--:|---|---|:--:|
-| A | موتور آرت: سبکِ واحد و پایپ‌لاینِ تولید | `░░░░░░░░░░░░  ۰٪` | ۰/۵ |
+| A | موتور آرت: سبکِ واحد و پایپ‌لاینِ تولید | `█████░░░░░░░  ۴۰٪` | ۲/۵ |
 | B | Vertical Slice: اولین دنیای نقاشی‌شده | `░░░░░░░░░░░░  ۰٪` | ۰/۵ |
 | C | تولید انبوه: کلِ دنیای بازی | `░░░░░░░░░░░░  ۰٪` | ۰/۶ |
 | D | یکپارچه‌سازی کامل در render/ | `░░░░░░░░░░░░  ۰٪` | ۰/۶ |
@@ -27,8 +27,8 @@
 ### سه کار بعدی (به همین ترتیب)
 
 ۱. ۱ — Art Bible: ۶ دارایی مرجع (کاشی چمن، درخت میوه، گاو، طویله، پرتره‌ی قهرمان، آیکون آیتم) با پرامپتِ سبکِ مشترک
-۲. ۲ — پایپ‌لاینِ هم‌ترازی tools/align-assets.py: chroma-keyِ پس‌زمینه، despill، trim، snap به شبکه، آزمونِ bbox
-۳. ۳ — بسته‌بندیِ اطلس tools/pack-atlas.py: اسپرایت‌ها به ۱-۲ اطلس + manifest JSON (key → x,y,w,h)
+۲. ۳ — بسته‌بندیِ اطلس tools/pack-atlas.py: اسپرایت‌ها به ۱-۲ اطلس + manifest JSON (key → x,y,w,h)
+۳. ۴ — check-assets: اعتبارسنجیِ manifestها + وجود همه‌ی کلیدهایِ ارجاع‌شده
 
 ## شاخص‌های کلیدی (KPI)
 
@@ -62,15 +62,15 @@
 
 **هدف فاز:** قبل از تولید انبوه: یک سبکِ ثابتِ نقاشی‌شده (art bible) و یک پایپ‌لاینِ خودکار از تصویرِ خامِ AI تا اسپرایتِ هم‌تراز با شبکه‌ی ۸۸×۴۴
 
-**پیشرفت:** `░░░░░░░░░░░░░░  ۰٪` (۰/۵)
+**پیشرفت:** `██████░░░░░░░░  ۴۰٪` (۲/۵)
 
 | وضعیت | # | کار | معیار پذیرش (DoD) | شاهد | پوش |
 |:--:|:--:|---|---|---|:--:|
-| <img src="docs/icons/todo.svg" width="16" height="16" alt="[ ]"> | ۱ | Art Bible: ۶ دارایی مرجع (کاشی چمن، درخت میوه، گاو، طویله، پرتره‌ی قهرمان، آیکون آیتم) با پرامپتِ سبکِ مشترک | شش تصویر در یک contact-sheet کنار هم؛ سبک/نور/پالتِ یکدست (نور از بالا-چپ، ایزومتریک ۲:۱، پالت گرم)؛ فایل پرامپت‌ها در docs/prompts/ برای بازتولیدپذیری | — | — |
-| <img src="docs/icons/todo.svg" width="16" height="16" alt="[ ]"> | ۲ | پایپ‌لاینِ هم‌ترازی tools/align-assets.py: chroma-keyِ پس‌زمینه، despill، trim، snap به شبکه، آزمونِ bbox | هر تصویرِ خام به PNGِ شفافِ هم‌اندازه/هم‌مبدلا تبدیل می‌شود؛ خروجیِ JSON برای اعتبارسنجی؛ تست واحد (تصویرِ مصنوعی → ابعاد/شفافیتِ انتظار) سبز | — | — |
-| <img src="docs/icons/todo.svg" width="16" height="16" alt="[ ]"> | ۳ | بسته‌بندیِ اطلس tools/pack-atlas.py: اسپرایت‌ها به ۱-۲ اطلس + manifest JSON (key → x,y,w,h) | اتلس ≤ ۱۰۲×۱۰۲۴؛ manifest با کلیدهایِ دقیقِ کشِ فعلی (c|crop|q|season|vr و t|season|variant و …)؛ خروجی reproducible | — | — |
-| <img src="docs/icons/todo.svg" width="16" height="16" alt="[ ]"> | ۴ | check-assets: اعتبارسنجیِ manifestها + وجود همه‌ی کلیدهایِ ارجاع‌شده | npm run check-assets اطلس‌ها را هم می‌خواند؛ کلیدِ گم‌شده = شکستِ CI | — | — |
-| <img src="docs/icons/todo.svg" width="16" height="16" alt="[ ]"> | ۵ | کشِ تصویر در موتور (render/atlas.ts) + preloader + fallback به رسمِ رویه‌ای | sprite() اول کشِ تصویر را می‌پرسد و اگر نبود همان رسمِ قبلی را می‌کشد؛ preloader در idle chunk‌شده (بدون استالِ main-thread)؛ flagِ window.__game.atlasReady برای e2e | — | — |
+| <img src="docs/icons/doing.svg" width="16" height="16" alt="[~]"> | ۱ | Art Bible: ۶ دارایی مرجع (کاشی چمن، درخت میوه، گاو، طویله، پرتره‌ی قهرمان، آیکون آیتم) با پرامپتِ سبکِ مشترک | شش تصویر در یک contact-sheet کنار هم؛ سبک/نور/پالتِ یکدست (نور از بالا-چپ، ایزومتریک ۲:۱، پالت گرم)؛ فایل پرامپت‌ها در docs/prompts/ برای بازتولیدپذیری | ۴ از ۶ دارایی مرجع تولید و پردازش‌شده با کلیدِ سبز (grass/tree/cow/barn)؛ contact-sheet: art-src/sprites/CONTACT_SHEET.png؛ تصمیمِ کلیدِ سبز به‌جای مجانتا مستند در docs/prompts/art-style.md؛ ۲ مورد (قهرمان/آیکون گندم) در نوبتِ تولیدِ بعدی | — |
+| <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۲ | پایپ‌لاینِ هم‌ترازی tools/align-assets.py: chroma-keyِ پس‌زمینه، despill، trim، snap به شبکه، آزمونِ bbox | هر تصویرِ خام به PNGِ شفافِ هم‌اندازه/هم‌مبدلا تبدیل می‌شود؛ خروجیِ JSON برای اعتبارسنجی؛ تست واحد (تصویرِ مصنوعی → ابعاد/شفافیتِ انتظار) سبز | tools/align-assets.py (chroma-keyِ سبز با لبه‌ی نرم + despill + trim + fit + گزارش JSON)؛ tests/atlas.test.ts روی تصویرِ مصنوعیِ tests/fixtures/align-synthetic.png کلید/trim/اندازه/شفافیت را سبز می‌کند | — |
+| <img src="docs/icons/doing.svg" width="16" height="16" alt="[~]"> | ۳ | بسته‌بندیِ اطلس tools/pack-atlas.py: اسپرایت‌ها به ۱-۲ اطلس + manifest JSON (key → x,y,w,h) | اتلس ≤ ۱۰۲×۱۰۲۴؛ manifest با کلیدهایِ دقیقِ کشِ فعلی (c|crop|q|season|vr و t|season|variant و …)؛ خروجی reproducible | tools/pack-atlas.py (shelf packing قطعی + آینه‌ی cropFrame برای ۵ فریمِ کلیدی → ۲۰ پله)؛ با نخستین اطلسِ فاز B اعتبارسنجی می‌شود | — |
+| <img src="docs/icons/doing.svg" width="16" height="16" alt="[~]"> | ۴ | check-assets: اعتبارسنجیِ manifestها + وجود همه‌ی کلیدهایِ ارجاع‌شده | npm run check-assets اطلس‌ها را هم می‌خواند؛ کلیدِ گم‌شده = شکستِ CI | tools/check-assets.mjs مانیفستِ public/art/manifest.json را می‌خواند (وجود اطلس + ناحیه‌های داخلِ حد)؛ مانیفست از فاز B وارد می‌شود | — |
+| <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۵ | کشِ تصویر در موتور (render/atlas.ts) + preloader + fallback به رسمِ رویه‌ای | sprite() اول کشِ تصویر را می‌پرسد و اگر نبود همان رسمِ قبلی را می‌کشد؛ preloader در idle chunk‌شده (بدون استالِ main-thread)؛ flagِ window.__game.atlasReady برای e2e | src/game/render/atlas.ts (cropFrame/resolveAtlas/blitAtlas×۳) + src/game/atlasLoader.ts (force-cache + decode جدا + سکوت در خطا) + image-first با fallback در sprite()/groundBase/drawBuilding + artVersion در امضای کشِ زمین + __game.atlasReady برای e2e؛ ۱۲ تستِ واحد سبز؛ بدونِ اطلس رفتار بازی بدونِ تغییر است (fallback) | — |
 
 ## B — Vertical Slice: اولین دنیای نقاشی‌شده
 
@@ -189,6 +189,7 @@
 | # | کامیت | تاریخ | شرح |
 |:--:|:--:|:--:|---|
 | ۱ | `e446f2b` | 2026-09-27 | feat(V.9): پنج دستگاه موسیقی — چهارگاه سپیده‌دم و دشتی شب با selectMode خالص |
+| ۲ | `82d18ac` | 2026-09-27 | docs(roadmap): نقشه‌ی راهِ تازه — مسیرِ AAA (آرتِ AI، گیم‌پلی، داستان، اندروید) |
 
 ---
 

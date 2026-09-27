@@ -96,6 +96,41 @@ if (existsSync(swPath)) {
   process.exit(1);
 }
 
+/* ── ۵) اسپرایت‌اطلسِ آرت (نقشه‌ی راه، فاز A): manifest + ناحیه‌های درِ حدِ اطلس ── */
+const artManifestPath = join(PUBLIC, "art", "manifest.json");
+let artEntries = 0;
+if (existsSync(artManifestPath)) {
+  const am = JSON.parse(readFileSync(artManifestPath, "utf8"));
+  const sizes = new Map();
+  const pngSize = (p) => {
+    if (!sizes.has(p)) {
+      const b = readFileSync(p);
+      sizes.set(p, b.readUInt32BE(0) === 0x89504e47 ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null);
+    }
+    return sizes.get(p);
+  };
+  for (const [name, url] of Object.entries(am.atlases ?? {})) {
+    const file = join(PUBLIC, url);
+    if (!existsSync(file)) {
+      console.error(`\n[خطا] اطلسِ «${name}» (${url}) در public/ نیست.\n`);
+      process.exit(1);
+    }
+    add(url, artManifestPath);
+  }
+  for (const [key, e] of Object.entries(am.entries ?? {})) {
+    artEntries++;
+    const size = pngSize(join(PUBLIC, am.atlases[e.a] ?? ""));
+    if (!size) {
+      console.error(`\n[خطا] اطلسِ «${e.a}» برای کلیدِ ${key} خوانا نیست.\n`);
+      process.exit(1);
+    }
+    if (e.x < 0 || e.y < 0 || e.x + e.w > size[0] || e.y + e.h > size[1]) {
+      console.error(`\n[خطا] ناحیه‌ی ${key} (${e.x},${e.y} ${e.w}x${e.h}) بیرون از اطلسِ ${size[0]}x${size[1]} است.\n`);
+      process.exit(1);
+    }
+  }
+}
+
 const missing = [];
 const ok = [];
 for (const [ref, from] of [...refs].sort()) {

@@ -13,6 +13,7 @@
  */
 import { N, SEASONS } from "../data";
 import { idx, locked, type State } from "../logic";
+import { artVersion, blitAtlasTile, resolveAtlas } from "./atlas";
 import { A, B, diamond, ellipse, fence, hash, makeCanvas, poly, shade, tileCenter } from "./core";
 
 /** لبه‌هایی از کاشیِ آب که به خشکی (یا لبه‌ی نقشه) می‌رسند: ۱ بالا-چپ، ۲ بالا-راست، ۴ پایین-راست، ۸ پایین-چپ */
@@ -58,27 +59,35 @@ function groundBase(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: num
   if (t.k === "water") {
     const lake = t.v > 0.5;
     const e = waterEdges(s, gx, gy);
-    const g = ctx.createLinearGradient(x, y - B, x, y + B);
-    if (lake) { g.addColorStop(0, e ? "#5cc6e8" : "#1d7fb4"); g.addColorStop(1, e ? "#2a9dc8" : "#0d5a86"); }
-    else { g.addColorStop(0, e ? "#3fb0dc" : "#11639b"); g.addColorStop(1, e ? "#1c7fb0" : "#063f6b"); }
-    diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
+    const hit = resolveAtlas("g|water"); // آرت؛ نبودش = گرادیانِ زیر
+    if (hit) blitAtlasTile(ctx, hit, x, y);
+    else {
+      const g = ctx.createLinearGradient(x, y - B, x, y + B);
+      if (lake) { g.addColorStop(0, e ? "#5cc6e8" : "#1d7fb4"); g.addColorStop(1, e ? "#2a9dc8" : "#0d5a86"); }
+      else { g.addColorStop(0, e ? "#3fb0dc" : "#11639b"); g.addColorStop(1, e ? "#1c7fb0" : "#063f6b"); }
+      diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
+    }
     if (e) { ctx.strokeStyle = "rgba(240,225,180,0.55)"; ctx.lineWidth = 3.5; ctx.stroke(); } // لبه‌ی شنیِ خیس
     if (lake && hash(gx, gy) > 0.72) { ellipse(ctx, x + 9, y + 4, 7, 3.4, "#2e7d32"); ellipse(ctx, x + 11, y + 3, 2.2, 1.6, "#f48fb1"); }
     return;
   }
   if (t.k === "soil") {
-    diamond(ctx, x, y, A, B); ctx.fillStyle = "#558b2f"; ctx.fill();
-    const base = t.wet ? "#3e261a" : "#6b3f24";
-    const g = ctx.createLinearGradient(x - A, y, x + A, y);
-    g.addColorStop(0, shade(base, -0.08)); g.addColorStop(1, shade(base, 0.14));
-    diamond(ctx, x, y + 1, A * 0.93, B * 0.93); ctx.fillStyle = g; ctx.fill();
-    ctx.strokeStyle = t.wet ? "rgba(20,10,0,0.6)" : "rgba(60,32,12,0.55)"; ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    for (let i = 1; i < 5; i++) {
-      const u = i / 5, p0x = x - A * 0.93 + A * 0.93 * u, p0y = y + 1 - B * 0.93 * u;
-      ctx.moveTo(p0x, p0y); ctx.lineTo(p0x + A * 0.93, p0y + B * 0.93);
+    const hit = resolveAtlas(t.wet ? "g|soilwet" : "g|soil");
+    if (hit) blitAtlasTile(ctx, hit, x, y);
+    else {
+      diamond(ctx, x, y, A, B); ctx.fillStyle = "#558b2f"; ctx.fill();
+      const base = t.wet ? "#3e261a" : "#6b3f24";
+      const g = ctx.createLinearGradient(x - A, y, x + A, y);
+      g.addColorStop(0, shade(base, -0.08)); g.addColorStop(1, shade(base, 0.14));
+      diamond(ctx, x, y + 1, A * 0.93, B * 0.93); ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = t.wet ? "rgba(20,10,0,0.6)" : "rgba(60,32,12,0.55)"; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i = 1; i < 5; i++) {
+        const u = i / 5, p0x = x - A * 0.93 + A * 0.93 * u, p0y = y + 1 - B * 0.93 * u;
+        ctx.moveTo(p0x, p0y); ctx.lineTo(p0x + A * 0.93, p0y + B * 0.93);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
     if (t.wet) ellipse(ctx, x - 12, y + 4, 9, 3.5, "rgba(120,200,255,0.4)");
     if (snow && (t.g || 0) < 0.3) snowCover(ctx, gx, gy, x, y, 0.93, 0.7);
   } else {
@@ -100,25 +109,29 @@ function groundBase(ctx: CanvasRenderingContext2D, s: State, gx: number, gy: num
     if (season === "autumn") { hue = 38 + t.v * 20; sat = 60; l = 50 + t.v * 6; }
     else if (season === "winter") { hue = 150 + t.v * 25; sat = 18; l = 78 + t.v * 10; }
     else if (season === "summer") { hue = 80 + t.v * 10; sat = 70; }
-    const g = ctx.createLinearGradient(x, y - B, x, y + B);
-    g.addColorStop(0, `hsl(${hue},${sat}%,${l + 5}%)`); g.addColorStop(1, `hsl(${hue},${sat}%,${l - 4}%)`);
-    diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
-    ctx.strokeStyle = `hsl(${hue},${sat}%,${l - 14}%)`; ctx.lineWidth = 1.3;
-    ctx.beginPath(); // دسته‌های علف (در کش ثابت‌اند)
-    for (let i = 0; i < 5; i++) {
-      const ux = (hash(gx * 3 + i, gy) - 0.5) * 60, uy = (hash(gy * 5 + i, gx) - 0.5) * 26;
-      if (Math.abs(ux) / A + Math.abs(uy) / B > 0.85) continue;
-      ctx.moveTo(x + ux - 2, y + uy); ctx.lineTo(x + ux - 3, y + uy - 6);
-      ctx.moveTo(x + ux, y + uy); ctx.lineTo(x + ux, y + uy - 8);
-      ctx.moveTo(x + ux + 2, y + uy); ctx.lineTo(x + ux + 3, y + uy - 5);
-    }
-    ctx.stroke();
-    if (t.v > 0.78 && t.k === "grass" && season !== "winter") {
-      const cols = season === "autumn" ? ["#ef6c00", "#fbc02d", "#ad1457", "#8d6e63"] : ["#ff80ab", "#fff176", "#ffffff", "#ce93d8", "#80d8ff"];
-      for (let i = 0; i < 4; i++) {
-        const fx = x + (hash(i, gx + gy * 7) - 0.5) * 50, fy = y + (hash(gy + i, gx) - 0.5) * 20;
-        ctx.strokeStyle = "#558b2f"; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - 6); ctx.stroke();
-        ellipse(ctx, fx, fy - 7, 2.4, 2.0, cols[(gx + i) % cols.length]);
+    const hit = resolveAtlas(`g|grass|${season}`); // آرتِ فصلی؛ نبودش = هویجِ رویه‌ایِ زیر
+    if (hit) blitAtlasTile(ctx, hit, x, y);
+    else {
+      const g = ctx.createLinearGradient(x, y - B, x, y + B);
+      g.addColorStop(0, `hsl(${hue},${sat}%,${l + 5}%)`); g.addColorStop(1, `hsl(${hue},${sat}%,${l - 4}%)`);
+      diamond(ctx, x, y, A + 0.6, B + 0.6); ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = `hsl(${hue},${sat}%,${l - 14}%)`; ctx.lineWidth = 1.3;
+      ctx.beginPath(); // دسته‌های علف (در کش ثابت‌اند)
+      for (let i = 0; i < 5; i++) {
+        const ux = (hash(gx * 3 + i, gy) - 0.5) * 60, uy = (hash(gy * 5 + i, gx) - 0.5) * 26;
+        if (Math.abs(ux) / A + Math.abs(uy) / B > 0.85) continue;
+        ctx.moveTo(x + ux - 2, y + uy); ctx.lineTo(x + ux - 3, y + uy - 6);
+        ctx.moveTo(x + ux, y + uy); ctx.lineTo(x + ux, y + uy - 8);
+        ctx.moveTo(x + ux + 2, y + uy); ctx.lineTo(x + ux + 3, y + uy - 5);
+      }
+      ctx.stroke();
+      if (t.v > 0.78 && t.k === "grass" && season !== "winter") {
+        const cols = season === "autumn" ? ["#ef6c00", "#fbc02d", "#ad1457", "#8d6e63"] : ["#ff80ab", "#fff176", "#ffffff", "#ce93d8", "#80d8ff"];
+        for (let i = 0; i < 4; i++) {
+          const fx = x + (hash(i, gx + gy * 7) - 0.5) * 50, fy = y + (hash(gy + i, gx) - 0.5) * 20;
+          ctx.strokeStyle = "#558b2f"; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - 6); ctx.stroke();
+          ellipse(ctx, fx, fy - 7, 2.4, 2.0, cols[(gx + i) % cols.length]);
+        }
       }
     }
     if (snow) snowCover(ctx, gx, gy, x, y, 1, 0.62);
@@ -178,7 +191,7 @@ export class GroundLayer {
     this.direct = wantsDirect(k, this.direct);
     const step = cacheStep(k);
     if (step !== this.want) { this.want = step; this.wantSince = now; }
-    const sig = `${season}|${snow ? 1 : 0}`;
+    const sig = `${season}|${snow ? 1 : 0}|${artVersion()}`; // آرتِ تازه = بازسازیِ کامل
     const rescale = !this.cv || (this.want !== this.scale && now - this.wantSince > 0.3);
     if (rescale || sig !== this.sig || nChanged > 24) this.rebuild(s, rescale || !this.cv ? this.want : this.scale, season, snow, sig);
     else for (const i of changed) this.patch(s, i % N, (i / N) | 0, season, snow);
