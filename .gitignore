@@ -14,7 +14,3 @@ playwright-report/
 
 # مورد ۹ِ نقشه‌ی راه: اسکرین‌شات‌ها فقط آرتیفکتِ CI هستند (playtest-shots)، نه بخشی از مخزن
 docs/shots/
-
-# تصاویرِ خامِ AI (قابلِ بازتولید از docs/prompts/) — برای سبک‌بودنِ مخزن
-art-src/bible/
-art-src/test/
