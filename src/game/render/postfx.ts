@@ -9,6 +9,8 @@
  * پیاده‌سازیِ «میکرو انجین» با WebGL2 خام — بدونِ وابستگیِ خارجی:
  * یک برنامه‌ی سه‌خطیِ شیدر + یک مثلثِ تمام‌صفحه. اگر WebGL2 نیست یا هر خطایی
  * رخ داد: `null` برمی‌گردانیم و مسیرِ ۲بعدیِ خالص می‌ماند (بازی هیچ‌گاه نمی‌شکند).
+ * سقفِ پسماند: رندررِ نرم‌افزاری (SwiftShader/llvmpipe) تشخیص داده می‌شود و گذار
+ * خاموش می‌ماند (پروفایلِ ضعیف ≥ ۴۵ فریم)؛ پرچمِ ?fx=1 برایِ نمونه‌ی اسکرین‌شات.
  * برای فازِ ۲ (رندرِ واقعیِ GPU) می‌توان همین بوم را به PixiJS/SDF منتقل کرد.
  */
 
@@ -87,6 +89,16 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
   try {
     gl = canvas.getContext("webgl2", { alpha: false, antialias: false, depth: false, stencil: false })!;
     if (!gl) return null;
+    // سقفِ پسماند: روی رندرِ نرم‌افزاری (SwiftShader/llvmpipe) گذارِ GPU به‌جای کمکِ
+    // فریم‌نرخ، آن را می‌کَنَد → مسیرِ ۲بعدیِ خالص (قاعده: پروفایلِ ضعیف ≥ ۴۵ فریم).
+    // پرچمِ ?fx=1 تشخیص را رد می‌کند (برایِ اسکرین‌شاتِ نمونه روی رندررِ نرم)
+    let renderer = "";
+    try {
+      const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+      if (dbg) renderer = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
+    } catch { /* بی‌صدا */ }
+    const forced = typeof location !== "undefined" && /[?&]fx=1\b/.test(location.search);
+    if (!forced && /swiftshader|llvmpipe|software/i.test(renderer)) return null;
     const vs = compile(gl, gl.VERTEX_SHADER, VERT);
     const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
     if (!vs || !fs) return null;

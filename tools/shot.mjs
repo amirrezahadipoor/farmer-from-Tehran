@@ -4,7 +4,9 @@
 // در یک لحظه‌ی نوریِ معیّن (ظهرِ تابستان، آفتابی) رندر و عکس می‌گیرد: نمایِ کلی + نمایِ نزدیک.
 import { chromium } from "@playwright/test";
 
-const url = process.argv[2] ?? "http://localhost:3111/";
+// ?fx=1 — پست‌پردازشِ GPU را حتی روی رندررِ نرم (SwiftShader) روشن نگه می‌دارد تا
+// نمونه‌ی بصری کامل باشد (در CI و بازیِ عادی، تشخیصِ نرم‌افزاری آن را خاموش می‌کند)
+const url = process.argv[2] ?? "http://localhost:3111/?fx=1";
 const out = process.argv[3] ?? "docs/shots/sample";
 
 
