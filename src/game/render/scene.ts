@@ -12,7 +12,7 @@
 import { N, CH, SEASONS, fmt } from "../data";
 import { idx, locked, chunkOf, canExpand, expandCost, type Fx, type State, type Tile } from "../logic";
 import { drawIcon } from "../icons";
-import { A, B, clamp, diamond, ellipse, glowSprite, hash, lightInfo, makeCanvas, tileCenter, type View, type Walker } from "./core";
+import { A, B, clamp, diamond, ellipse, glowSprite, hash, lightInfo, makeCanvas, sunLight, tileCenter, type View, type Walker } from "./core";
 import { GroundLayer, drawGroundAnim, drawGroundTile } from "./ground";
 import { drawCropTile, drawRock, drawTree, drawWalker, objectShadow, setSpriteScale, spriteCount } from "./nature";
 import { drawBuilding } from "./buildings";
@@ -161,7 +161,8 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
   const k = dpr * cam.z;
   const sway = k >= 0.9 && v.w >= 700;
   ctx.setTransform(k, 0, 0, k, dpr * (w / 2 + cam.x), dpr * (h / 2 + cam.y));
-  const sdx = -Math.cos(L.p * Math.PI * 2 - Math.PI / 2) * 12;
+  const SL = sunLight(L.p, L.e, L.dark);
+  const sdx = SL.sdx;
   // مستطیلِ دیده‌شده در مختصاتِ جهان؛ اشیا با حاشیه (بلندیِ ساختمان‌ها)
   const vx0 = (-w / 2 - cam.x) / cam.z, vx1 = (w / 2 - cam.x) / cam.z, vy0 = (-h / 2 - cam.y) / cam.z, vy1 = (h / 2 - cam.y) / cam.z;
   const pad = 150;
@@ -195,8 +196,9 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
     objectShadow(shadows, t, x, y, sdx);
     if (shadowsSoft) objectShadow(shadowsSoft, t, x, y, sdx, 1.4);
   }
-  if (shadowsSoft) { ctx.fillStyle = "rgba(10,20,8,0.11)"; ctx.fill(shadowsSoft); }
-  ctx.fillStyle = "rgba(10,20,8,0.22)"; ctx.fill(shadows);
+  const shCol = SL.night ? "6,12,26" : "10,20,8";
+  if (shadowsSoft) { ctx.fillStyle = `rgba(${shCol},${(SL.alpha * 0.5).toFixed(3)})`; ctx.fill(shadowsSoft); }
+  ctx.fillStyle = `rgba(${shCol},${SL.alpha.toFixed(3)})`; ctx.fill(shadows);
 
   const byTile = new Map<number, Walker[]>();
   for (const wk of walkers) { const key = idx(Math.floor(wk.x), Math.floor(wk.y)); byTile.set(key, [...(byTile.get(key) ?? []), wk]); }
@@ -282,6 +284,20 @@ export function render(ctx: CanvasRenderingContext2D, s: State, v: View, now: nu
       ctx.drawImage(glow, x - r, y - 14 - r, r * 2, r * 2);
     }
     ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+  if (L.dusk > 0.02 && !SL.night) {
+    const sb = skyBodies(L.p).sun;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cx = (sb.x / 100) * w, cy = (sb.y / 100) * h;
+    const a = 0.13 * L.dusk * sb.o;
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.9);
+    gr.addColorStop(0, `rgba(255,158,64,${a.toFixed(3)})`);
+    gr.addColorStop(0.45, `rgba(255,120,50,${(a * 0.45).toFixed(3)})`);
+    gr.addColorStop(1, "rgba(255,110,40,0)");
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = gr;
+    ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
   }
   // ذره‌های هوا در فضای صفحه، هر نوع در یک مسیر؛ تعداد با مساحتِ صفحه مقیاس می‌گیرد و روی

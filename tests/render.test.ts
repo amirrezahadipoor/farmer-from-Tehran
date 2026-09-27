@@ -37,6 +37,7 @@ let render: typeof import("../src/game/render").render;
 let renderStats: typeof import("../src/game/render").renderStats;
 let screenFx: typeof import("../src/game/render").screenFx;
 let skyBodies: typeof import("../src/game/render").skyBodies;
+let sunLight: typeof import("../src/game/render").sunLight;
 let ground: typeof import("../src/game/render/ground");
 let nature: typeof import("../src/game/render/nature");
 beforeAll(async () => {
@@ -44,7 +45,7 @@ beforeAll(async () => {
   g.Path2D = FakePath;
   g.DOMMatrix = class { constructor(_m?: number[]) {} };
   g.document = { createElement: () => { const c = { width: 1, height: 1, getContext: () => fakeCtx(cache, c) }; return c; } };
-  ({ render, renderStats, screenFx, skyBodies } = await import("../src/game/render"));
+  ({ render, renderStats, screenFx, skyBodies, sunLight } = await import("../src/game/render"));
   ground = await import("../src/game/render/ground");
   nature = await import("../src/game/render/nature");
 });
@@ -62,6 +63,7 @@ describe("کشِ زمین و اسپرایت (P5.14)", () => {
   it("فریمِ پایدار: زمین و درخت و محصول صفر گرادیان (فقط دیوارِ ساختمان‌ها)، fill+stroke زیرِ ۱۰۰ (قبلاً ۵۰۵۶)", () => {
     const s = newState();
     s.weather = "sun";
+    s.time = 120;
     const blds = s.tiles.filter((t) => t.k === "bld").length;
     frameOf(s, 1); // فریمِ اول کش را می‌سازد
     const st0 = renderStats();
@@ -177,5 +179,38 @@ describe("کشِ زمین و اسپرایت (P5.14)", () => {
       expect(y - 22 - 14).toBeGreaterThanOrEqual(ground.Y0); // تیرکِ پرچین در لبه‌ی بالا
       expect(y + 22).toBeLessThanOrEqual(ground.Y0 + ground.GH);
     }
+  });
+});
+
+describe("A.5 — نورِ بلادرنگ: سایه از جایِ خورشید و گرمایِ ساعتِ طلایی", () => {
+  it("ظهر: سایه‌ی کوتاه و تیره", () => {
+    const l = sunLight(0.5, 1, 0);
+    expect(Math.abs(l.sdx)).toBeLessThan(4);
+    expect(l.alpha).toBeGreaterThan(0.25);
+    expect(l.night).toBe(false);
+  });
+  it("طلوع: سایه‌ی بلندِ نرم رو به یک سو", () => {
+    const l = sunLight(0.25, 0, 0);
+    expect(l.sdx).toBeLessThan(-25);
+    expect(l.alpha).toBeLessThan(0.2);
+    expect(l.night).toBe(false);
+  });
+  it("غروب: همان بلندی در سمتِ مخالف", () => {
+    const l = sunLight(0.75, 0, 0);
+    expect(l.sdx).toBeGreaterThan(25);
+  });
+  it("نیمه‌شب: سایه‌ی ماه، ضعیف و کوتاه", () => {
+    const l = sunLight(0, -1, 0.68);
+    expect(l.night).toBe(true);
+    expect(l.alpha).toBeLessThan(0.12);
+    expect(Math.abs(l.sdx)).toBeLessThan(10);
+  });
+  it("ساعتِ طلایی: گرادیانِ گرم فقط نزدیکیِ افق رسم می‌شود", () => {
+    const s = newState();
+    s.time = 67;
+    const dusk = frameOf(s, 1);
+    s.time = 120;
+    const noon = frameOf(s, 1);
+    expect(dusk.createRadialGradient || 0).toBeGreaterThan(noon.createRadialGradient || 0);
   });
 });
