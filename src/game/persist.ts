@@ -186,7 +186,15 @@ export type PersistState = "granted" | "denied" | "unsupported";
  * درخواستِ حافظه‌ی ماندگار (مورد ۳): مرورگر زیرِ فشارِ فضا یا بعد از مدتی بی‌استفادگی سیو را پاک نمی‌کند.
  * ask=false فقط وضعیت را می‌پرسد (بی‌پنجره‌ی اجازه).
  */
+export const PERSIST_KEY = "farm_persist";
+
 export async function requestPersistence(ask = true): Promise<PersistState> {
+  const r = await persistState(ask);
+  if (ask) writeLS(PERSIST_KEY, r); // نتیجه‌ی آخرین درخواست (پنلِ «انتقال و پشتیبان» و تست)
+  return r;
+}
+
+async function persistState(ask: boolean): Promise<PersistState> {
   const s = typeof navigator !== "undefined" ? navigator.storage : undefined;
   if (!s?.persisted) return "unsupported";
   try {
