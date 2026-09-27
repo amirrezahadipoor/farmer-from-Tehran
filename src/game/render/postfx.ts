@@ -36,8 +36,29 @@ uniform float uRain;
 uniform float uTime;
 uniform vec4 uCam;
 uniform vec2 uScreen;
+uniform vec4 uSky;
 void main() {
   vec4 c = texture(uTex, vUv);
+  if (c.a < 0.02) {
+    float t = 1.0 - vUv.y;
+    vec3 zen = mix(vec3(0.24, 0.48, 0.85), vec3(0.03, 0.05, 0.13), uSky.x);
+    vec3 hor = mix(vec3(0.72, 0.87, 0.98), vec3(0.07, 0.10, 0.20), uSky.x);
+    vec3 sky = mix(hor, zen, smoothstep(0.15, 0.85, t));
+    sky = mix(sky, vec3(1.0, 0.52, 0.22) * (0.35 + 0.65 * (1.0 - t)), uSky.y * 0.55 * (1.0 - t));
+    vec2 g = floor(vUv * vec2(90.0, 60.0));
+    float st = fract(sin(dot(g, vec2(12.9898, 78.233))) * 43758.5453);
+    float tw = 0.5 + 0.5 * sin(uSky.w * (1.5 + st * 2.5) + st * 40.0);
+    float star = step(0.9975, st) * tw * uSky.x;
+    vec2 cp = vUv * vec2(3.2, 2.1) + vec2(uSky.w * 0.008, 0.0);
+    float n = 0.0;
+    n += 0.55 * (0.5 + 0.5 * sin(cp.x * 3.1 + sin(cp.y * 2.7) * 1.7));
+    n += 0.30 * (0.5 + 0.5 * sin(cp.x * 6.7 + 1.3 + sin(cp.y * 5.3 + 0.7) * 1.4));
+    n += 0.15 * (0.5 + 0.5 * sin(cp.x * 13.3 + 2.1 + sin(cp.y * 11.1) * 1.2));
+    float cloud = smoothstep(1.0 - uSky.z * 0.75, 1.35 - uSky.z * 0.5, n) * smoothstep(0.05, 0.35, t) * (1.0 - uSky.x * 0.85);
+    sky = mix(sky, vec3(0.97, 0.98, 1.0), cloud * 0.85);
+    sky += vec3(star);
+    c = vec4(sky, 1.0);
+  }
   vec2 px = vUv * uScreen;
   vec2 world = (px - uCam.xy) / uCam.z;
   vec2 muv = vec2((world.x + 1584.0) / 3168.0, (world.y + 792.0) / 1584.0);
@@ -76,7 +97,7 @@ export interface PostFX {
   setGrade: (v: number) => void;
   setFog: (v: number) => void;
   setWaterMask: (cv: HTMLCanvasElement) => void;
-  update: (u: { time: number; rain: number; ox: number; oy: number; k: number; sw: number; sh: number }) => void;
+  update: (u: { time: number; rain: number; ox: number; oy: number; k: number; sw: number; sh: number; dark: number; dusk: number; cloud: number; skyT: number }) => void;
 }
 
 /** آیا این مرورگر WebGL2 سالم دارد؟ (در محیطِ تست/سرور: همیشه false → مسیرِ ۲بعدی) */
@@ -161,6 +182,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
     const uTime = gl.getUniformLocation(prog, "uTime");
     const uCam = gl.getUniformLocation(prog, "uCam");
     const uScreen = gl.getUniformLocation(prog, "uScreen");
+    const uSky = gl.getUniformLocation(prog, "uSky");
     gl.uniform1i(uTex, 0);
     gl.uniform1i(uWaterTex, 1);
     let fog = 0.42, grade = 1.0;
@@ -212,6 +234,7 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
         gl.uniform1f(uTime, u.time);
         gl.uniform4f(uCam, u.ox, u.oy, u.k, 0);
         gl.uniform2f(uScreen, u.sw, u.sh);
+        gl.uniform4f(uSky, u.dark, u.dusk, u.cloud, u.skyT);
       },
     };
   } catch {
