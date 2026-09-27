@@ -6,12 +6,15 @@
  *  ۲. بدنه‌ی بیش از ۵۱۲ کیلوبایت → ۴۱۳ (هم از روی content-length، هم با شمارشِ واقعی).
  *  ۳. نرخ: هر «شناسه|IP» و هر IP سطلِ خودش را دارد → ۴۲۹ با Retry-After.
  *  ۴. داده قبل از نوشتن از همان sanitizeSave بازی می‌گذرد؛ سیوِ نامعتبر → ۴۲۲.
- *  ۵. خطای پایگاه‌داده = «آفلاین» (بازی روی دستگاه ادامه می‌دهد؛ هیچ ۵۰۰ی به بازیکن نمی‌رسد).
+ *  ۵. خطای پایگاه‌داده = «آفلاین» (بازی روی دستگاه ادامه می‌دهد؛ هیچ ۵۰۰ی به بازیکن نمی‌رسد)،
+ *     ولی دیگر بی‌صدا نیست: یک خطِ JSON در لاگِ سرور (مورد ۴).
  */
 import { sanitizeSave } from "@/game/sim/sanitize";
 import { TOKEN_HEADER, clientIp, hashToken, tokenMatches, validId, validToken } from "./auth";
 import { RateLimiter } from "./limit";
 import type { SaveStore } from "./store";
+import { TooLarge, readCapped } from "../http";
+import { logServerError } from "../log/server";
 
 export const MAX_BODY = 512 * 1024;
 
@@ -48,7 +51,8 @@ export async function handleGet(req: Request, deps: SaveDeps): Promise<Response>
     if (row.tokenHash && !tokenMatches(token, row.tokenHash)) return json({ data: null, mode: "cloud", error: "forbidden" }, 403);
     // ردیفِ قدیمی بدون مالک هم فقط به دارنده‌ی شناسه و یک توکنِ معتبر داده می‌شود؛ اولین نوشتن قفلش می‌کند
     return json({ data: row.data ?? null, mode: "cloud" });
-  } catch {
+  } catch (e) {
+    logServerError("save.get", e);
     return json({ data: null, mode: "offline" });
   }
 }
@@ -89,28 +93,8 @@ export async function handlePost(req: Request, deps: SaveDeps): Promise<Response
     if (row?.tokenHash && !tokenMatches(token, row.tokenHash)) return json({ ok: false, mode: "cloud", error: "forbidden" }, 403);
     await deps.store.put(id, clean, row?.tokenHash ?? hashToken(token));
     return json({ ok: true, mode: "cloud" });
-  } catch {
+  } catch (e) {
+    logServerError("save.post", e);
     return json({ ok: false, mode: "offline" });
   }
-}
-
-class TooLarge extends Error {}
-
-/** بدنه را تا سقفِ max بایت می‌خواند؛ بیشتر → TooLarge (content-length می‌تواند دروغ بگوید یا نباشد) */
-async function readCapped(req: Request, max: number): Promise<string> {
-  if (!req.body) return "";
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > max) {
-      await reader.cancel().catch(() => {});
-      throw new TooLarge();
-    }
-    chunks.push(value);
-  }
-  return Buffer.concat(chunks.map((c) => Buffer.from(c.buffer, c.byteOffset, c.byteLength))).toString("utf8");
 }

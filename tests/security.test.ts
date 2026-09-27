@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PERMISSIONS_POLICY, cspDirectives, securityHeaders } from "../src/security";
-import nextConfig from "../next.config";
+import nextConfig, { DOCUMENT_ROUTES, STATIC_ROUTES } from "../next.config";
 
 /** tests/security.test.ts — هدرهای امنیتی و قلابِ تست (نقشه‌ی راه، مورد ۶) */
 describe("هدرهای امنیتی", () => {
@@ -34,8 +34,12 @@ describe("هدرهای امنیتی", () => {
     }
     expect(nextConfig.poweredByHeader).toBe(false);
     const all = (await nextConfig.headers?.()) ?? [];
-    const global = all.find((h) => h.source === "/:path*");
-    expect(global?.headers.map((h) => h.key)).toEqual(keys);
+    expect(all.find((h) => h.source === DOCUMENT_ROUTES)?.headers.map((h) => h.key)).toEqual(keys);
+    expect(all.find((h) => h.source === STATIC_ROUTES)?.headers).toEqual([{ key: "X-Content-Type-Options", value: "nosniff" }]);
+    // مسیرِ سند همه‌جا جز فایل‌های ایستا را می‌گیرد
+    const doc = new RegExp(`^${DOCUMENT_ROUTES}$`);
+    for (const p of ["/", "/sw.js", "/manifest.json", "/api/save", "/api/health"]) expect(doc.test(p), p).toBe(true);
+    for (const p of ["/_next/static/chunks/a.js", "/fonts/Vazirmatn-Bold.woff2", "/images/logo_badge.webp", "/icons/icon-192.png"]) expect(doc.test(p), p).toBe(false);
   });
 
   it("Permissions-Policy فقط ویژگی‌های شناخته‌شده را می‌بندد (ویژگیِ ناشناخته خطای کنسول می‌دهد)", () => {
