@@ -78,6 +78,8 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
   const [portrait, setPortrait] = useState(portraitLockPref);
   const [quality, setQuality] = useState<QualityMode>(qualityPref);
   const [armReset, setArmReset] = useState(false);
+  // C/T7: بازیابیِ نسخه‌ی قبلی جای سیوِ فعلی می‌نشیند — با تأییدِ دومرحله‌ای
+  const [armPrev, setArmPrev] = useState(false);
 
   return (
     <div className="space-y-3">
@@ -195,8 +197,15 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
 
       <button
         type="button"
-        className={`${btn} w-full bg-slate-600 text-white`}
+        className={`${btn} w-full ${armPrev ? "bg-red-600" : "bg-slate-600"} text-white`}
         onClick={() => {
+          if (!armPrev) {
+            setArmPrev(true);
+            ui.toast("نسخه‌ی قبلی جای سیوِ فعلی می‌نشیند — برای تأیید دوباره لمس کن", "info");
+            setTimeout(() => setArmPrev(false), 4000);
+            return;
+          }
+          setArmPrev(false);
           void (async () => {
             const prev = await fetchCloudPrev();
             if (!prev) {
@@ -208,7 +217,7 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
           })();
         }}
       >
-        <Icon name="repeat" size={18} /> بازیابی نسخه‌ی قبلیِ ابری
+        <Icon name="repeat" size={18} /> {armPrev ? "تأیید: بازیابی نسخه‌ی قبلی" : "بازیابی نسخه‌ی قبلیِ ابری"}
       </button>
 
       <button

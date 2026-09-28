@@ -328,6 +328,6 @@ describe("B/T2 — یک رویداد = یک پیام در لول‌آپ", () => 
     expect(msgs.filter((m) => m.includes("سطح"))).toHaveLength(1);
     const one = msgs[0];
     expect(one).toContain("پاداش");
-    expect(one).toContain("امتیاز مهارت");
+    expect(one).toContain("امتیاز مهارتِ تازه"); // C/T8: سهمِ همین پرش، نه شمارنده‌ی تجمعی
   });
 });

@@ -32,6 +32,20 @@ describe("دروازه‌ی توست‌ها (B/T3) — کمترِ پیام، ه�
     expect(pass(g, "سطح ۵! پاداش ۲۲۵ سکه", "lvl", 6000)).toBe(true);
   });
 
+  it("پیام‌های متناوب (الف/ب/الف) هم در پنجره‌ی خودشان می‌گیرند (C/T4 — LRU)", () => {
+    const g = newGate();
+    expect(pass(g, "الف", "err", 1000)).toBe(true);
+    expect(pass(g, "ب", "err", 1100)).toBe(true);
+    expect(pass(g, "الف", "err", 1200)).toBe(false);
+    expect(pass(g, "الف", "err", 1000 + TOAST_WINDOW_MS.err + 1)).toBe(true);
+  });
+
+  it("حافظه سقف دارد: پیام‌های کهنه فراموش و دوباره مجاز می‌شوند (LRU)", () => {
+    const g = newGate();
+    for (let i = 0; i < 8; i++) expect(pass(g, `م${i}`, "info", 1000 + i)).toBe(true);
+    expect(pass(g, "م0", "info", 1010)).toBe(true); // از حافظه بیرون افتاده بود
+  });
+
   it("نوعِ ناشناخته = پنجره‌ی محافظه‌کارانه‌ی ۱۰ ثانیه", () => {
     const g = newGate();
     expect(pass(g, "متن", "نامعلوم", 1000)).toBe(true);

@@ -9,7 +9,8 @@
  */
 
 export interface GateMemory {
-  last: { text: string; at: number } | null;
+  /** متنِ پیام‌های اخیر → زمانِ آخرین نمایش (LRU با سقفِ GATE_MAX_KEYS) */
+  recent: Map<string, number>;
 }
 
 /** پنجره‌ی سکوت (میلی‌ثانیه) برای هر نوعِ پیام */
@@ -21,17 +22,22 @@ export const TOAST_WINDOW_MS: Record<string, number> = {
   info: 45_000,
 };
 
-export const newGate = (): GateMemory => ({ last: null });
+export const newGate = (): GateMemory => ({ recent: new Map() });
 
-/** آیا این پیام right now حقِ نمایش دارد؟ (خالص؛ memory را خودش به‌روز می‌کند) */
+/** سقفِ حافظه: پیام‌های کهنه‌تر فراموش می‌شوند تا نشستِ طولانی رشد نکند (C/T4) */
+export const GATE_MAX_KEYS = 6;
+
+/** آیا این پیام right now حقِ نمایش دارد؟ (خالص؛ حافظه را خودش به‌روز می‌کند) */
 export function pass(g: GateMemory, text: string, type: string, now: number): boolean {
   const windowMs = TOAST_WINDOW_MS[type] ?? 10_000;
-  if (g.last && g.last.text === text && now - g.last.at < windowMs) return false;
-  if (g.last) {
-    g.last.text = text;
-    g.last.at = now;
-  } else {
-    g.last = { text, at: now };
+  const at = g.recent.get(text);
+  if (at !== undefined && now - at < windowMs) return false;
+  g.recent.delete(text); // درجِ دوباره = تازه‌ترین در ترتیبِ LRU
+  g.recent.set(text, now);
+  while (g.recent.size > GATE_MAX_KEYS) {
+    const oldest = g.recent.keys().next();
+    if (oldest.done) break;
+    g.recent.delete(oldest.value);
   }
   return true;
 }

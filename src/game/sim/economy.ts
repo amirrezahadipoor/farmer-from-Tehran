@@ -162,7 +162,8 @@ export function addXp(s: State, n: number, ev: Events) {
     const unl = [...new Set(unlocked)];
     if (unl.length) parts.push(`باز شد: ${unl.join("، ")}`);
     parts.push(`پاداش ${fmt(bonusTotal)} سکه`);
-    if (s.stats.skillPoints > 0) parts.push(`${fmt(s.stats.skillPoints)} امتیاز مهارت`);
+    // C/T8: شمارنده‌ی تجمعی گمراه‌کننده بود؛ فقط سهمِ همین پرش
+    parts.push(`${fmt(lvlGained)} امتیاز مهارتِ تازه`);
     ev.toast(parts.join(" · "), "lvl");
   }
   checkAchievements(s, ev);
