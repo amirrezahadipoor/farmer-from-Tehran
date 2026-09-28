@@ -7,6 +7,7 @@ import {
   type State, type Order, type Events, newStoryState, generateMap, rnd, NCH, capacity, invCount,
   countB, hasTech, hasSkill, DROUGHT,
 } from "./state";
+import { rng } from "./rng";
 
 
 /** کالاهایی که «محصول کشاورزی» حساب می‌شوند (برای قیمتِ خشکسالی) */
@@ -21,7 +22,7 @@ export function newState(): State {
     if (cx >= 0 && cy >= 0 && cx < NCH && cy < NCH) chunks[cy * NCH + cx] = true;
   }
   const market: State["market"] = {};
-  Object.keys(ITEMS).forEach((k) => (market[k] = { sat: 0, hist: [], ph: Math.random() * 6.28 }));
+  Object.keys(ITEMS).forEach((k) => (market[k] = { sat: 0, hist: [], ph: rng() * 6.28 }));
   const contracts = CONTRACTS.map((c) => ({ id: c.id, progress: 0, claimed: false }));
   const s: State = {
     v: 5, coins: 400, xp: 0, level: 1, prestige: 0,
@@ -116,16 +117,16 @@ export function nextUnlock(level: number, max = 60): { level: number; items: Unl
 
 export function genOrder(s: State): Order {
   const pool = unlockedItems(s);
-  const nItems = Math.min(pool.length, 1 + Math.floor(Math.random() * Math.min(4, 1 + s.level / 2)));
-  const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, nItems);
+  const nItems = Math.min(pool.length, 1 + Math.floor(rng() * Math.min(4, 1 + s.level / 2)));
+  const picked = [...pool].sort(() => rng() - 0.5).slice(0, nItems);
   const items = picked.map((id) => ({ id, n: Math.max(1, Math.round(rnd(1, (ITEMS[id]?.base || 10) < 30 ? 6 : 3) + s.level / 2)) }));
   const val = items.reduce((a, it) => a + (ITEMS[it.id]?.base || 10) * it.n, 0);
-  let m = 1.3 + s.rep * 0.012 + Math.random() * 0.2;
+  let m = 1.3 + s.rep * 0.012 + rng() * 0.2;
   if (hasTech(s, "order_bonus")) m *= 1.25;
   if (hasTech(s, "global_market")) m *= 1.15;
   if (hasSkill(s, "zen_master")) m *= 1.05;
   return {
-    id: s.nextId++, npc: Math.floor(Math.random() * NPCS.length), items,
+    id: s.nextId++, npc: Math.floor(rng() * NPCS.length), items,
     coins: Math.round(val * m * (1 + s.prestige * 0.1)),
     xp: Math.round(4 + val / 10), repReward: Math.round(2 + val / 60),
     exp: s.time + rnd(360, 720),
@@ -190,7 +191,7 @@ export function sellPreview(s: State, id: string, n: number) {
 export function sell(s: State, id: string, n: number, ev: Events) {
   const pv = sellPreview(s, id, n);
   if (pv.n <= 0) return;
-  if (!s.market[id]) s.market[id] = { sat: 0, hist: [], ph: Math.random() * 6 };
+  if (!s.market[id]) s.market[id] = { sat: 0, hist: [], ph: rng() * 6 };
   s.inv[id] -= pv.n;
   s.coins += pv.coins; s.stats.earned += pv.coins;
   s.market[id].sat = pv.satAfter;

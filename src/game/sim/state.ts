@@ -4,6 +4,7 @@
  */
 import { ITEMS, N, CH, WorkerKind, CONTRACTS, WeatherType, EventType } from "../data";
 import { stripEmoji } from "../noEmoji";
+import { rng } from "./rng";
 import type { Gender } from "../gender";
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
 export interface Tile {
@@ -102,25 +103,25 @@ export function generateMap(): Tile[] {
     for (let x = 0; x < N; x++) {
       const d = Math.hypot(x - cx, y - cy);
       const coast = coastR + noise(x, y, 0.42, 3.1) * 1.6 + noise(x, y, 1.05, 7.7) * 0.75;
-      if (d > coast) { tiles.push({ k: "water", v: 0.1 + Math.random() * 0.3 }); continue; }
+      if (d > coast) { tiles.push({ k: "water", v: 0.1 + rng() * 0.3 }); continue; }
       if (wet[y * N + x] && !inStart(x, y, 1)) {
-        tiles.push({ k: "water", v: 0.6 + Math.random() * 0.35 });
+        tiles.push({ k: "water", v: 0.6 + rng() * 0.35 });
         continue;
       }
       const beach = d > coast - 1.5;
       const n = noise(x, y, 0.9, 12.3);
       const hillD = Math.hypot(x - hillX, y - hillY);
       if (!beach && !inStart(x, y, 0) && hillD < hillR * (0.55 + 0.45 * Math.abs(n))) {
-        tiles.push({ k: Math.random() < 0.55 ? "rock" : "grass", v: Math.random() });
+        tiles.push({ k: rng() < 0.55 ? "rock" : "grass", v: rng() });
         continue;
       }
       const forest = noise(x, y, 0.3, 5.5);
-      if (!beach && !inStart(x, y, 0) && forest > 0.4 && Math.random() < 0.75) {
-        tiles.push({ k: "tree", v: Math.random() });
+      if (!beach && !inStart(x, y, 0) && forest > 0.4 && rng() < 0.75) {
+        tiles.push({ k: "tree", v: rng() });
         continue;
       }
-      if (!beach && Math.random() < 0.03) { tiles.push({ k: "rock", v: Math.random() }); continue; }
-      tiles.push({ k: "grass", v: beach ? 0.04 + Math.random() * 0.08 : Math.random() });
+      if (!beach && rng() < 0.03) { tiles.push({ k: "rock", v: rng() }); continue; }
+      tiles.push({ k: "grass", v: beach ? 0.04 + rng() * 0.08 : rng() });
     }
   }
 
@@ -143,7 +144,7 @@ export function generateMap(): Tile[] {
           if (!seen[j] && tiles[j].k === "water") { seen[j] = true; stack.push(j); }
         }
       }
-      if (comp.length < 24) for (const j of comp) tiles[j] = { k: "grass", v: Math.random() };
+      if (comp.length < 24) for (const j of comp) tiles[j] = { k: "grass", v: rng() };
     }
   }
 
@@ -153,10 +154,10 @@ export function generateMap(): Tile[] {
       if (x < 0 || y < 0 || x >= N || y >= N) continue;
       const i = idx(x, y);
       if (tiles[i].k === "water") continue;
-      tiles[i] = { k: "grass", v: Math.random() };
+      tiles[i] = { k: "grass", v: rng() };
     }
   }
-  for (let y = sy0 + 1; y <= sy0 + 3; y++) for (let x = sx0 + 1; x <= sx0 + 4; x++) tiles[idx(x, y)] = { k: "soil", v: Math.random() };
+  for (let y = sy0 + 1; y <= sy0 + 3; y++) for (let x = sx0 + 1; x <= sx0 + 4; x++) tiles[idx(x, y)] = { k: "soil", v: rng() };
   tiles[idx(sx0 + 2, sy0 + 2)] = { k: "soil", v: 0.3, crop: "wheat", g: 0.95 };
   tiles[idx(sx0 + 3, sy0 + 2)] = { k: "soil", v: 0.3, crop: "wheat", g: 1 };
   tiles[idx(sx0 + 2, sy0 + 3)] = { k: "soil", v: 0.3, crop: "carrot", g: 0.7 };
@@ -192,7 +193,7 @@ export interface Events {
   guest?: (npc: number) => void;
 }
 
-export const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+export const rnd = (a: number, b: number) => a + rng() * (b - a);
 export const idx = (x: number, y: number) => y * N + x;
 export const chunkOf = (x: number, y: number) => Math.floor(y / CH) * Math.ceil(N / CH) + Math.floor(x / CH);
 export const locked = (s: State, x: number, y: number) => !s.chunks[chunkOf(x, y)];
@@ -235,7 +236,7 @@ export function migrate(d: unknown): State | null {
   if (!raw || raw.v !== 5 || !Array.isArray(raw.tiles) || raw.tiles.length !== N * N) return null;
   const s = raw as unknown as State;
   if (s.v !== 5) return null;
-  Object.keys(ITEMS).forEach((k) => { if (!s.market[k]) s.market[k] = { sat: 0, hist: [], ph: Math.random() * 6 }; });
+  Object.keys(ITEMS).forEach((k) => { if (!s.market[k]) s.market[k] = { sat: 0, hist: [], ph: rng() * 6 }; });
   if (!s.contracts) s.contracts = CONTRACTS.map((c) => ({ id: c.id, progress: 0, claimed: false }));
   if (!s.achievements) s.achievements = {};
   if (!s.techs) s.techs = [];

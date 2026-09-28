@@ -8,6 +8,7 @@ import { addXp } from "./economy";
 import { workshopTimeFactor } from "./legacy";
 import { harvest, plant, collect, queueRecipe } from "./actions";
 import { type GrowthFactors } from "./growth";
+import { rng } from "./rng";
 
 /** کارگاه‌های دامی (مرغدانی، گاوداری، …) — هدفِ دامپزشک، دامپروری پیشرفته و دامدار مهربان */
 const ANIMAL_OUT = new Set(["egg", "milk", "wool", "pork", "honey"]);
@@ -47,7 +48,7 @@ export function runBuilding(s: State, i: number, dt: number, f: GrowthFactors, e
       if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
       if (Math.abs(dx)+Math.abs(dy) > r) continue;
       const n = s.tiles[idx(nx, ny)];
-      if (n.k === "soil" && !n.fert && Math.random() < dt * 0.2) n.fert = true;
+      if (n.k === "soil" && !n.fert && rng() < dt * 0.2) n.fert = true;
     }
   }
   if (t.b === "harvester") {
@@ -77,7 +78,7 @@ export function runBuilding(s: State, i: number, dt: number, f: GrowthFactors, e
       const nx = x+dx, ny = y+dy;
       if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
       const n = s.tiles[idx(nx, ny)];
-      if (n.k === "soil" && !n.fert && Math.random() < dt * 0.1) {
+      if (n.k === "soil" && !n.fert && rng() < dt * 0.1) {
         if (s.coins >= Math.ceil(FERT_COST * 0.4)) { s.coins -= Math.ceil(FERT_COST * 0.4); s.stats.spent += Math.ceil(FERT_COST * 0.4); n.fert = true; }
       }
     }

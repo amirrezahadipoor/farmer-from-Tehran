@@ -310,7 +310,8 @@
           "id": "9",
           "title": "RNG تزریق‌پذیر (دترمینیسمِ شبیه‌سازی)",
           "dod": "همه‌ی Math.randomهای sim و تولیدِ نقشه از یک rng قابل‌تزریق عبور کنند؛ تست با بذرِ ثابت نتیجه‌ی یکسان بدهد؛ سیو تغییر نکند.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "src/game/sim/rng.ts با mulberry32 و setRng/withRng/withSeed (پیش‌فرض: پوششِ نازک روی Math.random تا spy کردنِ تست‌ها کار کند)؛ هر ۲۹ نقطه‌ی Math.random در state/economy/actions/daycycle/machines/sanitize از rng() عبور کرد — سیو بی‌تغییر (هیچ فیلدِ تازه)؛ tests/rng.test.ts با ۸ تست: نگهبانِ منبع، یکسانیِ نقشه و ۴۰۰ تیک با بذرِ ثابت، و تکرارپذیریِ پاک‌ساز؛ ۴۹۰ تست سبز (Node 20)، پوشش ۹۲.۶۴٪/۸۷.۲۰٪."
         },
         {
           "id": "10",

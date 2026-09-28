@@ -13,6 +13,7 @@ import { normalizeGenerations } from "./legacy";
 import { normalizeLineage } from "./lineage";
 import { ITEMS, N, CH, WEATHER_TYPES } from "../data";
 import { asGender } from "../gender";
+import { rng } from "./rng";
 
 const NCH = Math.ceil(N / CH);
 
@@ -113,7 +114,7 @@ export function sanitizeSave(raw: unknown): State | null {
   Object.keys(ITEMS).forEach((k) => {
     const m = (s.market as Record<string, unknown>)[k];
     if (!isObj(m)) {
-      (s.market as Record<string, unknown>)[k] = { sat: 0, hist: [], ph: Math.random() * 6.28 };
+      (s.market as Record<string, unknown>)[k] = { sat: 0, hist: [], ph: rng() * 6.28 };
       return;
     }
     m.sat = num(m.sat, 0, -1e6, 1e6);

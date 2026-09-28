@@ -9,6 +9,7 @@ import {
 } from "./state";
 import { addInv, addXp, recipeLock, updateContract } from "./economy";
 import { seedDiscount } from "./legacy";
+import { rng } from "./rng";
 import { asGender, type Gender } from "../gender";
 
 export function harvest(s: State, x: number, y: number, ev: Events, silent = false): boolean {
@@ -18,7 +19,7 @@ export function harvest(s: State, x: number, y: number, ev: Events, silent = fal
   let extra = (t.fert ? 2 : 0) + (s.currentEvent?.type === "bountiful_harvest" ? 1 : 0);
   if (hasTech(s, "greenhouse_tech")) extra += 1;
   if (hasSkill(s, "harvest_god")) extra += 1;
-  if (Math.random() < 0.2) extra += 1;
+  if (rng() < 0.2) extra += 1;
   const n = c.yield + extra;
   const outId = c.out ?? c.id; // صنوبر ← الوار
   const got = addInv(s, outId, n);
@@ -48,8 +49,8 @@ export function plant(s: State, x: number, y: number, crop: string, ev: Events, 
   if (s.coins < seedCost) { if (!silent) ev.toast("سکه کافی برای خرید بذر ندارید", "err"); return false; }
   s.coins -= seedCost; s.stats.spent += seedCost;
   t.crop = crop; t.g = 0;
-  if (hasTech(s, "fertilizer_master") && Math.random() < 0.3) t.fert = true;
-  if (hasSkill(s, "fert_soil") && Math.random() < 0.15) t.fert = true;
+  if (hasTech(s, "fertilizer_master") && rng() < 0.3) t.fert = true;
+  if (hasSkill(s, "fert_soil") && rng() < 0.15) t.fert = true;
   if (!silent) { ev.fx(x, y, `-${fmt(seedCost)}`, "#ffd54f", c.leaf, "ui:coin"); ev.sound("plant"); }
   return true;
 }
@@ -227,7 +228,7 @@ export function toolAction(s: State, x: number, y: number, tool: string, arg: st
       s.tiles[idx(x, y)] = { k: "grass", v: t.v }; addXp(s, 3, ev); ev.sound(t.k === "tree" ? "chop" : "rock");
       // P5.8: درخت = ۲ الوار و سنگ = ۲ سنگ (+۱ با شانس ۳۰٪) — مواد اولیه‌ی نجاری/معدن/سنگ‌تراشی
       const mat = t.k === "tree" ? "wood" : "stone";
-      const got = addInv(s, mat, CLEAR_YIELD + (Math.random() < 0.3 ? 1 : 0));
+      const got = addInv(s, mat, CLEAR_YIELD + (rng() < 0.3 ? 1 : 0));
       if (got) ev.fx(x, y, `+${fmt(got)}`, "#fff", undefined, `item:${mat}`);
       return;
     }

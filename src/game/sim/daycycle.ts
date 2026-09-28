@@ -5,6 +5,7 @@
 import { DAY_LEN, WORKERS, SEASONS, WeatherType, EventType, fmt } from "../data";
 import { type State, type Events, hasTech, rnd } from "./state";
 import { proposeFestival } from "./festival";
+import { rng } from "./rng";
 
 /** گذرِ یک تیکِ زمان روی چرخه‌ی روز: روز جدید و حقوق، شمارشِ آب‌وهوا، رویدادها و فستیوال */
 export function stepDay(s: State, dt: number, ev: Events): void {
@@ -20,7 +21,7 @@ export function stepDay(s: State, dt: number, ev: Events): void {
       if (s.coins >= wage) { s.coins -= wage; s.stats.spent += wage; ev.toast(`حقوق روزانه کارکنان پرداخت شد: ${fmt(wage)} سکه`); }
       else { const w = s.workers.pop()!; ev.toast(`${WORKERS[w.kind].name} به دلیل عدم پرداخت حقوق استعفا داد`, "err"); }
     }
-    const rand = Math.random();
+    const rand = rng();
     const sea = SEASONS[s.seasonIndex];
     if (sea.id === "winter") s.weather = rand < 0.5 ? "snow" : rand < 0.75 ? "fog" : "sun";
     else if (sea.id === "autumn") s.weather = rand < 0.45 ? "rain" : rand < 0.7 ? "fog" : "sun";
@@ -34,12 +35,12 @@ export function stepDay(s: State, dt: number, ev: Events): void {
   }
   if (s.weather !== "sun") { s.weatherLeft -= dt; if (s.weatherLeft <= 0) s.weather = "sun"; }
   s.eventAcc += dt;
-  if (s.eventAcc > 120 && !s.currentEvent && Math.random() < 0.5) {
+  if (s.eventAcc > 120 && !s.currentEvent && rng() < 0.5) {
     s.eventAcc = 0;
     // خشکسالی فقط در تابستان وارد چرخه‌ی رویدادها می‌شود (P5.8)
     const ets: EventType[] = ["fair","market_boom","bountiful_harvest","livestock_show"];
     if (SEASONS[s.seasonIndex].id === "summer") ets.push("drought");
-    const pick = ets[Math.floor(Math.random() * ets.length)];
+    const pick = ets[Math.floor(rng() * ets.length)];
     const texts: Record<EventType, string> = {
       fair: "نمایشگاه بهاره دهکده! +۲۵٪ تقاضای محصولات",
       market_boom: "رونق بزرگ بورس کالا! +۳۵٪ قیمت فروش",
