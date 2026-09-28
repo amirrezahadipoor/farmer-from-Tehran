@@ -13,7 +13,7 @@ import { load } from "js-yaml";
 const ROOT = new URL("../", import.meta.url).pathname;
 const FILES = readdirSync(ROOT + ".github/workflows").filter((f) => f.endsWith(".yml")).sort();
 
-type Job = { "runs-on"?: string; steps?: { uses?: string; run?: string }[]; "timeout-minutes"?: number };
+type Job = { "runs-on"?: string; steps?: { uses?: string; run?: string }[]; "timeout-minutes"?: number; permissions?: unknown };
 
 describe("ورک‌فلوی گیت‌هاب", () => {
   it("همه‌ی فایل‌های ورک‌فلو پیدا و خوانده می‌شوند", () => {
@@ -55,8 +55,10 @@ describe("ورک‌فلوی گیت‌هاب", () => {
         }
       });
 
-      it("بلوکِ permissions با حداقلِ امتیاز هست (B/T7)", () => {
-        expect(wf.permissions, "permissions: خواسته نشد").toBeDefined();
+      it("بلوکِ permissions — در سطحِ ورک‌فلو یا همه‌ی jobها (B/T7)", () => {
+        const jobs = Object.values(wf.jobs ?? {});
+        const ok = wf.permissions !== undefined || (jobs.length > 0 && jobs.every((j) => j.permissions !== undefined));
+        expect(ok, "نه ورک‌فلو و نه هیچ jobی permissions ندارد").toBe(true);
       });
 
       it("هیچ job بدون سقفِ زمان نمی‌ماند (اجرای قرمزِ آویزان)", () => {
