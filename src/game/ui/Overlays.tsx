@@ -12,6 +12,7 @@ import { Icon, stripEmoji } from "../icons";
 import { haptic } from "../mobile";
 import { sound } from "../audio";
 import { readLS, writeLS } from "../persist";
+import { newGate, pass } from "./toastGate";
 import type { AwayReport } from "../usePersistence";
 import { PANEL_META, TOAST_ICON, type PanelId } from "./common";
 import { menuBadges } from "./Hud";
@@ -23,8 +24,12 @@ export interface Toast {
   t: string;
 }
 
-/** آخرین پیام (ضد تکرارِ پیام یکسان در کمتر از ۱.۴ ثانیه) — بیرون از رندر نگه داشته می‌شود */
-let lastToast = { text: "", at: 0 };
+/**
+ * دروازه‌ی توست‌ها (B/T3 — بازخوردِ «اخطارهای متنیِ زیاد»): ضدتکرارِ هوشمند بر اساسِ نوعِ
+ * پیام (خطا/سطح ۴ ثانیه، موفقیت ۱۰ ثانیه، راهنما ۴۵ ثانیه). بیرون از رندر نگه داشته می‌شود.
+ * صدا و لرزش هم پشتِ همین دروازه‌اند — پیامِ ردشده هیچ اثری نمی‌گذارد.
+ */
+let toastGate = newGate();
 
 /** صف پیام‌ها: حداکثر دو پیام، خطای قبلی با خطای تازه جایگزین می‌شود. */
 export function useToasts() {
@@ -32,12 +37,11 @@ export function useToasts() {
   const toast = useCallback((raw: string, t = "info") => {
     const m = stripEmoji(raw);
     if (!m) return;
+    const now = Date.now();
+    if (!pass(toastGate, m, t, now)) return;
     if (t === "err") haptic("error");
     else if (t === "lvl" || t === "prestige") haptic("level");
     else if (t === "ok") haptic("success");
-    const now = Date.now();
-    if (lastToast.text === m && now - lastToast.at < 1400) return;
-    lastToast = { text: m, at: now };
     const id = Math.random();
     setToasts((a) => [...a.filter((x) => x.t !== "err").slice(-1), { id, m, t }]);
     if (t === "err") sound("err");
