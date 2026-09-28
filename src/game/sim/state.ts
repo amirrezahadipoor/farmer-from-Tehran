@@ -248,7 +248,7 @@ export function migrate(d: unknown): State | null {
   if (!Array.isArray(s.story.completed)) s.story.completed = [];
   if (typeof s.xpAcc !== "number" || !Number.isFinite(s.xpAcc)) s.xpAcc = 0;
   // سیوهای پیش از P5.16 ممکن است ایموجی در نام یا متنِ رویداد داشته باشند
-  s.story.name = stripEmoji(String(s.story.name || ""));
+  s.story.name = stripEmoji(typeof s.story.name === "string" ? s.story.name : "");
   if (s.currentEvent && typeof s.currentEvent.text === "string") s.currentEvent.text = stripEmoji(s.currentEvent.text);
   return s;
 }

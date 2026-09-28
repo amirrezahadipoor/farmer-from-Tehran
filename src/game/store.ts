@@ -54,12 +54,22 @@ export function useGameVersion(): number {
   return useSyncExternalStore(game.subscribe, game.version, serverVersion);
 }
 
-/** وضعیتِ بازی برای کامپوننت‌هایی که فقط بعد از «آماده‌بودن» رندر می‌شوند. */
+/**
+ * وضعیتِ بازی برای کامپوننت‌هایی که فقط بعد از «آماده‌بودن» رندر می‌شوند.
+ * اگر پیش از بارگذاری صدا زده شود throw می‌کند تا خطا زود و در جا پیدا شود؛
+ * برای کامپوننت‌هایی که ممکن است پیش از بارگذاری رندر شوند useGameSafe امن‌تر است.
+ */
 export function useGame(): State {
   useGameVersion();
   const s = game.get();
   if (!s) throw new Error("useGame() was called before the game state was loaded");
   return s;
+}
+
+/** نسخه‌ی امنِ useGame: پیش از بارگذاری null برمی‌گرداند (بدون throw). */
+export function useGameSafe(): State | null {
+  useGameVersion();
+  return game.get();
 }
 
 /** حالتِ زمان‌اجرای حلقه (غیر React): افکت‌ها، راه‌روندگان، دوربین و سنجش فریم. */

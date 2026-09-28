@@ -276,7 +276,7 @@ export function normalizeQuests(raw: unknown): QuestState | undefined {
   const badges = Array.isArray(raw.badges) ? [...new Set(raw.badges.filter((b) => STREAK_BADGES.some((sb) => sb.days === b)) as number[])] : [];
   return {
     day: raw.day,
-    week: String(raw.week).slice(0, 10),
+    week: typeof raw.week === "string" ? raw.week.slice(0, 10) : typeof raw.week === "number" ? String(raw.week).slice(0, 10) : "",
     daily,
     weekly: normEntry(raw.weekly),
     bonus: raw.bonus === true,

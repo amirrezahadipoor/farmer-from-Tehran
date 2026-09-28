@@ -31,8 +31,20 @@ const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
 /** عدد متناهی و در محدوده‌ی معقول (جلوی NaN/Infinity/رشد بی‌نهایت را می‌گیرد) */
+/**
+ * Number() روی شمول/تابع/نشانه استثنا می‌دهد؛ sanitizeSave باید برای هر ورودی‌ای
+ * (حتی از یک کلاینتِ خراب) پاسخ بدهد، نه اینکه ۵۰۰ بدهد. این نسخه هرگز throw نمی‌کند.
+ */
+function toNum(v: unknown): number {
+  try {
+    return Number(v as number);
+  } catch {
+    return NaN;
+  }
+}
+
 function num(v: unknown, fallback: number, min = -1e12, max = 1e12): number {
-  const n = typeof v === "number" ? v : Number(v);
+  const n = typeof v === "number" ? v : toNum(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
 }
@@ -89,7 +101,7 @@ export function sanitizeSave(raw: unknown): State | null {
   s.wAcc = num(s.wAcc, 0, 0, 1e6);
   s.histAcc = num(s.histAcc, 0, 0, 1e6);
   s.eventAcc = num(s.eventAcc, 0, 0, 1e6);
-  if (!(WEATHER_TYPES as readonly string[]).includes(String(s.weather))) s.weather = "sun";
+  if (typeof s.weather !== "string" || !(WEATHER_TYPES as readonly string[]).includes(s.weather)) s.weather = "sun";
   if (s.currentEvent !== null && !isObj(s.currentEvent)) s.currentEvent = null;
 
   // ── کاشی‌ها: هر کاشی نامعتبر به چمنِ خالی تبدیل می‌شود (زمین بازی «گم» نمی‌شود)
@@ -97,14 +109,14 @@ export function sanitizeSave(raw: unknown): State | null {
   s.tiles = s.tiles.map((t, i): Tile => {
     if (!isObj(t)) return { k: "grass", v: 0 };
     const raw2 = t as unknown as Record<string, unknown>;
-    const k = KINDS.has(String(raw2.k)) ? (raw2.k as Tile["k"]) : "grass";
+    const k = typeof raw2.k === "string" && KINDS.has(raw2.k) ? (raw2.k as Tile["k"]) : "grass";
     const tile: Tile = { k, v: intOr(raw2.v, i, 0, 1e6) };
-    if (Number.isFinite(Number(raw2.g))) tile.g = num(raw2.g, 0, 0, 1e9);
+    if (Number.isFinite(toNum(raw2.g))) tile.g = num(raw2.g, 0, 0, 1e9);
     if (typeof raw2.crop === "string" && raw2.crop) tile.crop = raw2.crop;
     if (typeof raw2.b === "string" && raw2.b) tile.b = raw2.b;
     if (raw2.wet === true) tile.wet = true;
     if (raw2.fert === true) tile.fert = true;
-    if (Number.isFinite(Number(raw2.q))) tile.q = [intOr(raw2.q, 0, 0, 1e6)];
+    if (Number.isFinite(toNum(raw2.q))) tile.q = [intOr(raw2.q, 0, 0, 1e6)];
     if (raw2.autoMode === true) tile.autoMode = true;
     return tile;
   });
@@ -127,8 +139,8 @@ export function sanitizeSave(raw: unknown): State | null {
   if (!isObj(s.inv)) s.inv = {};
   s.inv = Object.fromEntries(
     Object.entries(s.inv)
-      .filter(([k, v]) => k in ITEMS && Number.isFinite(Number(v)))
-      .map(([k, v]) => [k, Math.max(0, Math.round(Number(v)))])
+      .filter(([k, v]) => k in ITEMS && Number.isFinite(toNum(v)))
+      .map(([k, v]) => [k, Math.max(0, Math.round(toNum(v)))])
   );
   const statKeys = ["earned", "harvested", "orders", "produced", "spent", "animals", "decorations", "skillPoints"] as const;
   if (!isObj(s.stats)) s.stats = { earned: 0, harvested: 0, orders: 0, produced: 0, spent: 0, animals: 0, decorations: 0, skillPoints: 0 };
@@ -149,7 +161,7 @@ export function sanitizeSave(raw: unknown): State | null {
   if (!isObj(s.fest)) s.fest = undefined;
   else {
     const f = s.fest as Record<string, unknown>;
-    const choice = ["invest", "feast", "rest"].includes(String(f.choice)) ? (f.choice as "invest" | "feast" | "rest") : null;
+    const choice = typeof f.choice === "string" && (["invest", "feast", "rest"] as string[]).includes(f.choice) ? (f.choice as "invest" | "feast" | "rest") : null;
     s.fest = { idx: intOr(f.idx, 0, 0, 3), day: intOr(f.day, 1, 1, 1e6), choice };
     // پیشنهادِ بی‌جوابِ روزِ اول (قاعده‌ی قدیمی، روی آموزش باز می‌شد) کنار گذاشته می‌شود
     if (s.fest.choice === null && s.fest.day <= 1) s.fest = undefined;
