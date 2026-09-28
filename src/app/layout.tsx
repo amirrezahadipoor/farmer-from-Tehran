@@ -57,6 +57,9 @@ const FONT_FACES = ([["Regular", 400], ["Medium", 500], ["Bold", 700], ["Black",
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   for (const href of BOOT_FONTS) preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  // بالانسِ LCP (بسته‌ی D): عنصرِ LCP در گزارشِ لایت‌هاوس نشانِ اسپلش است؛ درخواستش باید هم‌زمانِ
+  // head کشف شود وگرنه در HTTP/1.1 پشتِ چانک‌های JS صف می‌شود (ران‌های ۹۴ با LCP 3.1s در برابرِ ۲.۱s).
+  preload(asset("/images/logo_badge.webp"), { as: "image", type: "image/webp", fetchPriority: "high" });
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <head>
