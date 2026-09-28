@@ -4,8 +4,8 @@
     "codename": "farmer-from-Tehran",
     "owner": "amirrezahadipoor",
     "repo": "https://github.com/amirrezahadipoor/farmer-from-Tehran",
-    "target": "≥ ۸۵۰ / ۱۰۰ (ریویوی سخت‌گیرانه)",
-    "baseline": "۷۴۲ / ۱۰۰ (ریویوی سخت‌گیرانه‌ی ۲۰۲۶/۰۹/۲۷)",
+    "target": "≥ ۹۰۰ / ۱۰۰۰ (ریویوی سخت‌گیرانه)",
+    "baseline": "۸۲۶ / ۱۰۰۰ (ریویوی سخت‌گیرانه‌ی ۲۰۲۶/۰۹/۲۸ — ریویوی مستقل با اجرای واقعیِ چک‌ها)",
     "rules": [
       "هیچ آیتمی تیک نمی‌خورد مگر «شاهد» داشته باشد (تست سبز CI، اسکرین‌شات، لاگ، یا عدد اندازه‌گیری‌شده).",
       "بعد از هر پوش، این فایل بازتولید و کامیت می‌شود (tools/gen-roadmap.mjs).",
@@ -17,9 +17,9 @@
     "kpis": [
       {
         "key": "امتیاز ریویوی سخت‌گیرانه",
-        "from": "۷۴",
-        "to": "≥ ۸۵۰",
-        "current": "۷۴۲"
+        "from": "۷۴۲",
+        "to": "≥ ۹۰۰",
+        "current": "۸۲۶ (ریویوی ۲۰۲۶/۰۹/۲۸)"
       },
       {
         "key": "عناصر زنده‌ی محیطی نقشه (پرنده/پروانه/کرم شب‌تاب/دود/برگ/شکوفه/درخشش آب/ساعت طلایی)",
@@ -242,6 +242,112 @@
           "dod": "ابزارِ diff بصری در CI اجرا شود؛ پروفایلِ دستگاهِ واقعی (نه SwiftShader) با webgl واقعی ≥ ۵۵ و هدف ۶۰؛ mobile-ux در ۳۲۰/۳۹۰/۴۳۰/۷۶۸/۸۴۴ بدونِ سرریز؛ گزارشِ پایانیِ اعداد در ROADMAP",
           "status": "done",
           "evidence": "browser-test سبز روی 86edfb9: ۱۰۰ تست صفر شکست (۸.۷ دقیقه)؛ [artdiff] mean=1.47 over24=0.99% (نگهبانِ diff پیکسلیِ e2e/art.spec.ts با پایه‌ی docs/light/artdiff-base.png)؛ [perf] chromium عادی=۶۰.۱ · باران=۵۵.۹ · CPU×۴=۶.۸ (بهترینِ سه پنجره، همه ≥ ۵۵)؛ mobile-ux در ۳۲۰/۳۹/۴۳۰/۷۶۸/۸۴۴ سبز (تمام‌صفحه‌ی اندروید)؛ quality/lighthouse/security/pages سبز"
+        }
+      ]
+    },
+    {
+      "id": "R",
+      "title": "رفعِ کسوراتِ ریویوی سختگیرانه (۲۰۲۶/۰۹/۲۸)",
+      "goal": "هر کسورِ ریویوی ۸۲۶/۱۰۰۰ با شاهد بسته شود: امنیتِ سقفِ نرخ، پوششِ لایه‌ی DB، شکستنِ tick، دترمینیسم، بهداشتِ مخزن، مستندسازی و ادغامِ وابستگی‌ها.",
+      "items": [
+        {
+          "id": "1",
+          "title": "غیرفعال‌سازیِ موقتِ browser-test تا فازِ APK",
+          "dod": "ورک‌فلو روی push/PR اجرا نشود اما با workflow_dispatch قابل اجرا بماند؛ راهنمای فعال‌سازی در بالای فایل.",
+          "status": "done",
+          "evidence": "کامیت 6b052dd: on: فقط workflow_dispatch با راهنمای برگرداندن؛ بقیه‌ی ورک‌فلوها (quality/security/lighthouse/pages) دست‌نخورده و فعال."
+        },
+        {
+          "id": "2",
+          "title": "ادغامِ dependabot و صفر کردنِ آسیب‌پذیری‌های npm",
+          "dod": "npm audit صفر مورد؛ PRهای قابل‌ادغام ادغام یا با دلیل بسته شوند؛ TypeScript 7 با دلیل مشخص بسته شود.",
+          "status": "done",
+          "evidence": "ادغام‌ی دستیِ checkout@v7، vitest 5 + vite 7، @types/node 26.6.2، upload-artifact@v7 (کامیت‌های 27de8c2 و 0b1c627)؛ PRهای #2/#5/#8/#10 با توضیح بسته شدند و #9 (TypeScript 7.0.2 — typecheck قرمز) با شاهد بسته شد. overrides هدفمندِ @esbuild-kit/core-utils/esbuild به ^0.25: npm audit از ۷ moderate به صفر. قفل با npm 10.9 بازتولید شد تا npm ci در CI سازگار بماند؛ typecheck/lint/lint:text/check-assets/۴۴۰ تست/بیلد سبز."
+        },
+        {
+          "id": "3",
+          "title": "بهداشتِ مخزن: اصلاحِ ادعای حجمِ کلون در README و چیدمانِ ابزارهای پراکنده",
+          "dod": "عددِ کلون در README با اندازه‌ی واقعیِ ردیابی‌شده بخواند؛ v4-shots.mjs و ابزارهای one-off از ریشه به tools/ بروند.",
+          "status": "todo"
+        },
+        {
+          "id": "4",
+          "title": "حذفِ ۳۱ مگابایت اسکرین‌شاتِ مقایسه از تاریخچه‌ی مخزن",
+          "dod": "docs/art-compare و docs/light (جز پایه‌ی diff) از کلِ تاریخچه حذف شود؛ پایه‌ی diff به e2e/fixtures منتقل و ارجاع‌ها به‌روز شود؛ حجمِ مخزن به چند مگابایت برسد.",
+          "status": "todo"
+        },
+        {
+          "id": "5",
+          "title": "سقفِ نرخ: رفعِ ریستِ همه‌ی سطل‌ها + بک‌اندِ توزیع‌شده‌ی اختیاری",
+          "dod": "prune هیچ‌وقت سطل‌های کاربرانِ سالم را پاک نکند (evict قدیمی‌ها)؛ بک‌اندِ Redis/Upstash REST اختیاری با env؛ محدودیتِ تک‌پروسه در README و کد صریح باشد؛ تستِ واحد برای eviction و بک‌اندِ تازه.",
+          "status": "todo"
+        },
+        {
+          "id": "6",
+          "title": "/api/log: احرازِ اختیاری و اعتبارسنجیِ سخت‌تر",
+          "dod": "با LOG_SHARED_SECRET، درخواستِ بی‌secret رد شود (مقایسه‌ی زمان‌ثابت)؛ فیلدهای ناشناخته دور ریخته شوند؛ تست‌های تازه.",
+          "status": "todo"
+        },
+        {
+          "id": "7",
+          "title": "پوششِ محلیِ لایه‌ی DB (SqlExecutor تزریق‌پذیر)",
+          "dod": "storeها روی یک رابطِ باریکِ اجرای SQL بنشینند تا مالکیت اتمی و کدهای انتقال بدونِ Postgres هم تست شوند؛ کاورجِ storeها محلی ≥ ۹۰٪؛ هشدار وقتی TEST_DATABASE_URL نباشد.",
+          "status": "todo"
+        },
+        {
+          "id": "8",
+          "title": "شکستنِ tick() به ماژول‌های موضوعی",
+          "dod": "tick به اورکستراتور ≤ ۶۰ خط برسد؛ آب‌وهوا/رویداد، رشد، ماشین‌ها، کارگرها و بازار ماژول‌های جدا و تست‌پذیر شوند؛ همه‌ی تست‌ها سبز بمانند.",
+          "status": "todo"
+        },
+        {
+          "id": "9",
+          "title": "RNG تزریق‌پذیر (دترمینیسمِ شبیه‌سازی)",
+          "dod": "همه‌ی Math.randomهای sim و تولیدِ نقشه از یک rng قابل‌تزریق عبور کنند؛ تست با بذرِ ثابت نتیجه‌ی یکسان بدهد؛ سیو تغییر نکند.",
+          "status": "todo"
+        },
+        {
+          "id": "10",
+          "title": "CHANGELOG و ریلیز/تگِ v0.1.0",
+          "dod": "CHANGELOG.md با قالبِ Keep a Changelog؛ تگِ v0.1.0 و ریلیزِ عمومی با یادداشتِ انتشار.",
+          "status": "todo"
+        },
+        {
+          "id": "11",
+          "title": "به‌روزرسانیِ KPI و شاهدِ نهاییِ فاز",
+          "dod": "KPI امتیازِ ریویو در ROADMAP به‌روز و وضعیتِ فاز R با شاهد بسته شود.",
+          "status": "todo"
+        }
+      ]
+    },
+    {
+      "id": "P",
+      "title": "APK اندروید از ورک‌فلو (فازِ پایانی)",
+      "goal": "بازیکن اندرویدی بتواند همان بازیِ آفلاین‌فِرست را به‌صورتِ APK از GitHub Actions بگیرد؛ بیلد با یک ورک‌فلو و بدونِ کامپیوترِ محلی.",
+      "items": [
+        {
+          "id": "1",
+          "title": "Capacitor: وابستگی‌ها، پیکربندی و اسکریپت‌ها",
+          "dod": "@capacitor/core+android+cli به devDeps؛ capacitor.config.ts با webDir=out و appId/appName؛ اسکریپت‌های npm برای sync و gradle؛ android/ در CI ساخته شود و در .gitignore بماند.",
+          "status": "todo"
+        },
+        {
+          "id": "2",
+          "title": "ورک‌فلو apk.yml: بیلد و انتشارِ artifact",
+          "dod": "روی tagِ v* و workflow_dispatch: بیلدِ استاتیک (NEXT_PUBLIC_STATIC=1، بدونِ basePath) → npx cap sync android → ./gradlew assembleDebug → آپلودِ APK به‌عنوانِ artifact؛ مدتِ اجرا < ۱۵ دقیقه.",
+          "status": "todo"
+        },
+        {
+          "id": "3",
+          "title": "امضای نسخه‌ی release (مستند و اختیاری)",
+          "dod": "assembleRelease با keystore از secrets (ANDROID_KEYSTORE_BASE64 و …)؛ راهنمای ساختِ keystore در docs؛ نبودِ secrets به بیلدِ debug نسوپرد.",
+          "status": "todo"
+        },
+        {
+          "id": "4",
+          "title": "شاهدِ پایانی: APK + browser-test دوباره فعال + کلِ CI سبز",
+          "dod": "اجرای سبزِ apk.yml با artifactِ APK؛ browser-test دوباره فعال و سبز؛ quality/security/lighthouse/pages/apk همه سبز؛ تیکِ فاز P با شاهد.",
+          "status": "todo"
         }
       ]
     }
