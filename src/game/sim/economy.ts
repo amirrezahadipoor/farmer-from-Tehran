@@ -149,6 +149,8 @@ export function addXp(s: State, n: number, ev: Events) {
     s.level++;
     lvlGained++;
     s.stats.skillPoints += 1;
+    // بالانس: پاداشِ هر ۴ سطح — کلِ درختِ مهارت (۳۵ امتیاز) در سطحِ ۲۸ کامل‌شدنی است، نه خارجِ محدوده‌ی محتوا
+    if (s.level % 4 === 0) { s.stats.skillPoints += 1; lvlGained++; }
     unlocked.push(...unlocksAt(s.level).map((u) => u.name));
     const bonus = s.level * 45;
     bonusTotal += bonus;

@@ -287,7 +287,7 @@ describe("تحقیق و مهارت", () => {
     expect(s.skills).toEqual(["master_planter", "fert_soil", "price_mind", "storage_master", "harvest_god"]);
     expect(capacity(s)).toBe(capacity({ ...s, skills: [] }) + 150);
     learnSkill(s, "master_planter", ev); // تکراری بی‌اثر
-    expect(s.stats.skillPoints).toBe(20 - 1 - 1 - 2 - 2 - 2);
+    expect(s.stats.skillPoints).toBe(20 - 1 - 1 - 2 - 2 - 1);
   });
 });
 
