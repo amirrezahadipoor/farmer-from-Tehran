@@ -230,7 +230,8 @@ export class GroundLayer {
     const sx0 = Math.max(X0, x0), sy0 = Math.max(Y0, y0), sx1 = Math.min(X0 + GW, x1), sy1 = Math.min(Y0 + GH, y1);
     if (sx1 <= sx0 || sy1 <= sy0) return;
     const tr = ctx.getTransform?.(); // شبیه‌سازهای تست ممکن است نداشته باشند → مسیرِ قبلی
-    const r = alignedBlit(sx0, sy0, sx1, sy1, X0, Y0, this.scale, tr?.a ?? 0, tr?.e ?? 0, tr?.f ?? 0);
+    const mat = tr ? { a: tr.a, b: tr.b, c: tr.c, e: tr.e, f: tr.f } : null;
+    const r = alignedBlit(sx0, sy0, sx1, sy1, X0, Y0, this.scale, mat);
     ctx.drawImage(this.cv, r.sx, r.sy, r.sw, r.sh, r.dx, r.dy, r.dw, r.dh);
   }
 }
@@ -241,17 +242,22 @@ export class GroundLayer {
  * دیده می‌شود. لبه‌های مقصد به مرزِ پیکسلِ دستگاه گرد می‌شوند (بدونِ چرخش؛ فقط مقیاس و جابه‌جایی).
  * خالص و تست‌پذیر.
  */
+export interface BlitMatrix { a: number; b: number; c: number; e: number; f: number }
+
 export function alignedBlit(
   sx0: number, sy0: number, sx1: number, sy1: number,
   originX: number, originY: number, sc: number,
-  ks: number, tx: number, ty: number,
+  mat: BlitMatrix | null,
 ): { sx: number; sy: number; sw: number; sh: number; dx: number; dy: number; dw: number; dh: number } {
   const sx = (sx0 - originX) * sc, sy = (sy0 - originY) * sc;
   const sw = (sx1 - sx0) * sc, sh = (sy1 - sy0) * sc;
-  if (!Number.isFinite(ks) || ks <= 0) return { sx, sy, sw, sh, dx: sx0, dy: sy0, dw: sx1 - sx0, dh: sy1 - sy0 };
-  const d0x = Math.round(sx * ks + tx), d1x = Math.round((sx + sw) * ks + tx);
-  const d0y = Math.round(sy * ks + ty), d1y = Math.round((sy + sh) * ks + ty);
-  return { sx, sy, sw, sh, dx: (d0x - tx) / ks, dy: (d0y - ty) / ks, dw: (d1x - d0x) / ks, dh: (d1y - d0y) / ks };
+  const legacy = { sx, sy, sw, sh, dx: sx0, dy: sy0, dw: sx1 - sx0, dh: sy1 - sy0 };
+  const ks = mat?.a ?? NaN;
+  // فقط مقیاس+جابه‌جایی تراز می‌شود؛ چرخش/برش (b/c ناصفر) → مسیرِ قبلی تا skew بی‌صدا رخ ندهد (C/T6)
+  if (!mat || !Number.isFinite(ks) || ks <= 0 || mat.b !== 0 || mat.c !== 0) return legacy;
+  const d0x = Math.round(sx * ks + mat.e), d1x = Math.round((sx + sw) * ks + mat.e);
+  const d0y = Math.round(sy * ks + mat.f), d1y = Math.round((sy + sh) * ks + mat.f);
+  return { sx, sy, sw, sh, dx: (d0x - mat.e) / ks, dy: (d0y - mat.f) / ks, dw: (d1x - d0x) / ks, dh: (d1y - d0y) / ks };
 }
 
 /**

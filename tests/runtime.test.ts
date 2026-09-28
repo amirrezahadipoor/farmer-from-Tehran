@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { newState } from "../src/game/logic";
 import { DAY_LEN } from "../src/game/data";
-import { adaptDpr, nextDpr } from "../src/game/loop";
+import { adaptDpr, dprFloor, nextDpr } from "../src/game/loop";
 import { catchUp } from "../src/game/usePersistence";
 import { game } from "../src/game/store";
 
@@ -37,6 +37,24 @@ describe("nextDpr / adaptDpr — سازگارسازی خودکار رزولوش�
     expect(nextDpr(1.5, 17.8, 2)).toBe(1.5);
     expect(nextDpr(1.5, 20.5, 2)).toBe(1.5); // پیش از B/T1 اینجا سقوط می‌کرد
   });
+  it("کفِ پویا (C/T1): رندررِ نرم‌افزاری کفِ ۰.۶۵ دارد، GPUِ واقعی ۰.۹", () => {
+    expect(dprFloor(false)).toBe(0.9);
+    expect(dprFloor(true)).toBe(0.65);
+    expect(nextDpr(0.8, 200, 2, 2, 0.65)).toBe(0.65); // زیرِ ۰.۹ ولی بالای کفِ نرم
+    expect(nextDpr(0.9, 200, 2, 2, 0.9)).toBe(0.9);
+    const st = adaptDpr({ dpr: 0.85, ceil: 2 }, 200, 2, 2, false, 0.65);
+    expect(st.dpr).toBeCloseTo(0.65);
+    expect(st.ceil).toBeCloseTo(0.75); // سقفِ پسماند به کفِ تازه احترام می‌گذارد
+  });
+
+  it("آستانه‌ی خودسازگار (C/T1): در محیطِ نرم‌افزاری حتی ۵۲ فریم (۱۸.۸ms) سطح را پایین می‌برد", () => {
+    // GPU: در ناحیه‌ی ۱۷.۳ تا ۲۱ms دست نمی‌زند (تیز بماند)
+    expect(nextDpr(1.3, 18.8, 2, 2, 0.9, 21)).toBe(1.3);
+    // نرم‌افزاری: همان عدد پایین می‌آید تا به ۵۵+ برسد
+    expect(nextDpr(1.3, 18.8, 2, 2, 0.65, 18.2)).toBeCloseTo(1.1);
+    expect(nextDpr(1.3, 17.5, 2, 2, 0.65, 18.2)).toBe(1.3); // هنوز در ناحیه‌ی آرام
+  });
+
   it("hold (B/T2) — در پنجره‌ی جشن هیچ تغییری نمی‌کند، نه سقوط نه صعود", () => {
     const st = { dpr: 1.5, ceil: 2 };
     expect(adaptDpr(st, 60, 2, 2, true).dpr).toBe(1.5);

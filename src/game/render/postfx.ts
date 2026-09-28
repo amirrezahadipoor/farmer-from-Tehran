@@ -39,6 +39,24 @@ export function webgl2Available(): boolean {
   }
 }
 
+/**
+ * C/T1: آیا WebGL روی رندررِ نرم‌افزاری است؟ (SwiftShader/llvmpipe/ANGLE Software)
+ * حلقه‌ی بازی با این کفِ رزولوشن را انتخاب می‌کند: روی GPU واقعی تیز (۰.۹)،
+ * روی نرم‌افزاری روان (۰.۷۲) — هر دو از راهِ سازگارسازی خودکار به همان مقصد می‌رسند.
+ */
+export function isSoftwareGL(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl2");
+    if (!gl) return false;
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    const r = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+    return /swiftshader|llvmpipe|software/i.test(r);
+  } catch {
+    return false;
+  }
+}
+
 import { BRIGHT, BLUR, FRAG, VERT, buildLutCanvas } from "./fxgl";
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
@@ -65,13 +83,8 @@ export async function createPostFX(src: HTMLCanvasElement): Promise<PostFX | nul
     // سقفِ پسماند: روی رندرِ نرم‌افزاری (SwiftShader/llvmpipe) گذارِ GPU به‌جای کمکِ
     // فریم‌نرخ، آن را می‌کَنَد → مسیرِ ۲بعدیِ خالص (قاعده: پروفایلِ ضعیف ≥ ۴۵ فریم).
     // پرچمِ ?fx=1 تشخیص را رد می‌کند (برایِ اسکرین‌شاتِ نمونه روی رندررِ نرم)
-    let renderer = "";
-    try {
-      const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-      if (dbg) renderer = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
-    } catch { /* بی‌صدا */ }
     const forced = typeof location !== "undefined" && /[?&]fx=1\b/.test(location.search);
-    if (!forced && /swiftshader|llvmpipe|software/i.test(renderer)) return null;
+    if (!forced && isSoftwareGL()) return null;
     const vs = compile(gl, gl.VERTEX_SHADER, VERT);
     const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
     if (!vs || !fs) return null;

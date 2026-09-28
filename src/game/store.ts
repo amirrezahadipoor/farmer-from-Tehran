@@ -97,6 +97,8 @@ export const rt = {
   dprLock: null as number | null,
   /** B/T2: تا این زمان‌مُهر (performance.now) هیچ سقوطِ رزولوشنی نمی‌خواهیم — پنجره‌ی جشن */
   dprHoldUntil: 0,
+  /** C/T1: WebGL روی رندررِ نرم‌افزاری است؟ → کفِ رزولوشن ۰.۷۲ به‌جای ۰.۹ */
+  softwareRender: false,
   /** V.3: جلوه‌های فضای صفحه (سکه‌ی پرنده، کاغذرنگی) */
   sfx: [] as Sfx[],
   /** V.3: زمانِ باقی‌مانده‌ی لرزشِ دوربین */

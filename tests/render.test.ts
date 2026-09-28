@@ -247,11 +247,11 @@ describe("A.8 — ذره‌های آب‌وهوا روی GPU", () => {
   });
 });
 
-describe("alignedBlit — ترازِ پیکسلیِ کشِ زمین (B/T6)", () => {
-  const A = (r: ReturnType<typeof import("../src/game/render/ground").alignedBlit>) => r;
-  it("با ترانهوِرمِ تمیز، مستطیل دست‌نخورده می‌ماند", async () => {
+describe("alignedBlit — ترازِ پیکسلیِ کشِ زمین (B/T6 + C/T6)", () => {
+  const M = (a: number, e = 0, f = 0) => ({ a, b: 0, c: 0, e, f });
+  it("با ترانهوِرمِ تمیز، مستطیل دست‌نخورده می‌ماند و لبه‌ها روی مرزِ پیکسل می‌نشینند", async () => {
     const { alignedBlit } = ground;
-    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, 2, 0, 0));
+    const r = alignedBlit(10, 20, 110, 120, 0, 0, 2, M(2));
     expect(r.sx).toBe(20);
     expect(r.sw).toBe(200);
     expect(r.dx).toBe(20); // همان ناحیه در فضای جهان
@@ -261,17 +261,28 @@ describe("alignedBlit — ترازِ پیکسلیِ کشِ زمین (B/T6)", () 
   it("با ترانهوِرمِ کسری، لبه‌های مقصد به مرزِ پیکسلِ دستگاه گرد می‌شوند", async () => {
     const { alignedBlit } = ground;
     const ks = 1.35, tx = 37.3, ty = -12.7;
-    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, ks, tx, ty));
+    const r = alignedBlit(10, 20, 110, 120, 0, 0, 2, M(ks, tx, ty));
     expect(r.dx * ks + tx).toBeCloseTo(Math.round(r.dx * ks + tx), 5);
     expect((r.dx + r.dw) * ks + tx).toBeCloseTo(Math.round((r.dx + r.dw) * ks + tx), 5);
     expect(r.dy * ks + ty).toBeCloseTo(Math.round(r.dy * ks + ty), 5);
     expect((r.dy + r.dh) * ks + ty).toBeCloseTo(Math.round((r.dy + r.dh) * ks + ty), 5);
   });
 
-  it("ترانهوِرمِ بی‌مق scale/خراب → رفتارِ قبلی (سقوطِ نرم)", async () => {
+  it("ترانهوِرمِ بی‌مقیاس/خراب → رفتارِ قبلی (سقوطِ نرم)", async () => {
     const { alignedBlit } = ground;
-    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, 0, 5, 5));
+    const r = alignedBlit(10, 20, 110, 120, 0, 0, 2, M(0, 5, 5));
     expect(r.dx).toBe(10);
     expect(r.dw).toBe(100);
+    const n = alignedBlit(10, 20, 110, 120, 0, 0, 2, null);
+    expect(n.dx).toBe(10);
+  });
+
+  it("چرخش/برشِ transform (b یا c ناصفر) → مسیرِ قبلی تا skew بی‌صدا رخ ندهد (C/T6)", async () => {
+    const { alignedBlit } = ground;
+    const r = alignedBlit(10, 20, 110, 120, 0, 0, 2, { a: 2, b: 0.5, c: 0, e: 0, f: 0 });
+    expect(r.dx).toBe(10);
+    expect(r.dw).toBe(100);
+    const r2 = alignedBlit(10, 20, 110, 120, 0, 0, 2, { a: 2, b: 0, c: 0.3, e: 0, f: 0 });
+    expect(r2.dw).toBe(100);
   });
 });

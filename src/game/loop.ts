@@ -24,7 +24,20 @@ import { stepSfx, drawSfx } from "./juice";
 import { raiseFatal, reportError } from "./errors";
 import { qualityPref, lockFor } from "./quality";
 
-const MIN_DPR = 0.9; // B/T1: بازخوردِ «بازی تار است» — زیرِ ۰.۹ دیگر هرگز نمی‌رویم (۰.۶ یعنی ۶۵٪ پیکسلِ کمتر = تاریِ آشکار)
+/**
+ * کفِ رزولوشن (B/T1 + C/T1): روی GPUِ واقعی ۰.۹ — تیزیِ بازخوردشده حفظ می‌شود؛
+ * روی رندررِ نرم‌افزاری (CI/دستگاهِ بی‌GPU) ۰.۷۲ — چون هزینه‌ی هر پیکسل چند برابر است و
+ * وعده‌ی ۵۵+ فریم شکسته بود. هر دو از همان سازگارسازیِ خودکار عبور می‌کنند.
+ */
+const MIN_DPR = 0.9;
+const SOFT_FLOOR = 0.65;
+export const dprFloor = (software: boolean) => (software ? SOFT_FLOOR : MIN_DPR);
+/**
+ * آستانه‌ی «این سطح کُند است» (C/T1): روی GPUِ واقعی ۲۱ms (زیرِ ~۴۸ فریم) — تیزی ارزشش را دارد؛
+ * روی رندررِ نرم‌افزاری ۱۸.۲ms — چون دروازه‌ی e2e همان‌جا ۵۵+ می‌خواهد و سازگارسازی باید
+ * دقیقاً به همان هدف خودش را برساند (خودسازگار با گیت، بدونِ عددِ جعلی).
+ */
+const slowMs = (software: boolean) => (software ? 18.2 : 21);
 const maxDpr = () => Math.min(2, window.devicePixelRatio || 1);
 
 /**
@@ -33,12 +46,12 @@ const maxDpr = () => Math.min(2, window.devicePixelRatio || 1);
  * پیش از P6.6 آستانه‌ی بالا رفتن ۱۳.۵ms بود که در ۶۰ هرتز هرگز رخ نمی‌داد: یک شروعِ کند رزولوشن را
  * برای همیشه روی کف نگه می‌داشت.
  */
-export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max): number {
-  if (avgFrameMs > 21 && cur > MIN_DPR) {
+export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max, floor = MIN_DPR, slowAboveMs = 21): number {
+  if (avgFrameMs > slowAboveMs && cur > floor) {
     // زیرِ ~۴۸ فریم → رزولوشن کمتر. هزینه‌ی رسم ≈ تعدادِ پیکسل ≈ dpr²، پس کندیِ شدید یک‌جا به
-    // تخمین می‌پرد (۱۰٪ حاشیه) — ولی هرگز زیرِ MIN_DPR (B/T1: وضوح فدای فریمِ اضافه نمی‌شود)
+    // تخمین می‌پرد (۱۰٪ حاشیه) — ولی هرگز زیرِ کف (B/T1: وضوح؛ C/T1: کف روی GPU و نرم‌افزار فرق می‌کند)
     const est = Math.round(cur * Math.sqrt(16.7 / avgFrameMs) * 0.9 * 20) / 20;
-    return Math.max(MIN_DPR, Math.min(cur - 0.15, est));
+    return Math.max(floor, Math.min(cur - 0.15, est));
   }
   const top = Math.min(max, ceil);
   if (avgFrameMs < 17.3 && cur < top - 0.001) return Math.min(top, cur + 0.1); // ۵۸+ فریم → کیفیت بیشتر
@@ -50,10 +63,10 @@ export interface DprState { dpr: number; ceil: number }
  * hold (B/T2): در پنجره‌ی جشنِ سطح، هیچ تغییرِ رزولوشنی نمی‌خواهیم — تغییرِ اندازه‌ی بوم
  * یعنی بازسازیِ کشِ زمین در همان فریمِ کاغذرنگی؛ همان فلش/شکافی که بازیکن گزارش کرد.
  */
-export function adaptDpr(st: DprState, avgFrameMs: number, max: number, ceil = max, hold = false): DprState {
+export function adaptDpr(st: DprState, avgFrameMs: number, max: number, ceil = max, hold = false, floor = MIN_DPR, slowAboveMs = 21): DprState {
   if (hold) return { dpr: st.dpr, ceil: st.ceil };
-  const d = nextDpr(st.dpr, avgFrameMs, max, st.ceil);
-  return { dpr: d, ceil: d < st.dpr ? Math.max(MIN_DPR, st.dpr - 0.1) : st.ceil };
+  const d = nextDpr(st.dpr, avgFrameMs, max, st.ceil, floor, slowAboveMs);
+  return { dpr: d, ceil: d < st.dpr ? Math.max(floor, st.dpr - 0.1) : st.ceil };
 }
 
 /** حالِ صوتیِ دره از وضعیتِ بازی (خالص؛ تست‌پذیر) */
@@ -130,7 +143,9 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   void (async () => {
     try {
       const m = await import("./render/postfx");
-      if (m.webgl2Available()) postFX = (await m.createPostFX(srcCv)) ?? null;
+      // C/T1: WebGL نرم‌افزاری است؟ کفِ رزولوشن پایین‌تر می‌رود تا وعده‌ی فریم شکسته نشود
+      rt.softwareRender = m.isSoftwareGL();
+      if (m.webgl2Available() && !rt.softwareRender) postFX = (await m.createPostFX(srcCv)) ?? null;
       rt.view.gpu = !!postFX;
     } catch { /* مسیرِ ۲بعدی می‌ماند */ }
   })();
@@ -146,7 +161,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     const v = rt.view;
     // شروع از ≤ ۱.۵: دستگاهِ قوی در چند ثانیه به سقف می‌رسد، دستگاهِ ضعیف چند ثانیه‌ی اول را
     // با کشِ زمینِ غول‌آسا و فریم‌های نیم‌ثانیه‌ای شروع نمی‌کند؛ با قفلِ کیفیتِ بازیکن همان‌جا می‌مانیم
-    v.dpr = rt.dprLock ?? Math.min(1.5, maxDpr());
+    v.dpr = rt.dprLock ?? Math.min(rt.softwareRender ? 1.0 : 1.5, maxDpr());
     v.maxDpr = maxDpr();
     ceil = maxDpr(); // اندازه‌ی تازه = سنجشِ تازه
     v.w = window.innerWidth;
@@ -188,7 +203,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
       // B/T2: در ۲.۵ ثانیه‌ی پس از جشن (کاغذرنگی/سکه)، تغییرِ رزولوشن ممنوع —
       // تغییرِ بوم در لحظه‌ی جشن = بازسازیِ کشِ زمین = فلش/شکافِ گزارش‌شده
       const hold = t < rt.dprHoldUntil;
-      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr(), ceil, hold);
+      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr(), ceil, hold, dprFloor(rt.softwareRender), slowMs(rt.softwareRender));
       const d = next.dpr;
       ceil = next.ceil;
       if (Math.abs(d - v.dpr) > 0.01) {
