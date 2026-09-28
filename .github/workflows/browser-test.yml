@@ -1,6 +1,6 @@
 name: browser-test
 
-# ⏸️ موقتاً غیرفعال (۲۰۲۶/۰۹/۲۸ — فاز R/T2ِ نقشه‌ی راه)
+# موقتاً غیرفعال (۲۰۲۶/۰۹/۲۸ — فاز R/T2ِ نقشه‌ی راه)
 # هدف: تا پیش از مرحله‌ی APK، هر push چند دقیقه طول‌کشش نکند.
 # فعال‌سازی دوباره: بلوک on: را به حالت زیر برگردان و push کن:
 #   on:
@@ -24,7 +24,7 @@ jobs:
       NEXT_PUBLIC_E2E: "1"
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 20
