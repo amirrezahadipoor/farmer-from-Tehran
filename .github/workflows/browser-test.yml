@@ -1,9 +1,14 @@
 name: browser-test
 
+# ⏸️ موقتاً غیرفعال (۲۰۲۶/۰۹/۲۸ — فاز R/T2ِ نقشه‌ی راه)
+# هدف: تا پیش از مرحله‌ی APK، هر push چند دقیقه طول‌کشش نکند.
+# فعال‌سازی دوباره: بلوک on: را به حالت زیر برگردان و push کن:
+#   on:
+#     push:
+#       branches: [main]
+#     pull_request:
+#     workflow_dispatch:
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 concurrency:
