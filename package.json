@@ -46,5 +46,10 @@
   },
   "version": "0.1.0",
   "description": "مزرعه طلایی — بازی مزرعه‌داری ایزومتریک ۲.۵ بعدی، آفلاین‌فِرست و فول‌تاچ برای موبایل",
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.0"
+    }
+  }
 }
