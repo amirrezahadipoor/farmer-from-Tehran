@@ -93,6 +93,14 @@ export default function PhotoMode({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // بازگشتِ تمرکز به دکمه‌ای که این قاب را باز کرده (قراردادِ صفحه‌کلید)
+  useEffect(() => {
+    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      if (returnTo && returnTo.isConnected) returnTo.focus();
+    };
+  }, []);
+
   /** ترکیب + PNG؛ زمان از لحظه‌ی ترکیب تا آماده شدنِ فایل سنجیده می‌شود */
   const produce = async (): Promise<Blob | null> => {
     if (!snap || !cvRef.current) return null;

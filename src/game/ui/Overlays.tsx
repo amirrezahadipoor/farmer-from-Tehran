@@ -15,6 +15,7 @@ import { readLS, writeLS } from "../persist";
 import type { AwayReport } from "../usePersistence";
 import { PANEL_META, TOAST_ICON, type PanelId } from "./common";
 import { menuBadges } from "./Hud";
+import { useDialogFocus } from "./useDialogFocus";
 
 export interface Toast {
   id: number;
@@ -163,9 +164,16 @@ export const MENU_ITEMS: PanelId[] = ["story", "quests", "market", "orders", "bi
 /** منوی اصلی موبایل — گرید لمسی با برچسب. */
 export function MainMenu({ s, onPick, onClose }: { s: State; onPick: (p: PanelId) => void; onClose: () => void }) {
   const { readyOrders, claimableContracts, skillPoints, readyQuests } = menuBadges(s);
+  // همان قراردادِ صفحه‌کلیدِ پنل‌ها: Escape = بستن، تمرکز رفت و برگشت (tests/a11y.test.ts)
+  const menuRef = useDialogFocus<HTMLDivElement>(onClose);
   return (
     <div className="absolute inset-0 z-50 flex items-end bg-slate-950/60 backdrop-blur-sm" onClick={onClose}>
       <div
+        ref={menuRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="منوی اصلی بازی"
         className="mx-auto w-full max-w-[560px] rounded-t-3xl bg-gradient-to-b from-amber-50 to-orange-100 p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.4)]"
         onClick={(e) => e.stopPropagation()}
       >

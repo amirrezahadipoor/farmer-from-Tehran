@@ -10,6 +10,7 @@ import { idx, type State } from "../logic";
 import { Icon } from "../icons";
 import { haptic } from "../mobile";
 import { capturePointer } from "../useCanvasInput";
+import { useDialogFocus } from "./useDialogFocus";
 import { PANEL_META, type Panel, type UiApi } from "./common";
 import { MarketPanel, OrdersPanel } from "./panels/Trade";
 import { BuildPanel, DecorPanel } from "./panels/Build";
@@ -31,8 +32,9 @@ interface SheetProps {
 }
 
 export default function Sheet({ s, panel, ui, settings }: SheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ y: 0, dy: 0, active: false });
+  // Escape = بستن، تمرکز رفت‌وبرگشت: قراردادِ صفحه‌کلید/صفحه‌خوان (tests/a11y.test.ts)
+  const sheetRef = useDialogFocus<HTMLDivElement>(() => ui.setPanel(null));
 
   const onDown = (e: React.PointerEvent) => {
     drag.current = { y: e.clientY, dy: 0, active: true };
@@ -63,6 +65,7 @@ export default function Sheet({ s, panel, ui, settings }: SheetProps) {
   return (
     <div
       ref={sheetRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={meta?.title ?? (bt?.b ? BMAP[bt.b]?.name : "ساختمان")}

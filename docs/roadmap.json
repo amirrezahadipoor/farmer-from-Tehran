@@ -19,7 +19,7 @@
         "key": "امتیاز ریویوی سخت‌گیرانه",
         "from": "۷۴۲",
         "to": "≥ ۹۰۰",
-        "current": "۸۲۶ (مبنا) + رفعِ ۱۱ کسریِ ثبت‌شده با شاهد؛ عددِ نهایی نیازمندِ ریویوی دوباره"
+        "current": "۸۲۶ (مبنا) + ۱۱۷ امتیازِ کسریِ بسته‌شده با شاهد (جدولِ کامل در docs/REVIEW.md بخش ۷) — تخمین ۹۴۳ در انتظارِ ریویوی دوباره"
       },
       {
         "key": "عناصر زنده‌ی محیطی نقشه (پرنده/پروانه/کرم شب‌تاب/دود/برگ/شکوفه/درخشش آب/ساعت طلایی)",
@@ -334,6 +334,55 @@
       ]
     },
     {
+      "id": "Q",
+      "title": "بستنِ کسری‌های ریویوی سخت‌گیرانه (قبل از فازِ APK)",
+      "goal": "هر کسریِ ثبت‌شده در REVIEW-farmer-from-Tehran.md یا با شاهد بسته شود یا با دلیلِ فنی به‌عنوانِ خطرِ پذیرفته‌شده مستند گردد؛ هدف: رسیدن از ۸۲۶ به ≥ ۹۰۰.",
+      "items": [
+        {
+          "id": "1",
+          "title": "راهنمای تستِ سرتاسریِ محلی (e2e) در README — کسریِ «صحت د»",
+          "dod": "README دقیقاً بگوید چه کسی چطور بدونِ سرورِ بیرونی کلِ بازی را محلی می‌آزماید: نصب مرورگر Playwright، اجرای e2e، معنیِ NEXT_PUBLIC_E2E، محلِ trace و اسکرین‌شات، جایگزینِ بدونِ مرورگر، شبیه‌سازیِ توازن و ساختِ APK.",
+          "status": "done",
+          "evidence": "بخشِ «تستِ سرتاسریِ محلی (Playwright)» در README.md با جدولِ نکات و فرمان‌ها؛ ۲۳ فایلِ e2e (۴۷ تست) و دو پروفایلِ موبایل در playwright.config.ts."
+        },
+        {
+          "id": "2",
+          "title": "تستِ واقعیِ صفحه‌کلید و صفحه‌خوان — کسریِ «دسترس‌پذیری»",
+          "dod": "قراردادِ دسترس‌پذیری در تستِ سریع (بدون مرورگر) و روی مرورگرِ واقعی با فقط صفحه‌کلید سنجیده شود؛ پنل‌ها با Escape بسته شوند، تمرکز رفت‌وبرگشت شود و هر دکمه نامِ دسترس‌پذیر داشته باشد.",
+          "status": "done",
+          "evidence": "src/game/ui/useDialogFocus.ts (Escape + تمرکز رفت‌وبرگشت + چرخشِ Tab) در Sheet، MainMenu و Photo؛ tests/a11y.test.ts با ۸ تستِ قراردادِ ایستا (بررسی‌شده با تزریقِ نقص: دکمه‌ی بی‌نام تست را می‌شکند)؛ e2e/a11y.spec.ts با ۵ تستِ واقعی روی Pixel 7 — همه سبز (۵/۵)."
+        },
+        {
+          "id": "3",
+          "title": "پوششِ تست و فایل‌های کم‌پوشش — کسریِ «صحت ب»",
+          "dod": "پوششِ کل ≥ ۹۰٪ شاخه؛ بدترین فایل‌ها (persist.ts، sound/beds.ts، sim/sanitize.ts) تستِ متمرکز داشته باشند؛ تستِ فازِ مرزِ اعتمادِ کلاینت به سرور وجود داشته باشد.",
+          "status": "done",
+          "evidence": "tests/persist-storage.test.ts با ۱۶ تست: persist.ts از ۶۸٪ به ۹۴٪ (IndexedDB، پشتیبانِ چرخشی، سیوِ ابری، حافظه‌ی ماندگار، توکن/شناسه، pickNewer)؛ tests/beds.test.ts با ۱۰ تست: sound/beds.ts از ۸۲٪ به ۱۰۰٪ (بسترهای حلقه‌ای، فایلِ ناقص، stop و میان‌پرده)؛ ۵ تستِ مرزِ نادر در tests/sanitize-fuzz.test.ts (نسخه‌ی ناشناخته، نقشه‌ی اشتباه، بازارِ خراب، ویژگیِ پرتاب‌کن، کاشیِ بی‌معنا) که sim/sanitize.ts را به ۹۰٪ گزاره و ۱۰۰٪ خط رساند؛ پوششِ کل ۹۴.۵۲٪ گزاره / ۸۸.۹۶٪ شاخه / ۹۵.۳۹٪ تابع / ۹۸.۰۷٪ خط با ۵۴۱ تست."
+        },
+        {
+          "id": "4",
+          "title": "محیطِ پیش‌نمایش برای PR — کسریِ CI",
+          "dod": "برای هر PR، بیلدِ استاتیک ساخته و به‌عنوانِ artifact بارگذاری شود تا بازبین بدونِ کلون، همان چیزی را که بازیکن می‌بیند دانلود و اجرا کند؛ وضعیتش در README و قالبِ PR مستند شود.",
+          "status": "done",
+          "evidence": ".github/workflows/pr-preview.yml روی هر PR: بیلدِ استاتیک با NEXT_PUBLIC_STATIC=1 (بدون basePath) → آزمونِ سلامتِ out/index.html و _next/static → آپلودِ کلِ بسته به‌عنوانِ artifact با نگه‌داشتِ ۱۴ روزه؛ توضیحِ «چرا artifact و نه دامنه‌ی preview» در README (بخشِ تستِ سرتاسری) و سرِ همان ورک‌فلو."
+        },
+        {
+          "id": "5",
+          "title": "CSP و unsafe-inline — کسریِ «امنیت ج» به‌صورتِ خطرِ پذیرفته‌شده",
+          "dod": "دلیلِ فنیِ لازمِ unsafe-inline در خروجیِ ایستا (React payload درون‌خطی و nonce یعنی رندرِ پویا) در src/security.ts و README مستند شود؛ محدودسازی‌های باقی‌مانده (هیچ مبدأِ بیرونی، object-src none، base-uri، form-action) با تست ثابت شود.",
+          "status": "blocked",
+          "evidence": "src/security.ts توضیحِ معماری را دارد (اسکریپت‌های درون‌خطیِ Next در خروجیِ ایستا؛ nonce با export ایستا سازگار نیست)؛ tests/security.test.ts و e2e/security.spec.ts دستورها را می‌سنجند. پذیرش: تا وقتی خروجی ایستا (GitHub Pages + APK) بماند، حذفِ unsafe-inline یعنی از دست دادنِ ایستایی."
+        },
+        {
+          "id": "6",
+          "title": "بازخوردِ کاربرِ واقعی و تلمتري — کسریِ UX/سلامت",
+          "dod": "مسیرِ جمع‌آوریِ بازخوردِ واقعی (فرم/کانال) و اندازه‌گیریِ استفاده مستند شود؛ تا وقتی کاربرِ واقعی نداریم، به‌عنوانِ خطرِ پذیرفته‌شده با نقشه‌ی رفع ثبت می‌شود.",
+          "status": "blocked",
+          "evidence": "بدونِ کاربرِ واقعی قابلِ اندازه‌گیری نیست؛ جایگزینِ فعلی: شبیه‌سازیِ بات در tests/sim-estimate.test.ts (نسبتِ سکه ۲.۶۲، ۱۰ روز بازی تا تناسخ) و گزارشِ خطای /api/log. پذیرش: این کسری فقط با انتشار و جمع‌آوریِ داده بسته می‌شود."
+        }
+      ]
+    },
+    {
       "id": "P",
       "title": "APK اندروید از ورک‌فلو (فازِ پایانی)",
       "goal": "بازیکن اندرویدی بتواند همان بازیِ آفلاین‌فِرست را به‌صورتِ APK از GitHub Actions بگیرد؛ بیلد با یک ورک‌فلو و بدونِ کامپیوترِ محلی.",
@@ -342,13 +391,15 @@
           "id": "1",
           "title": "Capacitor: وابستگی‌ها، پیکربندی و اسکریپت‌ها",
           "dod": "@capacitor/core+android+cli به devDeps؛ capacitor.config.ts با webDir=out و appId/appName؛ اسکریپت‌های npm برای sync و gradle؛ android/ در CI ساخته شود و در .gitignore بماند.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "@capacitor/{core,android,cli}@7.6.9 (موتورِ Node ≥20 سازگار با CI؛ نسخه‌ی 8 به Node 22 نیاز دارد) در devDeps؛ capacitor.config.ts با webDir=out و appId=ir.amirrezahadipoor.farm/appName؛ اسکریپت‌های build:static/cap:sync/apk:debug؛ tools/build-static.mjs بیلدِ بدونِ basePath می‌سازد (out/ ۷.۴ مگابایت)؛ android/ در CI ساخته و در .gitignore می‌ماند؛ tests/apk-config.test.ts با ۸ تست."
         },
         {
           "id": "2",
           "title": "ورک‌فلو apk.yml: بیلد و انتشارِ artifact",
           "dod": "روی tagِ v* و workflow_dispatch: بیلدِ استاتیک (NEXT_PUBLIC_STATIC=1، بدونِ basePath) → npx cap sync android → ./gradlew assembleDebug → آپلودِ APK به‌عنوانِ artifact؛ مدتِ اجرا < ۱۵ دقیقه.",
-          "status": "todo"
+          "status": "done",
+          "evidence": ".github/workflows/apk.yml روی tagِ v* و workflow_dispatch: بیلدِ استاتیک با NEXT_PUBLIC_STATIC=1 (بدونِ basePath) → npx cap sync android → ./gradlew assembleDebug → آپلودِ APK؛ نیازمندِ اجرای واقعی در CI (بعد از پوشِ راه‌دور)."
         },
         {
           "id": "3",

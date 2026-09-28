@@ -145,3 +145,56 @@ describe("sanitizeSave — تست حالت‌محور (fuzz) روی مرزِ ا�
     expect(out!.inv.wheat).toBe(7);
   });
 });
+
+describe("sanitizeSave — مرزهای نادرِ مستندشده", () => {
+  it("سیوِ نسخه‌ی دیگر (مهاجرت ناممکن) رد می‌شود، نه اینکه خراب بالا بیاید", () => {
+    const s = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    s.v = 4;
+    expect(sanitizeSave(s)).toBeNull();
+  });
+
+  it("نقشه با اندازه‌ی اشتباه رد می‌شود (مهاجرت ستون‌ها را نمی‌شکند)", () => {
+    const s = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    s.tiles = (s.tiles as unknown[]).slice(0, N - 1);
+    expect(sanitizeSave(s)).toBeNull();
+  });
+
+  it("بازار خالی یا خراب از صفر بازسازی می‌شود (بدون استثنا)", () => {    const s = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    s.market = {};
+    const out = sanitizeSave(s);
+    expect(out).not.toBeNull();
+    for (const k of Object.keys(ITEMS)) {
+      const m = (out!.market as Record<string, { hist: unknown[]; ph: number }>)[k];
+      expect(m, k).toBeDefined();
+      expect(Array.isArray(m.hist)).toBe(true);
+      expect(Number.isFinite(m.ph)).toBe(true);
+    }
+    const s2 = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    s2.market = { wheat: null, corn: "خراب" };
+    const out2 = sanitizeSave(s2);
+    expect(out2).not.toBeNull();
+    expect(Number.isFinite(out2!.market.wheat.ph)).toBe(true);
+  });
+
+  it("ویژگیِ پرتاب‌کن (سیوِ خرابِ عمدی) استثنا را به null تبدیل می‌کند، نه به ۵۰۰", () => {
+    const s = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    // خواندنِ این کلید استثنا می‌اندازد؛ مهاجرت روی آن می‌شکند و لایه‌ی دفاعی می‌گیردش
+    s.market = {
+      get wheat(): unknown {
+        throw new Error("خرابیِ عمدیِ سیو");
+      },
+    };
+    expect(sanitizeSave(s)).toBeNull();
+  });
+
+  it("آب‌وهوا یا نوعِ کاشیِ بی‌معنا به مقدارِ سالم برمی‌گردد", () => {
+    const s = JSON.parse(JSON.stringify(newState())) as Record<string, unknown>;
+    s.weather = "طوفانِ آتشی"; // بیرون از فهرست
+    const t = (s.tiles as Record<string, unknown>[])[0];
+    t.k = "کاشیِ ناموجود";
+    const out = sanitizeSave(s);
+    expect(out).not.toBeNull();
+    expect(WEATHER_TYPES).toContain(out!.weather);
+    expect(out!.tiles[0].k).not.toBe("کاشیِ ناموجود");
+  });
+});

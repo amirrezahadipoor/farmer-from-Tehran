@@ -1,0 +1,44 @@
+name: pr-preview
+
+# هدف: بازبینِ PR بدونِ کلون و بدونِ سرور، همان چیزی را که بازیکن می‌بیند بگیرد.
+# خروجی یک بسته‌ی استاتیک (out/) است که با دوبار کلیک در مرورگر اجرا می‌شود — همان
+# بیلدی که ورک‌فلوِ pages و apk استفاده می‌کنند، ولی بدونِ basePath و بدونِ API.
+# چرا فقط artifact و نه دامنه‌ی پیش‌نمایش: GitHub Pages تنها از main منتشر می‌شود و
+# هیچ سرویسِ میزبانیِ بیرونی در این پروژه نیست؛ artifact صددرصد آفلاین کار می‌کند.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pr-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: بسته‌ی پیش‌نمایش برای بازبین
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: بیلدِ استاتیک (NEXT_PUBLIC_STATIC=1، بدون basePath)
+        run: npm run build:static
+        env:
+          NEXT_PUBLIC_STATIC: "1"
+      - name: آزمونِ سلامتِ بسته: index.html و دارایی‌های اصلی
+        run: |
+          test -f out/index.html
+          test -n "$(ls out/_next/static 2>/dev/null)"
+          echo "حجم بسته: $(du -sh out | cut -f1)"
+      - name: آپلود بسته‌ی پیش‌نمایش
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-preview-${{ github.event.pull_request.number || github.run_id }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 14

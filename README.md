@@ -77,12 +77,35 @@ npm run db:push         # ساخت جدول farm_saves
 
 شاهد: `tests/save-api.test.ts` هندلرِ واقعی را با انبارِ حافظه‌ای تست می‌کند. `tests/save-pg.test.ts` همین قاعده‌ها را روی Postgresِ واقعی اجرا می‌کند — در CI با سرویسِ Postgres 17 و به‌صورتِ محلی با PGlite (همان Postgres به‌صورتِ WASM درون‌پروسه، بدونِ Docker). دیگر هیچ تستی به‌خاطرِ نبودِ دیتابیس skip نمی‌شود.
 
+### تستِ سرتاسریِ محلی (Playwright) — کلِ بازی روی مرورگرِ واقعی
+
+`npm run test` فقط منطق را می‌آزماید؛ برای دیدنِ «بازی واقعاً بالا می‌آید و قابلِ بازی
+است» تست‌های `e2e/` بازی را روی مرورگرِ موبایلِ واقعی اجرا می‌کنند (۲۳ فایل، ۴۷ تست:
+شروع بازی، چیدن ساختمان، برداشت محصول، پنل‌ها، جشنواره، صدا، اشکالِ رندر و کارایی):
+
+```bash
+npx playwright install --with-deps chromium webkit   # یک‌بار
+NEXT_PUBLIC_E2E=1 npx playwright test                # خودش build و start می‌کند
+NEXT_PUBLIC_E2E=1 npx playwright test --grep "شروع"  # فقط یک تست
+npx playwright show-report                           # گزارش و اسکرین‌شات‌ها
+```
+
+| نکته | توضیح |
+|---|---|
+| `NEXT_PUBLIC_E2E=1` | قلابِ `window.__game` (وضعیت، کارایی، صدا) فقط در این حالت به صفحه اضافه می‌شود؛ نسخه‌ی منتشرشده آن را ندارد |
+| پروفایل‌ها | `mobile-chrome` (Pixel 7) و `mobile-ios` (iPhone 13 با WebKit) — همان دو پروفایلی که در CI اجرا می‌شود |
+| نتیجه‌ی تستِ شکست‌خورده | `test-results/` ردِ کامل (trace) و اسکرین‌شات دارد؛ `docs/shots/` اسکرین‌شات‌های مقایسه |
+| بدونِ مرورگر | اگر نتوانی Playwright نصب کنی، `npm run test:coverage` + `npm run build:static` + باز کردنِ `out/index.html` همان بیلدِ CI را بدونِ سرور نشان می‌دهد |
+| توازنِ اقتصاد | `npx vitest run tests/sim-estimate.test.ts` باتِ بهینه را تا تناسخ می‌برد و نسبتِ سکه به آستانه را گزارش می‌کند (هدف ≤ ۵، فعلی ۲.۶) |
+| APK بدونِ سرورِ مک | `npm run apk:debug` (باید JDK 21 و Android SDK نصب باشد) یا ورک‌فلو `.github/workflows/apk.yml` |
+
 ## کیفیت
 
 ```bash
 npm run typecheck      # TypeScript — باید صفر خطا باشد
 npm run lint           # ESLint
 npm run test           # تست‌های منطق بازی (Vitest)
+npm run test:coverage  # تست + پوشش (آستانه: ۸۰٪ در هر چهار شاخص)
 npm run check-assets   # بررسی وجود همه‌ی تصاویر/فونت‌های ارجاع‌شده
 npm run verify         # همه‌ی موارد بالا + build
 npm run roadmap        # بازتولید ROADMAP.md از docs/roadmap.json
@@ -124,7 +147,7 @@ tests/            تست‌های خودکار
 ## مشارکت
 
 ۱. برنچ بساز → ۲. `npm run verify` را سبز کن (typecheck + lint بدون هیچ هشدار + تست + build) → ۳. PR بزن (قالب PR خودکار پر می‌شود).
-ورک‌فلوهای گیت‌هاب اکشن: `quality`، `browser-test`، `lighthouse` و `security` (بررسیِ امنیتی بلاک‌کننده است و Dependabot هر هفته وابستگی‌ها را به‌روز می‌کند).
+ورک‌فلوهای گیت‌هاب اکشن: `quality` (بلاک‌کننده: typecheck/lint/تست/build)، `security` (بررسیِ امنیتی بلاک‌کننده + Dependabot هفتگی)، `pr-preview` (روی هر PR یک بسته‌ی استاتیکِ قابلِ اجرا به‌عنوانِ artifact می‌سازد تا بازبین بدونِ کلون بازی را ببیند)، `browser-test` (اجرای بازی روی مرورگرِ موبایل؛ تا پیش از فازِ APK دستی است)، `lighthouse` و `pages` (انتشارِ دمو) و `apk` (ساختِ APK اندروید روی تگِ نسخه).
 
 ## مجوز
 
