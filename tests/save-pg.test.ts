@@ -88,6 +88,17 @@ describe(`Postgres واقعی${URL_ ? "" : " (PGlite درون‌پروسه)"}`, 
     expect(raw.rows[0].d).not.toContain(A);
   });
 
+  it("B/T11: نوشتنِ دوم، نسخه‌ی قبلی را در prev_data نگه می‌دارد و ستون روی جدولِ قدیمی خودش می‌آید", async () => {
+    const { post } = await mk();
+    const v1 = { ...JSON.parse(JSON.stringify(newState())), coins: 1000 };
+    const v2 = { ...JSON.parse(JSON.stringify(newState())), coins: 2000 };
+    expect((await post("p_prev_player", A, v1)).status).toBe(200);
+    expect((await post("p_prev_player", A, v2)).status).toBe(200);
+    const raw = await backend.q("SELECT data->'coins' AS c, prev_data->'coins' AS p FROM farm_saves WHERE id = 'p_prev_player'");
+    expect(Number(raw.rows[0].c)).toBe(2000);
+    expect(Number(raw.rows[0].p)).toBe(1000);
+  });
+
   it("پایگاه‌داده‌ی خالی: جدول خودش ساخته می‌شود", async () => {
     await backend.q("DROP TABLE farm_saves");
     const { post, get } = await mk();

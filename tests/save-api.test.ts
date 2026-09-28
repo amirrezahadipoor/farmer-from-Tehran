@@ -32,10 +32,10 @@ function post(body: unknown, token: string | null = A, extra: Record<string, str
   if (token) headers["x-farm-token"] = token;
   return handlePost(new Request("http://x/api/save", { method: "POST", headers, body: text }), deps);
 }
-function get(id = ID, token: string | null = A, ip = "10.0.0.1") {
+function get(id = ID, token: string | null = A, ip = "10.0.0.1", prev = false) {
   const headers: Record<string, string> = { "x-forwarded-for": ip };
   if (token) headers["x-farm-token"] = token;
-  return handleGet(new Request(`http://x/api/save?id=${encodeURIComponent(id)}`, { headers }), deps);
+  return handleGet(new Request(`http://x/api/save?id=${encodeURIComponent(id)}${prev ? "&prev=1" : ""}`, { headers }), deps);
 }
 
 describe("مالکیت با توکن", () => {
@@ -72,7 +72,7 @@ describe("مالکیت با توکن", () => {
   });
 
   it("ردیفِ قدیمیِ بی‌مالک (پیش از P5.13): اولین نوشتنِ معتبر قفلش می‌کند", async () => {
-    store.rows.set(ID, { data: save(), tokenHash: null });
+    store.rows.set(ID, { data: save(), tokenHash: null, prev: null });
     expect((await get(ID, B)).status).toBe(200);
     expect((await post({ id: ID, data: save() }, B)).status).toBe(200);
     expect(store.rows.get(ID)!.tokenHash).toBe(hashToken(B));
@@ -265,5 +265,23 @@ describe("کلاینت: توکنِ دستگاه و رفتارِ صادق در ب
     const r = await P.fetchCloudSave("p_me");
     expect(r.state).toBeNull();
     expect(r.note).toContain("توکن");
+  });
+});
+
+describe("B/T11 — نسخه‌ی قبلی (ضدِ رونویسیِ کور)", () => {
+  it("هر نوشتن، داده‌ی قبلی را نگه می‌دارد؛ ?prev=1 فقط با توکنِ مالک برمی‌گردد", async () => {
+    const first = save();
+    first.coins = 111;
+    expect((await post({ id: ID, data: first })).status).toBe(200);
+    expect(((await (await get(ID, A, "10.0.0.1", true)).json()).data) ?? null).toBeNull(); // هنوز نسخه‌ای قبلی نیست
+
+    const second = save();
+    second.coins = 222;
+    expect((await post({ id: ID, data: second })).status).toBe(200);
+    expect(((await (await get(ID)).json()).data as { coins: number }).coins).toBe(222);
+    expect(((await (await get(ID, A, "10.0.0.1", true)).json()).data as { coins: number }).coins).toBe(111);
+
+    // توکنِ دیگر نسخه‌ی قبلی را هم نمی‌بیند
+    expect((await get(ID, B, "10.0.0.2", true)).status).toBe(403);
   });
 });

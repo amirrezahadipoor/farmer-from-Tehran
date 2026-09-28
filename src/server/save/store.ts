@@ -14,6 +14,8 @@ export interface SaveRow {
   data: unknown;
   /** sha256 توکنِ مالک؛ null = ردیفِ قدیمیِ پیش از P5.13 (اولین نوشتنِ معتبر مالکش می‌شود) */
   tokenHash: string | null;
+  /** B/T11: نسخه‌ی قبلی — آخرین ردیفی که با نوشتنِ بعدی رونویسی شده (null = هیچ) */
+  prev: unknown;
 }
 
 export interface SaveStore {
@@ -42,7 +44,8 @@ export class MemorySaveStore implements SaveStore {
   async put(id: string, data: unknown, tokenHash: string) {
     const cur = this.rows.get(id);
     if (cur?.tokenHash && cur.tokenHash !== tokenHash) return false;
-    this.rows.set(id, { data, tokenHash });
+    // B/T11: رونویسیِ کور ممنوع — داده‌ی قبلی به «نسخه‌ی قبلی» می‌رود
+    this.rows.set(id, { data, tokenHash, prev: cur ? cur.data : null });
     return true;
   }
 }
@@ -56,6 +59,7 @@ function ensureSchema(db: SqlRunner): Promise<void> {
       sql`CREATE TABLE IF NOT EXISTS farm_saves (id text PRIMARY KEY, data jsonb NOT NULL, updated_at timestamp DEFAULT now() NOT NULL, token_hash text)`,
     );
     await db.execute(sql`ALTER TABLE farm_saves ADD COLUMN IF NOT EXISTS token_hash text`);
+    await db.execute(sql`ALTER TABLE farm_saves ADD COLUMN IF NOT EXISTS prev_data jsonb`); // B/T11
   })().catch((e: unknown) => {
     schemaReady = null;
     throw e;
@@ -68,18 +72,19 @@ export class PgSaveStore implements SaveStore {
 
   async get(id: string): Promise<SaveRow | null> {
     await ensureSchema(this.db);
-    const r = await this.db.execute(sql`SELECT data, token_hash FROM farm_saves WHERE id = ${id} LIMIT 1`);
+    const r = await this.db.execute(sql`SELECT data, token_hash, prev_data FROM farm_saves WHERE id = ${id} LIMIT 1`);
     const row = r.rows[0];
-    return row ? { data: row.data, tokenHash: (row.token_hash as string | null) ?? null } : null;
+    return row ? { data: row.data, tokenHash: (row.token_hash as string | null) ?? null, prev: (row.prev_data as unknown) ?? null } : null;
   }
 
   async put(id: string, data: unknown, tokenHash: string): Promise<boolean> {
     await ensureSchema(this.db);
     // یک دستورِ اتمی: درج، یا به‌روزرسانی فقط اگر ردیف بی‌مالک یا مالِ همین توکن باشد؛ وگرنه هیچ ردیفی برنمی‌گردد
     const r = await this.db.execute(sql`
-      INSERT INTO farm_saves (id, data, token_hash, updated_at)
-      VALUES (${id}, ${JSON.stringify(data)}::jsonb, ${tokenHash}, now())
-      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, token_hash = EXCLUDED.token_hash, updated_at = now()
+      INSERT INTO farm_saves (id, data, token_hash, prev_data, updated_at)
+      VALUES (${id}, ${JSON.stringify(data)}::jsonb, ${tokenHash}, NULL, now())
+      ON CONFLICT (id) DO UPDATE SET
+        prev_data = farm_saves.data, data = EXCLUDED.data, token_hash = EXCLUDED.token_hash, updated_at = now()
       WHERE farm_saves.token_hash IS NULL OR farm_saves.token_hash = ${tokenHash}
       RETURNING id
     `);

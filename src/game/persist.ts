@@ -258,6 +258,31 @@ export function restoreQuarantined(): LoadOutcome {
 
 /* ---------------------------- خواندن سیوِ ابری ---------------------------- */
 
+/**
+ * B/T11 — نسخه‌ی قبلیِ ابری: آخرین سیوی که با نوشتنِ بعدی رونویسی شده.
+ * برای «رونویسی کور ممنوع»: بازیکن می‌تواند نسخه‌ی پیشین را برگرداند.
+ * هر خطا (آفلاین، ۵۰۰، JSON خراب) = `null` — هیچ‌گاه بازی را نمی‌شکند.
+ */
+export async function fetchCloudPrev(timeoutMs = 7000): Promise<State | null> {
+  if (STATIC_BUILD) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(asset("/api/save?prev=1"), {
+      signal: controller.signal,
+      headers: { [TOKEN_HEADER]: ensureFarmToken() },
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data?: unknown };
+    if (!body?.data) return null;
+    return sanitizeSave(body.data);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** سیوِ ابری را با مهلت زمانی می‌خواند؛ هر خطا (آفلاین، ۵۰۰، JSON خراب) = `null`. */
 export async function fetchCloudSave(id: string, timeoutMs = 7000): Promise<LoadOutcome> {
   if (STATIC_BUILD) return { state: null, corrupt: false, source: null, note: "نسخه‌ی دمو: ذخیره فقط روی همین دستگاه" };

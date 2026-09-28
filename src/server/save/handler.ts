@@ -41,7 +41,10 @@ const limited = (retryAfter: number, extra: Record<string, unknown>) =>
   json({ ...extra, mode: "cloud", error: "rate" }, 429, { "retry-after": String(retryAfter) });
 
 export async function handleGet(req: Request, deps: SaveDeps): Promise<Response> {
-  const id = new URL(req.url).searchParams.get("id");
+  const params = new URL(req.url).searchParams;
+  const id = params.get("id");
+  // B/T11: ?prev=1 یعنی «نسخه‌ی قبلی» — همان قفلِ مالکیت، برای برگرداندنِ رونویسی
+  const wantPrev = params.get("prev") === "1";
   if (!deps.store) return json({ data: null, mode: "offline" });
   if (!validId(id)) return json({ data: null, mode: "cloud", error: "id" }, 400);
   const token = req.headers.get(TOKEN_HEADER);
@@ -53,7 +56,7 @@ export async function handleGet(req: Request, deps: SaveDeps): Promise<Response>
     if (!row) return json({ data: null, mode: "cloud" });
     if (row.tokenHash && !tokenMatches(token, row.tokenHash)) return json({ data: null, mode: "cloud", error: "forbidden" }, 403);
     // ردیفِ قدیمی بدون مالک هم فقط به دارنده‌ی شناسه و یک توکنِ معتبر داده می‌شود؛ اولین نوشتن قفلش می‌کند
-    return json({ data: row.data ?? null, mode: "cloud" });
+    return json({ data: (wantPrev ? row.prev : row.data) ?? null, mode: "cloud" });
   } catch (e) {
     logServerError("save.get", e);
     return json({ data: null, mode: "offline" });

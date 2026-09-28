@@ -10,7 +10,7 @@ import { fmt } from "../../data";
 import { newState } from "../../logic";
 import { Icon } from "../../icons";
 import { haptic, setHaptics, hapticsEnabled, lockOrientation, unlockOrientation } from "../../mobile";
-import { clearAllSaves, readLS, writeLS } from "../../persist";
+import { clearAllSaves, readLS, writeLS, fetchCloudPrev } from "../../persist";
 import { getAudioSettings, setAudioSettings, sound, type AudioSettings } from "../../audio";
 import { recenter } from "../../useCanvasInput";
 import { game, resetRuntime } from "../../store";
@@ -191,6 +191,24 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
         }}
       >
         <Icon name="save" size={18} /> ذخیره دستی
+      </button>
+
+      <button
+        type="button"
+        className={`${btn} w-full bg-slate-600 text-white`}
+        onClick={() => {
+          void (async () => {
+            const prev = await fetchCloudPrev();
+            if (!prev) {
+              ui.toast("نسخه‌ی قبلی در ابر نیست — یا آفلاینی یا هنوز رونویسی نشده", "info");
+              return;
+            }
+            game.set(prev);
+            ui.toast("نسخه‌ی قبلیِ ابری برقرار شد — سیو در چند ثانیه دوباره بالا می‌رود", "ok");
+          })();
+        }}
+      >
+        <Icon name="repeat" size={18} /> بازیابی نسخه‌ی قبلیِ ابری
       </button>
 
       <button
