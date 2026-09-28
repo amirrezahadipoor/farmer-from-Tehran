@@ -3,7 +3,8 @@ import { calmMix, musicMode, DEFAULT_AUDIO } from "../src/game/sound/mix";
 import { CalmLayer } from "../src/game/sound/calm";
 import { Engine } from "../src/game/sound/engine";
 import type { Ctx } from "../src/game/sound/sfx";
-import { FakeDecodingAC, FakeGain } from "./fakeAudio";
+import { FakeDecodingAC, FakeGain, FakeOsc } from "./fakeAudio";
+import { vi } from "vitest";
 
 const env = (hour: number, weather = "sun") => ({ hour, season: "spring", weather });
 const AC = FakeDecodingAC as unknown as new (o?: AudioContextOptions) => AudioContext;
@@ -46,6 +47,37 @@ describe("لایه‌ی آرامش (B/T4) — پدِ درون و جریانِ آ
     CalmLayer.create(ac, ac.createGain(), noise, null);
     const soft = fake.nodes.filter((n) => n instanceof FakeGain && n.gain.events.some((e) => e[0] === "target"));
     expect(soft.length).toBeGreaterThanOrEqual(2); // پد + جریان
+  });
+
+  it("نتِ اولیه از دستگاهِ ماهور است، نه ۴۴۰ پیش‌فرض — ثانیه‌ی اول پرش ندارد (C/T5)", () => {
+    const fake = new FakeDecodingAC();
+    const ac = fake as unknown as Ctx;
+    const noise = fake.createBuffer(1, 1000, 8000) as unknown as AudioBuffer;
+    CalmLayer.create(ac, ac.createGain(), noise, null);
+    const freqs = fake.nodes
+      .filter((n): n is FakeOsc => n instanceof FakeOsc)
+      .map((o) => o.frequency.value)
+      .filter((f) => f > 50);
+    expect(freqs.length).toBe(2); // پایه + پنجم (LFO در ۰.۰۶ هرتز است)
+    expect(freqs[1]).toBeCloseTo(freqs[0] * 1.5);
+    expect(freqs[0]).toBeGreaterThan(80);
+    expect(freqs[0]).toBeLessThan(300);
+  });
+
+  it("stop پس از محو، گره‌ها را disconnect می‌کند — بدونِ نشت (C/T5)", () => {
+    vi.useFakeTimers();
+    try {
+      const fake = new FakeDecodingAC();
+      const ac = fake as unknown as Ctx;
+      const noise = fake.createBuffer(1, 1000, 8000) as unknown as AudioBuffer;
+      const calm = CalmLayer.create(ac, ac.createGain(), noise, env(12))!;
+      const osc = fake.nodes.find((n): n is FakeOsc => n instanceof FakeOsc)!;
+      calm.stop();
+      vi.advanceTimersByTime(2500);
+      expect(osc.out.length).toBe(0); // جداسازی شد
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("در موتور: با موسیقی روشن ساخته می‌شود و خاموشی/روشنِ دوباره بدون خطاست — بدونِ فایلِ جدید", () => {

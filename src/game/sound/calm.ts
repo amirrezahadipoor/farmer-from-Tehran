@@ -47,8 +47,12 @@ export class CalmLayer {
     padGain.connect(filter);
     this.params.push({ p: padGain.gain, base: PAD_GAIN });
 
+    // C/T5: نتِ اولیه از دستگاهِ ماهور (نه ۴۴۰ پیش‌فرض) — تا ثانیه‌ی اول «پرش» شنیدنی نباشد
+    const f0 = degreeFreq(musicMode({ hour: 12, season: "spring", weather: "sun" }).mode, -7);
     const root = this.oscOf("sine");
+    root.frequency.value = f0;
     const fifth = this.oscOf("sine");
+    fifth.frequency.value = f0 * 1.5;
     const rootG = this.ac.createGain();
     rootG.gain.value = 0.6;
     const fifthG = this.ac.createGain();
@@ -124,7 +128,7 @@ export class CalmLayer {
     }
   }
 
-  /** محوِ دوثانیه‌ای و قطعِ همه‌چیز */
+  /** محوِ دوثانیه‌ای، قطعِ منابع و جداسازیِ گره‌ها (C/T5 — بدونِ نشت) */
   stop() {
     if (this.stopped) return;
     this.stopped = true;
@@ -138,5 +142,14 @@ export class CalmLayer {
     } catch {
       /* بی‌صدا */
     }
+    setTimeout(() => {
+      for (const n of [...this.nodes, ...this.sources]) {
+        try {
+          n.disconnect();
+        } catch {
+          /* بی‌صدا */
+        }
+      }
+    }, 2300);
   }
 }
