@@ -111,7 +111,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
           type="button"
           aria-label={`سطح ${fmt(s.level)}`}
           onClick={() => setPanel("skills")}
-          className="flex h-10 items-center gap-2 rounded-full bg-white/95 py-0.5 pl-3 pr-0.5 shadow-lg ring-1 ring-amber-900/10 active:scale-95 md:h-11"
+          className="flex h-11 items-center gap-2 rounded-full bg-white/95 py-0.5 pl-3 pr-0.5 shadow-lg ring-1 ring-amber-900/10 active:scale-95 md:h-11"
         >
           <LevelRing level={s.level} pct={s.xp / need} />
           <span className="hidden text-right leading-tight sm:block">
@@ -180,7 +180,7 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
             if (s.story.shown) game.bump();
             else setPanel(panel === "story" ? null : "story");
           }}
-          className={`flex h-10 max-w-[56vw] items-center gap-2 rounded-full py-0.5 pl-3 pr-1 shadow-lg ring-1 active:scale-95 md:h-11 md:max-w-[300px] ${
+          className={`flex h-11 max-w-[56vw] items-center gap-2 rounded-full py-0.5 pl-3 pr-1 shadow-lg ring-1 active:scale-95 md:h-11 md:max-w-[300px] ${
             s.story.shown ? "animate-pulse bg-purple-600 text-white ring-purple-300" : "bg-white/95 text-amber-950 ring-amber-900/10"
           }`}
         >
@@ -202,14 +202,14 @@ export default function Hud({ s, panel, setPanel, openMenu, saveState, online }:
         </button>
 
         {s.currentEvent && (
-          <span className="flex h-10 items-center gap-1.5 rounded-full bg-purple-100 pl-3 pr-1.5 text-[11px] font-black text-purple-900 shadow-lg ring-1 ring-purple-300 md:h-11">
+          <span className="flex h-11 items-center gap-1.5 rounded-full bg-purple-100 pl-3 pr-1.5 text-[11px] font-black text-purple-900 shadow-lg ring-1 ring-purple-300 md:h-11">
             <Icon name="sparkle" size={24} />
             <span className="hidden max-w-[220px] truncate md:inline">{stripEmoji(s.currentEvent.text)}</span>
           </span>
         )}
       </div>
 
-      <div className="pointer-events-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-slate-900/75 pl-3 pr-1 text-white shadow-lg backdrop-blur-md md:h-11">
+      <div className="pointer-events-auto flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-900/75 pl-3 pr-1 text-white shadow-lg backdrop-blur-md md:h-11">
         <Icon name={weatherIcon} size={30} />
         <span className="text-right leading-tight">
           <span className="block text-[12px] font-black min-[430px]:text-[13px]">روز {fmt(s.day)}</span>
