@@ -59,7 +59,8 @@ describe("ورک‌فلو apk.yml", () => {
     expect(wf).toContain("npx cap add android");
     expect(wf).toContain("npx cap sync android");
     expect(wf).toContain("./gradlew assembleDebug");
-    expect(wf).toContain("actions/upload-artifact@v7");
+    expect(wf).toMatch(/actions\/upload-artifact@[0-9a-f]{40}( # v7)?/); // B/T7: پینِ SHA
+    expect(wf).toContain("# v7");
     expect(wf).toContain("android/app/build/outputs/apk/debug/*.apk");
   });
   it("JDK ۲۱ و Node ۲۰ (هم‌خوان با بقیه‌ی ورک‌فلوها) استفاده می‌شود", () => {
