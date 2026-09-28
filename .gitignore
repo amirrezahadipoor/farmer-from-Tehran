@@ -14,3 +14,7 @@ playwright-report/
 
 # مورد ۹ِ نقشه‌ی راه: اسکرین‌شات‌ها فقط آرتیفکتِ CI هستند (playtest-shots)، نه بخشی از مخزن
 docs/shots/
+
+# فاز P: پروژه‌ی اندروید در CI ساخته می‌شود، نه در مخزن
+android/
+.api-parked/

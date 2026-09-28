@@ -1,0 +1,58 @@
+name: apk
+
+# فاز Pِ نقشه‌ی راه — بسته‌ی اندروید (APK) از ورک‌فلو ساخته می‌شود.
+# بیلدِ محلیِ اندروید ممکن نیست (SDK و gradle روی ماشینِ توسعه نیست)، پس اینجا:
+#   بیلدِ ایستای وب (NEXT_PUBLIC_STATIC=1، بدونِ مسیرِ پایه، بدونِ API)
+#   → npx cap add/sync android → ./gradlew assembleDebug → APK به‌عنوان artifact.
+# پروژه‌ی اندروید در CI ساخته می‌شود و در مخزن نمی‌ماند (.gitignore: android/).
+#
+# فعال‌سازی: تگِ نسخه (git tag v1.2.3 && git push origin v1.2.3) یا اجرای دستی.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: بیلدِ APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: بیلدِ ایستای وب (بدونِ API و بدونِ مسیرِ پایه)
+        run: npm run build:static
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21" # الگوی Capacitor ۷ با AGP ۸.۷ به JDK ۲۱ نیاز دارد
+      - name: آماده‌سازیِ اندروید SDK ۳۵
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: ساختِ پروژه‌ی اندروید
+        run: npx cap add android
+      - name: همگام‌سازیِ وب با اندروید
+        run: npx cap sync android
+      - name: بیلدِ APKِ دیباگ
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: آپلودِ APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: golden-valley-farm-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30

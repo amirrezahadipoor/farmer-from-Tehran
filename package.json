@@ -4,6 +4,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:static": "node tools/build-static.mjs",
+    "cap:sync": "npm run build:static && npx cap sync android",
+    "apk:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug --no-daemon",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "lint:text": "node tools/lint-text.mjs",
@@ -28,6 +31,9 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/cli": "^7.6.9",
+    "@capacitor/core": "^7.6.9",
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "4.3.3",
