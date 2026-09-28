@@ -45,8 +45,13 @@ export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max
   return cur;
 }
 export interface DprState { dpr: number; ceil: number }
-/** با سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود؛ سقف = آخرین سطحِ سالمِ زیرِ آن */
-export function adaptDpr(st: DprState, avgFrameMs: number, max: number, ceil = max): DprState {
+/**
+ * با سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود؛ سقف = آخرین سطحِ سالمِ زیرِ آن.
+ * hold (B/T2): در پنجره‌ی جشنِ سطح، هیچ تغییرِ رزولوشنی نمی‌خواهیم — تغییرِ اندازه‌ی بوم
+ * یعنی بازسازیِ کشِ زمین در همان فریمِ کاغذرنگی؛ همان فلش/شکافی که بازیکن گزارش کرد.
+ */
+export function adaptDpr(st: DprState, avgFrameMs: number, max: number, ceil = max, hold = false): DprState {
+  if (hold) return { dpr: st.dpr, ceil: st.ceil };
   const d = nextDpr(st.dpr, avgFrameMs, max, st.ceil);
   return { dpr: d, ceil: d < st.dpr ? Math.max(MIN_DPR, st.dpr - 0.1) : st.ceil };
 }
@@ -180,7 +185,10 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     if (p.n >= 40 || (p.acc >= 1000 && p.n >= 3)) {
       const avg = p.acc / p.n;
       rt.perf = { acc: 0, n: 0 };
-      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr(), ceil);
+      // B/T2: در ۲.۵ ثانیه‌ی پس از جشن (کاغذرنگی/سکه)، تغییرِ رزولوشن ممنوع —
+      // تغییرِ بوم در لحظه‌ی جشن = بازسازیِ کشِ زمین = فلش/شکافِ گزارش‌شده
+      const hold = t < rt.dprHoldUntil;
+      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr(), ceil, hold);
       const d = next.dpr;
       ceil = next.ceil;
       if (Math.abs(d - v.dpr) > 0.01) {

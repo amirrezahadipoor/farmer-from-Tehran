@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   newState,
+  addXp,
   tick,
   toolAction,
   sell,
@@ -314,5 +315,19 @@ describe("پاداش اولین برداشت روز", () => {
     s.day += 1; s.tiles[147] = { k: "grass", v: 0, crop: "tomato", g: 1 };
     expect(harvest(s, 3, 4, ev2)).toBe(true);
     expect(toasts.filter(bonusOf)).toHaveLength(2);
+  });
+});
+
+describe("B/T2 — یک رویداد = یک پیام در لول‌آپ", () => {
+  it("پرشِ چندسطحی هم فقط یک توست می‌سازد که سطح، پاداش و امتیازِ مهارت را با هم دارد", () => {
+    const s = newState();
+    const msgs: string[] = [];
+    const ev: Events = { toast: (m) => msgs.push(m), fx: () => {}, sound: () => {} };
+    addXp(s, 100_000, ev);
+    expect(s.level).toBeGreaterThan(2);
+    expect(msgs.filter((m) => m.includes("سطح"))).toHaveLength(1);
+    const one = msgs[0];
+    expect(one).toContain("پاداش");
+    expect(one).toContain("امتیاز مهارت");
   });
 });

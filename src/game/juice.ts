@@ -18,6 +18,8 @@ export function shake() {
 
 export function celebrate(kind: "level" | "achievement" | "prestige") {
   if (typeof window === "undefined") return;
+  // B/T2: پنجره‌ی ۲.۵ ثانیه‌ای بدونِ تغییرِ رزولوشن — بازسازیِ کشِ زمین وسطِ جشن، فلش/شکاف می‌سازد
+  rt.dprHoldUntil = performance.now() + 2500;
   const w = window.innerWidth, h = window.innerHeight;
   const n = kind === "prestige" ? 60 : kind === "level" ? 40 : 26;
   const cols = kind === "prestige" ? GOLD : CONFETTI;

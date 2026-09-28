@@ -142,21 +142,28 @@ export function addXp(s: State, n: number, ev: Events) {
   if (s.level >= 10 && s.level < 20) m += 0.15; // V.7: کاهش گرایند میانه‌ی بازی
   s.xp += Math.round(n * m);
   let lvlGained = 0;
+  let bonusTotal = 0;
+  const unlocked: string[] = [];
   while (s.xp >= xpFor(s.level)) {
     s.xp -= xpFor(s.level);
     s.level++;
     lvlGained++;
     s.stats.skillPoints += 1;
-    const unl = unlocksAt(s.level).map((u) => u.name);
-    ev.toast(`سطح ${fmt(s.level)}! ${unl.length ? "باز شد: " + unl.join("، ") : ""}`, "lvl");
-    ev.sound("lvl");
+    unlocked.push(...unlocksAt(s.level).map((u) => u.name));
     const bonus = s.level * 45;
+    bonusTotal += bonus;
     s.coins += bonus;
-    ev.toast(`پاداش پیشرفت: +${fmt(bonus)} سکه`, "ok");
   }
-  if (lvlGained > 0) ev.celebrate?.("level"); // V.3: جشن سطح
-  if (lvlGained > 0 && s.stats.skillPoints > 0) {
-    ev.toast(`${fmt(s.stats.skillPoints)} امتیاز مهارت در انتظار توست — از منو ← «مهارت‌ها» خرجش کن`, "lvl");
+  if (lvlGained > 0) {
+    ev.sound("lvl");
+    ev.celebrate?.("level"); // V.3: جشن سطح
+    // B/T3: یک رویداد = یک پیام. سه توستِ پشت‌سرِ هم (سطح + پاداش + مهارت) صفحه را شلوغ می‌کرد
+    const parts = [`سطح ${fmt(s.level)}!`];
+    const unl = [...new Set(unlocked)];
+    if (unl.length) parts.push(`باز شد: ${unl.join("، ")}`);
+    parts.push(`پاداش ${fmt(bonusTotal)} سکه`);
+    if (s.stats.skillPoints > 0) parts.push(`${fmt(s.stats.skillPoints)} امتیاز مهارت`);
+    ev.toast(parts.join(" · "), "lvl");
   }
   checkAchievements(s, ev);
 }

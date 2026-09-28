@@ -37,6 +37,12 @@ describe("nextDpr / adaptDpr — سازگارسازی خودکار رزولوش�
     expect(nextDpr(1.5, 17.8, 2)).toBe(1.5);
     expect(nextDpr(1.5, 20.5, 2)).toBe(1.5); // پیش از B/T1 اینجا سقوط می‌کرد
   });
+  it("hold (B/T2) — در پنجره‌ی جشن هیچ تغییری نمی‌کند، نه سقوط نه صعود", () => {
+    const st = { dpr: 1.5, ceil: 2 };
+    expect(adaptDpr(st, 60, 2, 2, true).dpr).toBe(1.5);
+    expect(adaptDpr(st, 8, 2, 2, true).dpr).toBe(1.5);
+    expect(adaptDpr(st, 60, 2, 2, false).dpr).toBeLessThan(1.5);
+  });
 
 
   it("سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود", () => {
