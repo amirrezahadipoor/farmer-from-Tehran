@@ -26,6 +26,7 @@ describe("ورک‌فلوی گیت‌هاب", () => {
         name?: string;
         on?: Record<string, unknown>;
         jobs?: Record<string, Job>;
+        permissions?: unknown;
       };
 
       it("YAML معتبر است و نامِ ورک‌فلو با نامِ فایل می‌خواند", () => {
@@ -43,13 +44,19 @@ describe("ورک‌فلوی گیت‌هاب", () => {
         }
       });
 
-      it("هر action بیرونی با نسخه‌ی مشخص استفاده شده (بدون شاخه‌ی شناور)", () => {
+      it("هر action بیرونی با SHAی کامیت پین شده و نسخه‌اش در کامنت هست (B/T7 — عرضه‌ی زنجیره)", () => {
         for (const [id, job] of Object.entries(wf.jobs ?? {})) {
           for (const s of job.steps ?? []) {
             if (!s.uses) continue;
-            expect(s.uses, `${id}: ${s.uses}`).toMatch(/^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[\w][\w.-]*$/);
+            expect(s.uses, `${id}: ${s.uses} — باید owner/action@SHA40 # نسخه باشد`).toMatch(
+              /^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[0-9a-f]{40}( # v[\w.-]+)?$/,
+            );
           }
         }
+      });
+
+      it("بلوکِ permissions با حداقلِ امتیاز هست (B/T7)", () => {
+        expect(wf.permissions, "permissions: خواسته نشد").toBeDefined();
       });
 
       it("هیچ job بدون سقفِ زمان نمی‌ماند (اجرای قرمزِ آویزان)", () => {
