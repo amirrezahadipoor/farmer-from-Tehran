@@ -111,4 +111,59 @@ describe("/api/transfer", () => {
     expect((await (await handleCreate(req("/api/transfer", { id: "p_x_1" }), d)).json()).mode).toBe("offline");
     expect((await (await handleRedeem(req("/api/transfer/redeem", { code: "ABCD-EFGH" }), d)).json()).mode).toBe("offline");
   });
+
+  // ── B/T8: بستنِ کسورِ پوششِ ریویو — مسیرهای خطا و تاب‌آوریِ هندلر
+
+  it("بدنه‌ی JSON خراب یا ناع объект → 400 (بدونِ استثنا)", async () => {
+    const d = mkDeps();
+    const bad = (raw: string, token = TOKEN) =>
+      new Request("http://x/api/transfer", { method: "POST", body: raw, headers: { "content-type": "application/json", "x-forwarded-for": "1.2.3.4", ...(token ? { "x-farm-token": token } : {}) } });
+    expect((await handleCreate(bad("not json"), d)).status).toBe(400);
+    expect((await handleCreate(bad(JSON.stringify(["array"])), d)).status).toBe(400);
+    expect((await handleCreate(bad(JSON.stringify({ id: 42 })), d)).status).toBe(400);
+    expect((await handleRedeem(bad("{{{"), d)).status).toBe(400);
+  });
+
+  it("برخوردِ کد (تقریباً ناممکن) → تا دو بار دوباره، بعد خطا بالا می‌رود و «آفلاین» می‌شود", async () => {
+    const d = mkDeps();
+    await d.saves.put("p_owner_3", newState(), hashToken(TOKEN));
+    let throws = 2;
+    const real = d.transfers.create.bind(d.transfers);
+    d.transfers.create = async (code, saveId, exp) => {
+      if (throws-- > 0) throw new Error("collision");
+      return real(code, saveId, exp);
+    };
+    const r = await handleCreate(req("/api/transfer", { id: "p_owner_3" }), d);
+    expect(r.status).toBe(200); // دو برخورد پشتِ سر، سومین موفق
+    expect(((await r.json()) as { code: string }).code).toHaveLength(8);
+  });
+
+  it("خطای پایگاه‌داده در ساخت و مصرف کد → «آفلاین»، نه ۵۰۰", async () => {
+    const d = mkDeps();
+    await d.saves.put("p_owner_4", newState(), hashToken(TOKEN));
+    d.saves.get = async () => {
+      throw new Error("db down");
+    };
+    const c = await handleCreate(req("/api/transfer", { id: "p_owner_4" }), d);
+    expect((await c.json()).mode).toBe("offline");
+
+    const d2 = mkDeps();
+    await d2.saves.put("p_owner_5", newState(), hashToken(TOKEN));
+    const made = await (await handleCreate(req("/api/transfer", { id: "p_owner_5" }), d2)).json();
+    d2.transfers.take = async () => {
+      throw new Error("db down");
+    };
+    const r = await handleRedeem(req("/api/transfer/redeem", { code: made.code }), d2);
+    expect((await r.json()).mode).toBe("offline");
+  });
+
+  it("کدِ سالم اما سیوِ حذف‌شده → 404 no_save (نه crash و نه داده‌ی خالی)", async () => {
+    const d = mkDeps();
+    await d.saves.put("p_owner_6", newState(), hashToken(TOKEN));
+    const made = await (await handleCreate(req("/api/transfer", { id: "p_owner_6" }), d)).json();
+    d.saves.rows.delete("p_owner_6");
+    const r = await handleRedeem(req("/api/transfer/redeem", { code: made.code }), d);
+    expect(r.status).toBe(404);
+    expect((await r.json()).error).toBe("no_save");
+  });
 });
