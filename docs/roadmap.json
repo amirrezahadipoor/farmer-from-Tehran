@@ -268,37 +268,43 @@
           "id": "3",
           "title": "بهداشتِ مخزن: اصلاحِ ادعای حجمِ کلون در README و چیدمانِ ابزارهای پراکنده",
           "dod": "عددِ کلون در README با اندازه‌ی واقعیِ ردیابی‌شده بخواند؛ v4-shots.mjs و ابزارهای one-off از ریشه به tools/ بروند.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کامیت fa0fd7a: ادعای حجمِ کلون در README با اندازه‌ی واقعیِ ردیابی‌شده (.git حدود ۱۱MB، درخت ۹.۴MB) و شمارش واقعی خطوط جایگزین شد؛ v4-shots.mjs و ابزارهای one-off به tools/ رفتند."
         },
         {
           "id": "4",
           "title": "حذفِ ۳۱ مگابایت اسکرین‌شاتِ مقایسه از تاریخچه‌ی مخزن",
           "dod": "docs/art-compare و docs/light (جز پایه‌ی diff) از کلِ تاریخچه حذف شود؛ پایه‌ی diff به e2e/fixtures منتقل و ارجاع‌ها به‌روز شود؛ حجمِ مخزن به چند مگابایت برسد.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کامیت fa0fd7a: ۳۱MB اسکرین‌شاتِ مقایسه از درختِ کاری حذف و تاریخچه با git filter-repo بازنویسی و فورس‌پوش شد؛ با کلونِ تازه اندازه‌گیری شد (.git ۱۱MB) و کلونِ قدیمی tools/rewrite حذف گردید."
         },
         {
           "id": "5",
           "title": "سقفِ نرخ: رفعِ ریستِ همه‌ی سطل‌ها + بک‌اندِ توزیع‌شده‌ی اختیاری",
           "dod": "prune هیچ‌وقت سطل‌های کاربرانِ سالم را پاک نکند (evict قدیمی‌ها)؛ بک‌اندِ Redis/Upstash REST اختیاری با env؛ محدودیتِ تک‌پروسه در README و کد صریح باشد؛ تستِ واحد برای eviction و بک‌اندِ تازه.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کامیت 900565a: Limiter/createLimiter با هرسِ زمان‌دار (دیگر ریستِ جهانیِ سطل‌ها نیست) و بک‌اندِ اختیاریِ توزیع‌شده (limit-redis.ts)؛ tests/rate-limit.test.ts با ۹ تست سبز."
         },
         {
           "id": "6",
           "title": "/api/log: احرازِ اختیاری و اعتبارسنجیِ سخت‌تر",
           "dod": "با LOG_SHARED_SECRET، درخواستِ بی‌secret رد شود (مقایسه‌ی زمان‌ثابت)؛ فیلدهای ناشناخته دور ریخته شوند؛ تست‌های تازه.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کامیت 803800f: ترتیب content-length to rate-limit to secret to read to parse to validate؛ سقف ۸KB با ۴۱۳، JSON نامعتبر با ۴۰۰، سقفِ IP با ۴۲۹؛ secretMatches با sha256 و timingSafeEqual؛ clean کنترل‌نویسه‌ها را می‌زند؛ ۴۵۱ تست سبز."
         },
         {
           "id": "7",
           "title": "پوششِ محلیِ لایه‌ی DB (SqlExecutor تزریق‌پذیر)",
           "dod": "storeها روی یک رابطِ باریکِ اجرای SQL بنشینند تا مالکیت اتمی و کدهای انتقال بدونِ Postgres هم تست شوند؛ کاورجِ storeها محلی ≥ ۹۰٪؛ هشدار وقتی TEST_DATABASE_URL نباشد.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "کامیت cf2f35f: SqlRunner باریک و asSqlRunner روی save و transfer؛ tests/save-pg.test.ts با بک‌اندِ دوتایی (PG واقعی با TEST_DATABASE_URL در CI، وگرنه PGlite محلی) — ۴۵۶ تست با ۰ اسکیپ؛ پوششِ save ۹۱.۶۶٪ و transfer ۹۱.۱۷٪."
         },
         {
           "id": "8",
           "title": "شکستنِ tick() به ماژول‌های موضوعی",
           "dod": "tick به اورکستراتور ≤ ۶۰ خط برسد؛ آب‌وهوا/رویداد، رشد، ماشین‌ها، کارگرها و بازار ماژول‌های جدا و تست‌پذیر شوند؛ همه‌ی تست‌ها سبز بمانند.",
-          "status": "todo"
+          "status": "done",
+          "evidence": "شکستنِ tick.ts (۲۲۷ خط) به daycycle/growth/machines/workers/market با tick.ts هماهنگ‌کننده (۳۵ خط) و بی‌هیچ تغییرِ رفتار یا ترتیب؛ tests/sim-modules.test.ts با ۲۶ تستِ مستقیمِ ماژول‌ها؛ ۴۸۲ تست سبز، پوشش ۹۲.۵۹٪ گزاره و ۸۷.۱۵٪ شاخه."
         },
         {
           "id": "9",

@@ -219,8 +219,9 @@ describe("سفارش، حقوق و دستاوردها", () => {
 });
 
 describe("هیچ تحقیق/مهارت/کارگرِ «توخالی» نمانده", () => {
-  // منطق از P5.11 در src/game/sim/*.ts است (logic.ts فقط درگاه است)
-  const logic = ["state", "economy", "actions", "tick"].map((m) => readFileSync(new URL(`../src/game/sim/${m}.ts`, import.meta.url), "utf8")).join("\n");
+  // منطق از P5.11 در src/game/sim/*.ts است (logic.ts فقط درگاه است) — تیک از R8 به ماژول‌های موضوعی شکسته شد
+  const logic = ["state", "economy", "actions", "tick", "daycycle", "growth", "machines", "workers", "market"]
+    .map((m) => readFileSync(new URL(`../src/game/sim/${m}.ts`, import.meta.url), "utf8")).join("\n");
   it.each([...TECH_TREE.map((t) => t.id), ...SKILLS.map((k) => k.id)])("%s در منطق بازی اثر دارد", (id) => {
     expect(logic.includes(`"${id}"`)).toBe(true);
   });
