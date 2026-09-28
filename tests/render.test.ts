@@ -246,3 +246,32 @@ describe("A.8 — ذره‌های آب‌وهوا روی GPU", () => {
     expect(red.stroke || 0).toBe(gpu.stroke || 0);
   });
 });
+
+describe("alignedBlit — ترازِ پیکسلیِ کشِ زمین (B/T6)", () => {
+  const A = (r: ReturnType<typeof import("../src/game/render/ground").alignedBlit>) => r;
+  it("با ترانهوِرمِ تمیز، مستطیل دست‌نخورده می‌ماند", async () => {
+    const { alignedBlit } = ground;
+    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, 2, 0, 0));
+    expect(r.sx).toBe(20);
+    expect(r.sw).toBe(200);
+    expect(r.dx).toBe(20); // همان ناحیه در فضای جهان
+    expect(r.dx * 2 % 1).toBe(0); // لبه‌ی مقصد در فضای دستگاه روی مرزِ پیکسل است
+  });
+
+  it("با ترانهوِرمِ کسری، لبه‌های مقصد به مرزِ پیکسلِ دستگاه گرد می‌شوند", async () => {
+    const { alignedBlit } = ground;
+    const ks = 1.35, tx = 37.3, ty = -12.7;
+    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, ks, tx, ty));
+    expect(r.dx * ks + tx).toBeCloseTo(Math.round(r.dx * ks + tx), 5);
+    expect((r.dx + r.dw) * ks + tx).toBeCloseTo(Math.round((r.dx + r.dw) * ks + tx), 5);
+    expect(r.dy * ks + ty).toBeCloseTo(Math.round(r.dy * ks + ty), 5);
+    expect((r.dy + r.dh) * ks + ty).toBeCloseTo(Math.round((r.dy + r.dh) * ks + ty), 5);
+  });
+
+  it("ترانهوِرمِ بی‌مق scale/خراب → رفتارِ قبلی (سقوطِ نرم)", async () => {
+    const { alignedBlit } = ground;
+    const r = A(alignedBlit(10, 20, 110, 120, 0, 0, 2, 0, 5, 5));
+    expect(r.dx).toBe(10);
+    expect(r.dw).toBe(100);
+  });
+});
