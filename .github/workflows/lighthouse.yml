@@ -1,7 +1,8 @@
 name: lighthouse
 
 # P6.5: «Lighthouse ≥ ۹۵ در همه‌ی شاخص‌ها» روی رانرِ تمیزِ گیت‌هاب سنجیده می‌شود (نه ماشینِ توسعه):
-# پروفایلِ موبایلِ پیش‌فرضِ Lighthouse 12 (شبیه‌سازیِ 4G کند و CPU×۴)، ۵ اجرا و میانه‌ی هر شاخص.
+# پروفایلِ موبایلِ پیش‌فرضِ Lighthouse 12 (شبیه‌سازیِ 4G کند و CPU×۴)، ۷ اجرا و میانه‌ی هر شاخص
+# (۷ به‌جای ۵: یک ماشینِ ضعیفِ تصادفی نمی‌تواند میانه را بیندازد — لازم است ۴ اجرای سالم از ۷).
 on:
   push:
     branches: [main]
@@ -16,7 +17,7 @@ concurrency:
 
 jobs:
   lighthouse:
-    name: Lighthouse موبایل (میانه‌ی ۵ اجرا، هدف ≥ ۹۵)
+    name: Lighthouse موبایل (میانه‌ی ۷ اجرا، هدف ≥ ۹۵)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -37,7 +38,7 @@ jobs:
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/ > /dev/null && exit 0; sleep 1; done
           cat /tmp/next.log; exit 1
       - name: Lighthouse × ۵
-        # یک اجرای گرم‌کنِ کنارگذاشته پیش از ۵ اجرای شمرده‌شده: اولین اجرای Chrome روی رانرِ سرد
+        # یک اجرای گرم‌کنِ کنارگذاشته پیش از ۷ اجرای شمرده‌شده: اولین اجرای Chrome روی رانرِ سرد
         # همه‌چیز را یکنواخت کُند می‌کند (کارِ رشته‌ی اصلی ~۴ برابر، حتی بخشِ Unattributable؛ TTFB فقط ۷ms)
         # و در اجرای a49d8f9 عددِ ۷۰ داد در حالی که چهار اجرای بعدی ۹۸ تا ۹۹ بودند.
         run: |
@@ -45,7 +46,7 @@ jobs:
           npx --yes lighthouse@12 http://127.0.0.1:3000/ --quiet \
             --chrome-flags="--headless=new --no-sandbox" \
             --only-categories=performance --output=json --output-path=/tmp/lh-warmup.json
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6 7; do
             npx --yes lighthouse@12 http://127.0.0.1:3000/ --quiet \
               --chrome-flags="--headless=new --no-sandbox" \
               --only-categories=performance,accessibility,best-practices,seo \
