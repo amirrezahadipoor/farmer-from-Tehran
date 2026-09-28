@@ -1,6 +1,6 @@
 import { getDb } from "@/db";
 import { defaultLimits, handleGet, handlePost, type SaveDeps } from "@/server/save/handler";
-import { PgSaveStore } from "@/server/save/store";
+import { PgSaveStore, asSqlRunner } from "@/server/save/store";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ const limits = defaultLimits();
 
 function deps(): SaveDeps {
   const db = getDb();
-  return { store: db ? new PgSaveStore(db) : null, ...limits };
+  return { store: db ? new PgSaveStore(asSqlRunner(db)) : null, ...limits };
 }
 
 /** گرفتن سیو از ابر — فقط با توکنِ همان دستگاه */

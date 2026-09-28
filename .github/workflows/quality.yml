@@ -41,7 +41,8 @@ jobs:
         run: npm run lint:text
       - name: Assets (تصاویر و فونت‌های گم‌شده)
         run: npm run check-assets
-      - name: Unit tests + پوشش منطق (P5.11 — آستانه‌ی ۸۰٪) + سیو روی Postgresِ واقعی (P5.13)
+      # P5.11 آستانه‌ی ۸۰٪ · P5.13/R/T7: سیو روی Postgresِ واقعی (در محلی، PGlite جایگزین می‌شود)
+      - name: Unit tests + پوشش منطق + سیو روی Postgresِ واقعی
         run: npm run test:coverage
         env:
           TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/farm_test

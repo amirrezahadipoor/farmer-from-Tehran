@@ -1,12 +1,14 @@
 /**
- * src/server/save/store.ts — انبارِ سیو (P5.13): یک رابط، دو پیاده‌سازی
- *  • PgSaveStore: Postgres با drizzle؛ جدول و ستونِ token_hash را خودش (idempotent) می‌سازد
+ * src/server/save/store.ts — انبارِ سیو (P5.13 · R/T7): یک رابط، دو پیاده‌سازی
+ *  • PgSaveStore: Postgres با drizzle. جدول و ستونِ token_hash را خودش (idempotent) می‌سازد
  *    تا پایگاه‌داده‌ی تازه یا قدیمی بدون مهاجرتِ دستی کار کند.
  *  • MemorySaveStore: برای تست‌ها.
+ *
+ * R/T7: ذخیره‌ها روی SQLِ خام و از یک رابطِ باریکِ SqlRunner کار می‌کنند (نه روی نوعِ
+ * خاصِ یک درایور)، پس همان منطق روی Postgresِ واقعی (CI با TEST_DATABASE_URL) و روی
+ * PGlite درون‌پروسه (تستِ محلی، بدونِ Docker) اجرا می‌شود و کاورجشان محلی هم سبز است.
  */
-import { eq, sql } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { saves } from "@/db/schema";
+import { sql } from "drizzle-orm";
 
 export interface SaveRow {
   data: unknown;
@@ -24,6 +26,14 @@ export interface SaveStore {
   put(id: string, data: unknown, tokenHash: string): Promise<boolean>;
 }
 
+/** رابطِ باریکِ اجرای SQL — هر درایورِ drizzle (node-postgres یا pglite) این را دارد */
+export interface SqlRunner {
+  execute(query: unknown): Promise<{ rows: Record<string, unknown>[] }>;
+}
+
+/** دروازه‌ی نوع برای پاس‌دادنِ هر dbِ drizzle به انبارها */
+export const asSqlRunner = (db: unknown): SqlRunner => db as SqlRunner;
+
 export class MemorySaveStore implements SaveStore {
   readonly rows = new Map<string, SaveRow>();
   async get(id: string) {
@@ -37,11 +47,10 @@ export class MemorySaveStore implements SaveStore {
   }
 }
 
-type Db = NodePgDatabase<Record<string, never>>;
 let schemaReady: Promise<void> | null = null;
 
 /** جدول و ستونِ تازه را یک بار در هر پروسه تضمین می‌کند (شکست = دوباره در درخواستِ بعد) */
-function ensureSchema(db: Db): Promise<void> {
+function ensureSchema(db: SqlRunner): Promise<void> {
   schemaReady ??= (async () => {
     await db.execute(
       sql`CREATE TABLE IF NOT EXISTS farm_saves (id text PRIMARY KEY, data jsonb NOT NULL, updated_at timestamp DEFAULT now() NOT NULL, token_hash text)`,
@@ -55,28 +64,25 @@ function ensureSchema(db: Db): Promise<void> {
 }
 
 export class PgSaveStore implements SaveStore {
-  constructor(private readonly db: Db) {}
+  constructor(private readonly db: SqlRunner) {}
 
   async get(id: string): Promise<SaveRow | null> {
     await ensureSchema(this.db);
-    const rows = await this.db.select().from(saves).where(eq(saves.id, id)).limit(1);
-    const r = rows[0];
-    return r ? { data: r.data, tokenHash: r.tokenHash ?? null } : null;
+    const r = await this.db.execute(sql`SELECT data, token_hash FROM farm_saves WHERE id = ${id} LIMIT 1`);
+    const row = r.rows[0];
+    return row ? { data: row.data, tokenHash: (row.token_hash as string | null) ?? null } : null;
   }
 
   async put(id: string, data: unknown, tokenHash: string): Promise<boolean> {
     await ensureSchema(this.db);
-    const now = new Date();
     // یک دستورِ اتمی: درج، یا به‌روزرسانی فقط اگر ردیف بی‌مالک یا مالِ همین توکن باشد؛ وگرنه هیچ ردیفی برنمی‌گردد
-    const rows = await this.db
-      .insert(saves)
-      .values({ id, data, tokenHash, updatedAt: now })
-      .onConflictDoUpdate({
-        target: saves.id,
-        set: { data, tokenHash, updatedAt: now },
-        setWhere: sql`${saves.tokenHash} is null or ${saves.tokenHash} = ${tokenHash}`,
-      })
-      .returning({ id: saves.id });
-    return rows.length > 0;
+    const r = await this.db.execute(sql`
+      INSERT INTO farm_saves (id, data, token_hash, updated_at)
+      VALUES (${id}, ${JSON.stringify(data)}::jsonb, ${tokenHash}, now())
+      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, token_hash = EXCLUDED.token_hash, updated_at = now()
+      WHERE farm_saves.token_hash IS NULL OR farm_saves.token_hash = ${tokenHash}
+      RETURNING id
+    `);
+    return r.rows.length > 0;
   }
 }
