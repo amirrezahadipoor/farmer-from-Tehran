@@ -97,7 +97,7 @@ npx playwright show-report                           # گزارش و اسکری�
 | نتیجه‌ی تستِ شکست‌خورده | `test-results/` ردِ کامل (trace) و اسکرین‌شات دارد؛ `docs/shots/` اسکرین‌شات‌های مقایسه |
 | بدونِ مرورگر | اگر نتوانی Playwright نصب کنی، `npm run test:coverage` + `npm run build:static` + باز کردنِ `out/index.html` همان بیلدِ CI را بدونِ سرور نشان می‌دهد |
 | توازنِ اقتصاد | `npx vitest run tests/sim-estimate.test.ts` باتِ بهینه را تا تناسخ می‌برد و نسبتِ سکه به آستانه را گزارش می‌کند (هدف ≤ ۵، فعلی ۲.۶) |
-| APK بدونِ سرورِ مک | `npm run apk:debug` (باید JDK 21 و Android SDK نصب باشد) یا ورک‌فلو `.github/workflows/apk.yml` |
+| APK بدونِ سرورِ مک | `npm run apk:debug` (باید JDK 21 و Android SDK نصب باشد) یا ورک‌فلو `.github/workflows/apk.yml` — برای انتشارِ در Play، امضای نسخه‌ی release در [`docs/android-signing.md`](docs/android-signing.md) |
 
 ## کیفیت
 

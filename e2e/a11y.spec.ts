@@ -159,4 +159,46 @@ test.describe("دسترس‌پذیری — صفحه‌کلید و صفحه‌خ�
     await expect(live).toHaveCount(1);
     await expect(live).toHaveAttribute("role", "status");
   });
+
+  test("چیدمان در ۳۲۰ پیکسل: همه‌ی دکمه‌ها درونِ دید و نوارِ بالا و پایین هم‌پوشانی ندارند", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await enterGame(page);
+
+    const boxes = await page.evaluate(() => {
+      const out: { label: string; x: number; y: number; w: number; h: number }[] = [];
+      /** داخلِ نوارِ افقیِ قابل‌اسکرول بودن طبیعی است (ابزارها کشیده می‌شوند) */
+      const inScroller = (el: Element) => {
+        for (let n: Element | null = el; n; n = n.parentElement) {
+          const ox = getComputedStyle(n).overflowX;
+          if (ox === "auto" || ox === "scroll") return true;
+        }
+        return false;
+      };
+      for (const el of Array.from(document.querySelectorAll("button"))) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) continue;
+        if (inScroller(el)) continue;
+        out.push({
+          label: (el.getAttribute("aria-label") || el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 30),
+          x: Math.round(r.x),
+          y: Math.round(r.y),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+        });
+      }
+      return out;
+    });
+    expect(boxes.length).toBeGreaterThan(3);
+    const outside = boxes.filter((b) => b.x < 0 || b.y < 0 || b.x + b.w > 320 || b.y + b.h > 568);
+    expect(outside, `خارج از دید در ۳۲۰px: ${JSON.stringify(outside)}`).toEqual([]);
+
+    // نوار بالا (HUD با دکمه‌ی منو) و نوار پایین (ابزار) نباید روی هم بیفتند
+    const menu = boxes.find((b) => b.label === "منو");
+    expect(menu, "دکمه‌ی منو پیدا نشد").toBeDefined();
+    const lowestTop = Math.min(...boxes.filter((b) => b.y > menu!.y + 40).map((b) => b.y));
+    expect(menu!.y + menu!.h, "نوار بالا روی نوار پایین می‌افتد").toBeLessThanOrEqual(lowestTop);
+
+    // شاهدِ بصری برای بازبینی‌ی انسان (artifactِ playtest-shots)
+    await page.screenshot({ path: `docs/shots/e2e-${testInfo.project.name}-a11y-320.png`, fullPage: false });
+  });
 });
