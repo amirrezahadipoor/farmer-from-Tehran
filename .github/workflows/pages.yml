@@ -3,7 +3,7 @@ name: pages
 # مورد ۲ِ نقشه‌ی راه: دموی عمومی روی GitHub Pages
 # https://amirrezahadipoor.github.io/farmer-from-Tehran/
 # نسخه‌ی ایستا (output: export) زیرِ مسیرِ پایه، بدونِ API: ذخیره فقط روی دستگاهِ بازیکن است.
-# بعد از انتشار، تستِ دود روی همان آدرسِ عمومی اجرا می‌شود (e2e-demo/demo.spec.ts).
+# بعد از انتشار، تستِ دود روی همان آدرسِ عمومی اجرا می‌شود (tools/demo/demo.spec.ts).
 on:
   push:
     branches: [main]
@@ -67,7 +67,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test -c playwright.demo.config.ts
+      - run: npx playwright test -c tools/demo/playwright.config.ts
         env:
           DEMO_URL: https://amirrezahadipoor.github.io/farmer-from-Tehran/
       - name: آپلودِ اسکرین‌شاتِ دمو

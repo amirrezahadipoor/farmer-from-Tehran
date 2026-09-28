@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
 /**
- * e2e-demo/demo.spec.ts — تستِ دود روی دموی عمومیِ GitHub Pages (نقشه‌ی راه، مورد ۲)
+ * tools/demo/demo.spec.ts — تستِ دود روی دموی عمومیِ GitHub Pages (نقشه‌ی راه، مورد ۲)
  *
  * همان مسیرِ بازیکنِ تازه، بی‌هیچ قلابِ تستی (نسخه‌ی منتشرشده قلاب ندارد):
  * دارایی‌ها زیرِ مسیرِ پایه ۲۰۰ می‌دهند، اسپلش می‌آید، نام، بستنِ داستان، ردِ آموزش و رسیدن به

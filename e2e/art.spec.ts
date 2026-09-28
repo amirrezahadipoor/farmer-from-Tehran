@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const BASE = "docs/light/artdiff-base.png";
+const BASE = "e2e/fixtures/artdiff-base.png";
 
 test.use({ trace: "off", viewport: { width: 768, height: 1024 }, deviceScaleFactor: 1 });
 

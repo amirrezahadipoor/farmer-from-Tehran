@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 /** تستِ دودِ دموی عمومی (مورد ۲): بدونِ سرورِ محلی، مستقیم روی آدرسِ منتشرشده. */
 export default defineConfig({
-  testDir: "./e2e-demo",
+  testDir: ".",
   timeout: 90_000,
   expect: { timeout: 15_000 },
   // انتشارِ تازه ممکن است چند ثانیه طول بکشد تا روی CDNِ گیت‌هاب برسد

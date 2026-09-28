@@ -1,7 +1,7 @@
 import { chromium } from "@playwright/test";
 import { writeFileSync } from "node:fs";
 const url = process.argv[2] ?? "http://localhost:3111/";
-const out = process.argv[3] ?? "docs/light/artdiff-base.png";
+const out = process.argv[3] ?? "e2e/fixtures/artdiff-base.png";
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 768, height: 1024 }, deviceScaleFactor: 1 });
 await page.addInitScript(() => {

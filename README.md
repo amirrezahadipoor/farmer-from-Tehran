@@ -29,7 +29,7 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-برای کلونِ سبک (حدودِ ۱۱ مگابایت، بدونِ تاریخچه‌ی قدیمیِ اسکرین‌شات‌ها): `git clone --depth 1 https://github.com/amirrezahadipoor/farmer-from-Tehran.git`
+حجمِ فایل‌های ردیابی‌شده ≈ ۹.۴ مگابایت (تصاویر داستان، صداها و فونت‌ها). اسکرین‌شات‌های مقایسه و شاهدهای بصری در artifactهای CI می‌مانند و وارد مخزن نمی‌شوند. برای کلونِ سبک: `git clone --depth 1 https://github.com/amirrezahadipoor/farmer-from-Tehran.git`
 
 ### انتشار
 
