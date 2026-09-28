@@ -30,7 +30,7 @@ jobs:
         run: npm run build:static
         env:
           NEXT_PUBLIC_STATIC: "1"
-      - name: آزمونِ سلامتِ بسته: index.html و دارایی‌های اصلی
+      - name: "آزمونِ سلامتِ بسته: index.html و دارایی‌های اصلی"
         run: |
           test -f out/index.html
           test -n "$(ls out/_next/static 2>/dev/null)"
