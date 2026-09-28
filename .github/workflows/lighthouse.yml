@@ -57,7 +57,7 @@ jobs:
         run: node tools/lighthouse-median.mjs lh 95 | tee lh/summary.md | tee -a "$GITHUB_STEP_SUMMARY"
       - name: آپلود گزارش‌ها
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse
           path: lh/
