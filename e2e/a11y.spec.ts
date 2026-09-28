@@ -71,7 +71,10 @@ test.describe("دسترس‌پذیری — صفحه‌کلید و صفحه‌خ�
     expect(nameless, nameless.join(" | ")).toEqual([]);
   });
 
-  test("با Tab به رابط می‌رسیم و حلقه‌ی تمرکز دیدنی است", async ({ page }) => {
+  test("با Tab به رابط می‌رسیم و حلقه‌ی تمرکز دیدنی است", async ({ page, browserName }) => {
+    // WebKit روی iOS فوکوس را با Tab حرکت نمی‌دهد (مگر با کیبوردِ بیرونی و Full Keyboard
+    // Access)؛ این سنجش روی کرومِ اندروید معنا دارد و همان‌جا اجرا می‌شود.
+    test.skip(browserName === "webkit", "مرورگرِ iOS فوکوس را با Tab حرکت نمی‌دهد");
     await enterGame(page);
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 
