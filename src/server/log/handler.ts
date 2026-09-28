@@ -8,19 +8,19 @@
  */
 import { createHash } from "node:crypto";
 import { clientIp } from "../save/auth";
-import { RateLimiter } from "../save/limit";
+import { createLimiter, type Limiter } from "../save/limit";
 import { TooLarge, readCapped } from "../http";
 import type { Sink } from "./server";
 
 export const MAX_LOG_BODY = 8 * 1024;
 
 export interface LogDeps {
-  limit: RateLimiter;
+  limit: Limiter;
   sink: Sink;
 }
 
 /** هر IP ده گزارشِ پشتِ‌سرِهم و بعد یکی هر ۶ ثانیه */
-export const defaultLogLimit = () => new RateLimiter(10, 6000);
+export const defaultLogLimit = (): Limiter => createLimiter(10, 6000);
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : undefined);
 const status = (code: number) => new Response(null, { status: code, headers: { "cache-control": "no-store" } });
@@ -28,7 +28,7 @@ const status = (code: number) => new Response(null, { status: code, headers: { "
 export async function handleLog(req: Request, deps: LogDeps): Promise<Response> {
   if (Number(req.headers.get("content-length") || 0) > MAX_LOG_BODY) return status(413);
   const ip = clientIp(req);
-  if (!deps.limit.take(ip).ok) return status(429);
+  if (!(await deps.limit.take(ip)).ok) return status(429);
   let text: string;
   try {
     text = await readCapped(req, MAX_LOG_BODY);

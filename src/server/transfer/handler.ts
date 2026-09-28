@@ -10,7 +10,7 @@ import { randomInt } from "node:crypto";
 import { sanitizeSave } from "@/game/sim/sanitize";
 import { CODE_ALPHABET, CODE_LEN, CODE_TTL_MS, normalizeCode } from "@/game/transferCode";
 import { TOKEN_HEADER, clientIp, tokenMatches, validId, validToken } from "../save/auth";
-import { RateLimiter } from "../save/limit";
+import { createLimiter, type Limiter } from "../save/limit";
 import type { SaveStore } from "../save/store";
 import { readCapped } from "../http";
 import { logServerError } from "../log/server";
@@ -19,12 +19,12 @@ import type { TransferStore } from "./store";
 export interface TransferDeps {
   saves: SaveStore | null;
   transfers: TransferStore | null;
-  limit: RateLimiter;
+  limit: Limiter;
   now?: () => number;
 }
 
 /** هر IP پنج تلاش و بعد یکی هر ۱۲ ثانیه (برای حدسِ کدی با ۴۰ بیت، عملاً بی‌اثر) */
-export const defaultTransferLimit = () => new RateLimiter(5, 12_000);
+export const defaultTransferLimit = (): Limiter => createLimiter(5, 12_000);
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
 
@@ -47,7 +47,7 @@ export async function handleCreate(req: Request, deps: TransferDeps): Promise<Re
   if (!deps.saves || !deps.transfers) return json({ mode: "offline" });
   const token = req.headers.get(TOKEN_HEADER);
   if (!validToken(token)) return json({ error: "token" }, 401);
-  if (!deps.limit.take(clientIp(req)).ok) return json({ error: "rate" }, 429);
+  if (!(await deps.limit.take(clientIp(req))).ok) return json({ error: "rate" }, 429);
   const b = await body(req);
   if (!b || !validId(b.id)) return json({ error: "id" }, 400);
   try {
@@ -72,7 +72,7 @@ export async function handleCreate(req: Request, deps: TransferDeps): Promise<Re
 
 export async function handleRedeem(req: Request, deps: TransferDeps): Promise<Response> {
   if (!deps.saves || !deps.transfers) return json({ mode: "offline" });
-  if (!deps.limit.take(clientIp(req)).ok) return json({ error: "rate" }, 429);
+  if (!(await deps.limit.take(clientIp(req))).ok) return json({ error: "rate" }, 429);
   const b = await body(req);
   const code = normalizeCode(b?.code);
   if (!code) return json({ error: "invalid" }, 400);

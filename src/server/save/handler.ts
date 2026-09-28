@@ -11,7 +11,7 @@
  */
 import { sanitizeSave } from "@/game/sim/sanitize";
 import { TOKEN_HEADER, clientIp, hashToken, tokenMatches, validId, validToken } from "./auth";
-import { RateLimiter } from "./limit";
+import { createLimiter, type Limiter } from "./limit";
 import type { SaveStore } from "./store";
 import { TooLarge, readCapped } from "../http";
 import { logServerError } from "../log/server";
@@ -21,15 +21,18 @@ export const MAX_BODY = 512 * 1024;
 export interface SaveDeps {
   store: SaveStore | null;
   /** سطلِ هر «شناسه|IP» برای نوشتن */
-  writeLimit: RateLimiter;
+  writeLimit: Limiter;
   /** سطلِ هر IP برای همه‌ی درخواست‌ها (جلوی پاشیدنِ شناسه‌های زیاد از یک IP) */
-  ipLimit: RateLimiter;
+  ipLimit: Limiter;
 }
 
-/** تنظیمِ پیش‌فرض: کلاینت هر ۱۲ ثانیه ذخیره می‌کند؛ ۸ نوشتنِ پشتِ‌سرِهم و بعد یکی هر ۴ ثانیه */
-export const defaultLimits = () => ({
-  writeLimit: new RateLimiter(8, 4000),
-  ipLimit: new RateLimiter(60, 1000),
+/**
+ * تنظیمِ پیش‌فرض: کلاینت هر ۱۲ ثانیه ذخیره می‌کند؛ ۸ نوشتنِ پشتِ‌سرِهم و بعد یکی هر ۴ ثانیه.
+ * با RATE_LIMIT_REDIS_REST_URL، سطل‌ها توزیع‌شده (Redis) می‌شوند (R/T5).
+ */
+export const defaultLimits = (): { writeLimit: Limiter; ipLimit: Limiter } => ({
+  writeLimit: createLimiter(8, 4000),
+  ipLimit: createLimiter(60, 1000),
 });
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -43,7 +46,7 @@ export async function handleGet(req: Request, deps: SaveDeps): Promise<Response>
   if (!validId(id)) return json({ data: null, mode: "cloud", error: "id" }, 400);
   const token = req.headers.get(TOKEN_HEADER);
   if (!validToken(token)) return json({ data: null, mode: "cloud", error: "token" }, 401);
-  const lim = deps.ipLimit.take(clientIp(req));
+  const lim = await deps.ipLimit.take(clientIp(req));
   if (!lim.ok) return limited(lim.retryAfter, { data: null });
   try {
     const row = await deps.store.get(id);
@@ -64,7 +67,7 @@ export async function handlePost(req: Request, deps: SaveDeps): Promise<Response
   const token = req.headers.get(TOKEN_HEADER);
   if (!validToken(token)) return json({ ok: false, mode: "cloud", error: "token" }, 401);
   const ip = clientIp(req);
-  const ipLim = deps.ipLimit.take(ip);
+  const ipLim = await deps.ipLimit.take(ip);
   if (!ipLim.ok) return limited(ipLim.retryAfter, { ok: false });
 
   let text: string;
@@ -82,7 +85,7 @@ export async function handlePost(req: Request, deps: SaveDeps): Promise<Response
   }
   if (!body || typeof body !== "object" || !validId(body.id)) return json({ ok: false, mode: "cloud", error: "id" }, 400);
   const id = body.id;
-  const lim = deps.writeLimit.take(`${id}|${ip}`);
+  const lim = await deps.writeLimit.take(`${id}|${ip}`);
   if (!lim.ok) return limited(lim.retryAfter, { ok: false });
 
   const clean = sanitizeSave(body.data);

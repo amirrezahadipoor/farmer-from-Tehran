@@ -164,12 +164,12 @@ describe("محدودیتِ نرخ", () => {
     expect((await get("p_probe_y", A, "10.9.9.9")).status).toBe(200);
   });
 
-  it("سطل‌ها حافظه را بی‌نهایت پر نمی‌کنند", () => {
+  it("سطل‌ها حافظه را بی‌نهایت پر نمی‌کنند", async () => {
     const lim = new RateLimiter(2, 1000, now, 100);
-    for (let i = 0; i < 1000; i++) lim.take(`k${i}`);
+    for (let i = 0; i < 1000; i++) await lim.take(`k${i}`);
     expect(lim.size).toBeLessThanOrEqual(100);
     clock += 10_000;
-    for (let i = 0; i < 50; i++) lim.take(`new${i}`);
+    for (let i = 0; i < 50; i++) await lim.take(`new${i}`);
     expect(lim.size).toBeLessThanOrEqual(100);
   });
 });
