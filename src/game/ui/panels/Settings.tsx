@@ -14,6 +14,7 @@ import { clearAllSaves, readLS, writeLS } from "../../persist";
 import { getAudioSettings, setAudioSettings, sound, type AudioSettings } from "../../audio";
 import { recenter } from "../../useCanvasInput";
 import { game, resetRuntime } from "../../store";
+import { QUALITY_MODES, applyQuality, qualityPref, type QualityMode } from "../../quality";
 import type { SaveState } from "../../net";
 import { SettingRow, Toggle, btn, type PanelProps } from "../common";
 
@@ -75,6 +76,7 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
   };
   const [haptics, setHapticsState] = useState(hapticsEnabled);
   const [portrait, setPortrait] = useState(portraitLockPref);
+  const [quality, setQuality] = useState<QualityMode>(qualityPref);
   const [armReset, setArmReset] = useState(false);
 
   return (
@@ -105,6 +107,30 @@ export function SettingsPanel({ s, ui, saveState, online, fs, onReset }: Setting
           }}
         />
       ))}
+
+      <SettingRow icon="sparkle" title="کیفیت تصویر" hint={QUALITY_MODES.find((m) => m.id === quality)?.hint}>
+        <div className="flex gap-1" role="group" aria-label="کیفیت تصویر">
+          {QUALITY_MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              aria-pressed={quality === m.id}
+              title={m.hint}
+              onClick={() => {
+                setQuality(m.id);
+                applyQuality(m.id, Math.min(2, window.devicePixelRatio || 1));
+                haptic("tap");
+                sound("click");
+              }}
+              className={`min-h-[44px] rounded-xl px-2.5 text-xs font-black transition-colors ${
+                quality === m.id ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </SettingRow>
 
       <SettingRow icon="target" title="لرزش لمسی (هپتیک)">
         <Toggle

@@ -9,17 +9,21 @@ import { game } from "../src/game/store";
  * P5.10 — ماژول‌هایی که از Game.tsx جدا شدند، حالا بدون مرورگر تست‌پذیرند.
  */
 
-describe("nextDpr / adaptDpr — سازگارسازی خودکار رزولوشن (P6.6)", () => {
-  it("کندیِ ملایم (۱۸.۵ تا ۲۰ms) → دست‌کم ۰.۱۵ کم؛ هرگز زیرِ ۰.۶", () => {
-    expect(nextDpr(2, 19, 2)).toBeLessThanOrEqual(1.85);
-    expect(nextDpr(0.7, 200, 2)).toBeCloseTo(0.6);
+describe("nextDpr / adaptDpr — سازگارسازی خودکار رزولوشن (P6.6 + B/T1)", () => {
+  it("کندیِ واقعی (بیش از ۲۱ms) → کم می‌شود؛ هرگز زیرِ ۰.۹ (B/T1: دیگر تاریِ عمیق ممنوع)", () => {
+    expect(nextDpr(2, 22, 2)).toBeLessThanOrEqual(1.85);
+    expect(nextDpr(0.95, 200, 2)).toBeCloseTo(0.9);
+    expect(nextDpr(0.9, 200, 2)).toBe(0.9);
+    // زیرِ کف فقط از راهِ قفلِ دستی ممکن است؛ در کُندی پایین‌تر نمی‌رود و در رفعِ کندی بالا می‌آید
     expect(nextDpr(0.6, 200, 2)).toBe(0.6);
+    expect(nextDpr(0.6, 8, 2)).toBe(0.7);
   });
 
   it("کندیِ شدید → یک‌جا به تخمین می‌پرد (هزینه ≈ dpr²)، نه ده‌ها پله", () => {
     // ۲ → ۱.۱۵ با ۴۰ms (قبلاً ۱.۸۵ و بعد ده پنجره‌ی دیگر)
     expect(nextDpr(2, 40, 2)).toBeCloseTo(1.15);
-    expect(nextDpr(2, 100, 2)).toBeCloseTo(0.75);
+    // B/T1: تخمین زیرِ کفِ ۰.۹ نمی‌رود
+    expect(nextDpr(2, 100, 2)).toBe(0.9);
   });
 
   it("هم‌پای vsync (۶۰ هرتز ≈ ۱۶.۷ms یا سریع‌تر) → کیفیت بالا می‌رود تا سقفِ دستگاه", () => {
@@ -29,15 +33,17 @@ describe("nextDpr / adaptDpr — سازگارسازی خودکار رزولوش�
     expect(nextDpr(2, 8, 2)).toBe(2);
   });
 
-  it("بینِ ۱۷.۳ و ۱۸.۵ms → دست نمی‌خورد (بدون نوسان)", () => {
+  it("بینِ ۱۷.۳ و ۲۱ms → دست نمی‌خورد (بدون نوسان)", () => {
     expect(nextDpr(1.5, 17.8, 2)).toBe(1.5);
+    expect(nextDpr(1.5, 20.5, 2)).toBe(1.5); // پیش از B/T1 اینجا سقوط می‌کرد
   });
+
 
   it("سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود", () => {
     let st = { dpr: 1.5, ceil: 2 };
     st = adaptDpr(st, 16.7, 2); // ۱.۶
     expect(st.dpr).toBeCloseTo(1.6);
-    st = adaptDpr(st, 19, 2); // کند در ۱.۶ → پایین و سقف = ۱.۵ (آخرین سطحِ سالم)
+    st = adaptDpr(st, 24, 2); // کندِ واقعی در ۱.۶ → پایین و سقف = ۱.۵ (آخرین سطحِ سالم؛ آستانه‌ی B/T1: ۲۱ms)
     expect(st.dpr).toBeLessThan(1.6);
     expect(st.ceil).toBeCloseTo(1.5);
     for (let i = 0; i < 10; i++) st = adaptDpr(st, 16.7, 2);

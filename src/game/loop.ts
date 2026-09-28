@@ -22,20 +22,21 @@ import { stepHero } from "./hero";
 import { stepGuests } from "./guests";
 import { stepSfx, drawSfx } from "./juice";
 import { raiseFatal, reportError } from "./errors";
+import { qualityPref, lockFor } from "./quality";
 
-const MIN_DPR = 0.6;
+const MIN_DPR = 0.9; // B/T1: بازخوردِ «بازی تار است» — زیرِ ۰.۹ دیگر هرگز نمی‌رویم (۰.۶ یعنی ۶۵٪ پیکسلِ کمتر = تاریِ آشکار)
 const maxDpr = () => Math.min(2, window.devicePixelRatio || 1);
 
 /**
  * تصمیمِ رزولوشن برای پنجره‌ی سنجش (خالص؛ تست‌پذیر).
- * کند (> ۲۰ms) → کمتر؛ هم‌پای vsync (< ۱۷.۵ms، یعنی ۵۷+ فریم) → بیشتر تا سقف. پیش از P6.6
- * آستانه‌ی بالا رفتن ۱۳.۵ms بود که در ۶۰ هرتز هرگز رخ نمی‌دهد: یک شروعِ کند رزولوشن را
- * برای همیشه روی ۰.۶ نگه می‌داشت.
+ * کُندیِ واقعی (> ۲۱ms، یعنی زیرِ ~۴۸ فریم) → کمتر؛ هم‌پای vsync (< ۱۷.۵ms، یعنی ۵۷+ فریم) → بیشتر تا سقف.
+ * پیش از P6.6 آستانه‌ی بالا رفتن ۱۳.۵ms بود که در ۶۰ هرتز هرگز رخ نمی‌داد: یک شروعِ کند رزولوشن را
+ * برای همیشه روی کف نگه می‌داشت.
  */
 export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max): number {
-  if (avgFrameMs > 18.5 && cur > MIN_DPR) {
-    // زیرِ ۵۴ فریم → رزولوشن کمتر. هزینه‌ی رسم ≈ تعدادِ پیکسل ≈ dpr²، پس کندیِ شدید یک‌جا به
-    // تخمین می‌پرد (۱۰٪ حاشیه) به‌جای ده‌ها پله‌ی ۰.۱۵ (دستگاهِ ضعیف در ۱ تا ۲ پنجره می‌نشیند)
+  if (avgFrameMs > 21 && cur > MIN_DPR) {
+    // زیرِ ~۴۸ فریم → رزولوشن کمتر. هزینه‌ی رسم ≈ تعدادِ پیکسل ≈ dpr²، پس کندیِ شدید یک‌جا به
+    // تخمین می‌پرد (۱۰٪ حاشیه) — ولی هرگز زیرِ MIN_DPR (B/T1: وضوح فدای فریمِ اضافه نمی‌شود)
     const est = Math.round(cur * Math.sqrt(16.7 / avgFrameMs) * 0.9 * 20) / 20;
     return Math.max(MIN_DPR, Math.min(cur - 0.15, est));
   }
@@ -45,7 +46,7 @@ export function nextDpr(cur: number, avgFrameMs: number, max: number, ceil = max
 }
 export interface DprState { dpr: number; ceil: number }
 /** با سقفِ پسماند: سطحی که کند بود دوباره امتحان نمی‌شود؛ سقف = آخرین سطحِ سالمِ زیرِ آن */
-export function adaptDpr(st: DprState, avgFrameMs: number, max: number): DprState {
+export function adaptDpr(st: DprState, avgFrameMs: number, max: number, ceil = max): DprState {
   const d = nextDpr(st.dpr, avgFrameMs, max, st.ceil);
   return { dpr: d, ceil: d < st.dpr ? Math.max(MIN_DPR, st.dpr - 0.1) : st.ceil };
 }
@@ -111,6 +112,8 @@ function stepFx(dt: number) {
 
 /** حلقه را روی بوم شروع می‌کند؛ خروجی = تابع توقف. */
 export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () => void {
+  // B/T1: ترجیحِ کیفیتِ بازیکن (خودکار/تیز/روان) پیش از اولین اندازه اعمال می‌شود
+  rt.dprLock = lockFor(qualityPref(), maxDpr());
   // بومِ شفاف: آسمان و رنگ‌های صفحه‌ای لایه‌ی CSS زیر/روی بوم هستند (ui/ScreenLayers.tsx)
   const ctx = cv.getContext("2d");
   if (!ctx) return () => {};
@@ -137,8 +140,8 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
   const resize = () => {
     const v = rt.view;
     // شروع از ≤ ۱.۵: دستگاهِ قوی در چند ثانیه به سقف می‌رسد، دستگاهِ ضعیف چند ثانیه‌ی اول را
-    // با کشِ زمینِ غول‌آسا و فریم‌های نیم‌ثانیه‌ای شروع نمی‌کند
-    v.dpr = Math.min(1.5, maxDpr());
+    // با کشِ زمینِ غول‌آسا و فریم‌های نیم‌ثانیه‌ای شروع نمی‌کند؛ با قفلِ کیفیتِ بازیکن همان‌جا می‌مانیم
+    v.dpr = rt.dprLock ?? Math.min(1.5, maxDpr());
     v.maxDpr = maxDpr();
     ceil = maxDpr(); // اندازه‌ی تازه = سنجشِ تازه
     v.w = window.innerWidth;
@@ -177,7 +180,7 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     if (p.n >= 40 || (p.acc >= 1000 && p.n >= 3)) {
       const avg = p.acc / p.n;
       rt.perf = { acc: 0, n: 0 };
-      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr());
+      const next = adaptDpr({ dpr: v.dpr, ceil }, avg, maxDpr(), ceil);
       const d = next.dpr;
       ceil = next.ceil;
       if (Math.abs(d - v.dpr) > 0.01) {
