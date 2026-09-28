@@ -13,6 +13,7 @@ import { Music } from "./music";
 import { SFX, playVoices, sfxLength, type PlayKit } from "./sfx";
 import { SampleBank, nearestSetar, type Fetcher } from "./samples";
 import { Interlude, SampleAmbience, bedFiles, nextInterludeGap } from "./beds";
+import { CalmLayer } from "./calm";
 import { BED_SAMPLES, INTERLUDES, SETAR_NOTES, SFX_SAMPLES } from "./samples.gen";
 import { rng } from "./mix";
 
@@ -47,6 +48,7 @@ export class Engine {
   private nextInterlude: number;
   private readonly r = rng(Date.now() & 0xffff);
   private music: Music | null = null;
+  private calm: CalmLayer | null = null;
   private env: AmbientEnv | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private readonly recent = new Map<SfxKey, number>();
@@ -125,8 +127,12 @@ export class Engine {
         this.music = new Music(this.ac, this.buses.music, this.kit.pluck);
         if (this.env) this.music.setEnv(musicMode(this.env));
       }
+      // B/T4: لایه‌ی آرامش (پدِ درون + جریانِ آب) هم‌عمرِ موسیقی است
+      if (!this.calm) this.calm = CalmLayer.create(this.ac, this.buses.music, this.kit.noise, this.env);
     } else {
       this.music = null;
+      this.calm?.stop();
+      this.calm = null;
       this.interlude?.stop();
     }
   }
@@ -175,6 +181,7 @@ export class Engine {
     this.amb?.set(ambientMix(e));
     this.sampleAmb?.set(ambientMix(e));
     this.music?.setEnv(musicMode(e));
+    this.calm?.setEnv(e);
   }
 
   /** زمان‌بندِ پیش‌نگر: هر ۲۰۰ میلی‌ثانیه رویدادهای ۶۰۰ میلی‌ثانیه‌ی بعد */

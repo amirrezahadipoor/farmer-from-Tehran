@@ -134,7 +134,22 @@ export function musicMode(env: AmbientEnv): { mode: ModeId; tempo: number; level
   const wet = env.weather === "rain" || env.weather === "snow";
   const night = env.hour >= 20 || env.hour < 5;
   const level = night ? (wet ? 0.6 : 0.75) : wet ? 0.8 : 1;
-  return { mode, tempo: TEMPO[mode], level };
+  // B/T4: شب‌ها جمله‌ها کُندتر و خواب‌آلودتر
+  return { mode, tempo: Math.round(TEMPO[mode] * (night ? 0.85 : 1)), level };
+}
+
+/**
+ * شدتِ لایه‌ی آرامش (B/T4): پدِ درونِ گرم و بسترِ «جریانِ آب».
+ * شب پد گرم‌تر می‌شود؛ باران/برف جریانِ آب را پیش می‌برد؛ روزِ آفتابی نرم‌ترین حال است.
+ * خالص و تست‌پذیر؛ پخش در sound/calm.ts.
+ */
+export function calmMix(env: AmbientEnv): { pad: number; stream: number } {
+  const night = env.hour >= 19 || env.hour < 6;
+  const wet = env.weather === "rain" || env.weather === "snow";
+  const misty = env.weather === "fog";
+  const pad = night ? 1 : misty ? 0.8 : wet ? 0.7 : 0.55;
+  const stream = wet ? 1 : misty ? 0.6 : night ? 0.5 : 0.35;
+  return { pad, stream };
 }
 
 /** تولیدکننده‌ی تصادفیِ قابل‌تکرار (mulberry32) */

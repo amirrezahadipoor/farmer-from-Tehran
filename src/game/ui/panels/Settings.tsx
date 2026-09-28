@@ -28,7 +28,7 @@ export interface SettingsProps extends PanelProps {
 /** اسلایدرهای حجم (P5.12) — برچسب همان aria-label است تا تست و صفحه‌خوان پیدایش کنند */
 const VOLUMES: { key: "master" | "music" | "sfx" | "ambient"; icon: string; title: string; hint: string }[] = [
   { key: "master", icon: "sound", title: "حجم کل", hint: "همه‌ی صداهای بازی" },
-  { key: "music", icon: "music", title: "موسیقی", hint: "سه‌تارِ واقعی روی ماهور، شور و اصفهان، گاهی بداهه‌ی سه‌گاه" },
+  { key: "music", icon: "music", title: "موسیقی", hint: "سه‌تارِ آرام روی دستگاه‌های ایرانی + پدِ درون و جریانِ آبِ ملایم برای آرامش" },
   { key: "sfx", icon: "sparkle", title: "جلوه‌های صوتی", hint: "کاشت، برداشت، فروش و ساخت" },
   { key: "ambient", icon: "bird", title: "صدای محیط", hint: "پرنده، جیرجیرک، باران و باد، ضبطِ واقعی" },
 ];
