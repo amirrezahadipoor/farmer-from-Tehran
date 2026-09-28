@@ -89,6 +89,30 @@ describe("/api/log", () => {
     expect((await handleLog(post(JSON.stringify({ where: "x" })), deps)).status).toBe(400);
   });
 
+  it("نویسه‌های کنترلی از گزارش پاک و pathِ نامعتبر دور ریخته می‌شود", async () => {
+    const lines: string[] = [];
+    const res = await handleLog(
+      post(JSON.stringify({ message: "خطا\nدوباره", where: "lo\top", path: "javascript:alert(1)", ua: "u".repeat(500) })),
+      { limit: new RateLimiter(5, 1000), sink: (l) => lines.push(l) },
+    );
+    expect(res.status).toBe(204);
+    const row = JSON.parse(lines[0]);
+    expect(row.message).toBe("خطا دوباره");
+    expect(row.where).toBe("lo op");
+    expect(row.path).toBeUndefined();
+    expect(row.ua.length).toBe(160);
+    expect(lines[0]).not.toContain("\n"); // لاگ یک‌خطی می‌ماند
+  });
+
+  it("با LOG_SHARED_SECRET: بی‌سرآیند ۴۰۱، با سرآیندِ درست ۲۰۴ (مقایسه‌ی زمانِ ثابت)", async () => {
+    const lines: string[] = [];
+    const deps = { limit: new RateLimiter(50, 1000), sink: (l: string) => lines.push(l), secret: "s3cret" };
+    expect((await handleLog(post(JSON.stringify({ message: "m" })), deps)).status).toBe(401);
+    expect((await handleLog(post(JSON.stringify({ message: "m" }), { "x-log-secret": "wrong" }), deps)).status).toBe(401);
+    expect((await handleLog(post(JSON.stringify({ message: "m" }), { "x-log-secret": "s3cret" }), deps)).status).toBe(204);
+    expect(lines).toHaveLength(1);
+  });
+
   it("بیش از سقفِ نرخِ هر IP ← ۴۲۹", async () => {
     const deps = { limit: new RateLimiter(2, 60_000, () => 0), sink: () => undefined };
     const ok = JSON.stringify({ message: "m" });
