@@ -420,7 +420,7 @@
           "title": "شاهدِ پایانی: APK + browser-test دوباره فعال + کلِ CI سبز",
           "dod": "اجرای سبزِ apk.yml با artifactِ APK؛ browser-test دوباره فعال و سبز؛ quality/security/lighthouse/pages/apk همه سبز؛ تیکِ فاز P با شاهد.",
           "status": "done",
-          "evidence": "ورک‌فلوی apk روی HEAD (f4bec90) با اجرای دستی سبز شد: https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36464884256 — زمان ۲ دقیقه و ۱۹ ثانیه (سقف ۱۵ دقیقه) و artifactِ golden-valley-farm-apk به اندازه‌ی ۱۰٫۲ مگابایت (۶۹۵ ورودی، ۱۵۳ فایلِ assets/public یعنی کلِ بازی داخلِ APK). browser-test دوباره فعال شد و روی همان کامیت سبز است (https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36463332153 — Pixel 7 و iPhone 13). quality و security و pages و lighthouse همه سبز. APK دانلودشده و ساختارش بررسی شد (AndroidManifest.xml، classes.dex، resources.arsc و assets/public/index.html موجودند). فاز P کامل بسته شد."
+          "evidence": "ورک‌فلوی apk روی HEAD (f4bec90) با اجرای دستی سبز شد: https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36464884256 — زمان ۲ دقیقه و ۱۹ ثانیه (سقف ۱۵ دقیقه) و artifactِ golden-valley-farm-apk به اندازه‌ی ۱۰٫۲ مگابایت (۶۹۵ ورودی، ۱۵۳ فایلِ assets/public یعنی کلِ بازی داخلِ APK). browser-test دوباره فعال شد و روی همان کامیت سبز است (https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36463332153 — Pixel 7 و iPhone 13). quality و security و pages و lighthouse همه سبز. APK دانلودشده و ساختارش بررسی شد (AndroidManifest.xml، classes.dex، resources.arsc و assets/public/index.html موجودند). فاز P کامل بسته شد. · APKِ نهاییِ بالانس‌شده روی 3cae7e4 (پوشِ 3cae7e4 = بالانس D + preloadِ LCP) با اجرای دستیِ run 36486742556 سبز شد — آرتیفکتِ golden-valley-farm-apk ۹٫۸MB؛ لایت‌هاوسِ همان HEAD پس از preloadِ نشانِ اسپلش تمام‌سبز."
         }
       ]
     },
@@ -588,6 +588,14 @@
           "status": "done",
           "evidence": "ایشیوی #11 ساخته شد: «درخواستِ بازبینِ دوم برای دوره‌ی فرایندی (B12)» — دمو عمومی روی Pages از قبل بالاست؛ بستنِ نهاییِ B12 منوط به رسیدنِ پاسخِ انسانی است.",
           "push": null
+        },
+        {
+          "id": "10",
+          "title": "بالانسِ کاملِ اقتصادی از همه‌ی لحاظ‌ها (بسته‌ی D)",
+          "dod": "نردبانِ سودِ صعودیِ بدونِ جهش و بدونِ محصولِ مرده؛ هیچ دستورِ کارگاهی زیان‌ده نباشد؛ درختِ مهارت کامل‌شدنی؛ سفارش ≥۱۲۰٪ فروشِ خام؛ همه در نگهبانِ خودکار.",
+          "status": "done",
+          "evidence": "پوشِ 381388b + 3cae7e4: ۲۴ کالا قیمت‌دهی دوباره (نعنا ۶٬۷۵۰→۴٬۵۰۰، آلبالو ۵٬۸۷۴→۴٬۱۶۸، پرتقال ۴٬۸۳۰ تاجِ نهایی)؛ آبمیوه و شربتِ عسل از زیان به سود؛ مهارت ۴۱→۳۵ امتیاز + پاداشِ هر ۴ سطح → کامل در سطحِ ۲۸؛ tests/balance.test.ts (۹ نام‌زد) + docs/BALANCE.md؛ پلی‌تستِ ربات ۰٫۶۶ساعت تا پرستیژ؛ ۶۲۶/۵۰ سبز.",
+          "push": "381388b"
         }
       ]
     }

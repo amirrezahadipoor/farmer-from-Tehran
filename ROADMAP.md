@@ -10,7 +10,7 @@
 ███████████████████░  ۹۵٪
 ```
 
-**۶۱ از ۶۴ آیتم انجام شده (۹۵٪)** · در دست اجرا: **۰** · آخرین به‌روزرسانی: 2026-09-28 · نسخه: `0.1.0`
+**۶۲ از ۶۵ آیتم انجام شده (۹۵٪)** · در دست اجرا: **۰** · آخرین به‌روزرسانی: 2026-09-28 · نسخه: `0.1.0`
 
 | فاز | عنوان | پیشرفت | انجام/کل |
 |:--:|---|---|:--:|
@@ -20,7 +20,7 @@
 | Q | بستنِ کسری‌های ریویوی سخت‌گیرانه (قبل از فازِ APK) | `█████████░░░  ۷۱٪` | ۵/۷ |
 | P | APK اندروید از ورک‌فلو (فازِ پایانی) | `████████████  ۱۰۰٪` | ۴/۴ |
 | B | undefined | `███████████░  ۹۲٪` | ۱۱/۱۲ |
-| C | بستنِ کسوراتِ ریویوی فوق‌سختگیرانه (۸۴۸/۱۰۰۰ → هدف: هرچه کد می‌شود) | `████████████  ۱۰۰٪` | ۹/۹ |
+| C | بستنِ کسوراتِ ریویوی فوق‌سختگیرانه (۸۴۸/۱۰۰۰ → هدف: هرچه کد می‌شود) | `████████████  ۱۰۰٪` | ۱۰/۱۰ |
 
 ### سه کار بعدی (به همین ترتیب)
 
@@ -136,7 +136,7 @@
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۱ | Capacitor: وابستگی‌ها، پیکربندی و اسکریپت‌ها | @capacitor/core+android+cli به devDeps؛ capacitor.config.ts با webDir=out و appId/appName؛ اسکریپت‌های npm برای sync و gradle؛ android/ در CI ساخته شود و در .gitignore بماند. | @capacitor/{core,android,cli}@7.6.9 (موتورِ Node ≥20 سازگار با CI؛ نسخه‌ی 8 به Node 22 نیاز دارد) در devDeps؛ capacitor.config.ts با webDir=out و appId=ir.amirrezahadipoor.farm/appName؛ اسکریپت‌های build:static/cap:sync/apk:debug؛ tools/build-static.mjs بیلدِ بدونِ basePath می‌سازد (out/ ۷.۴ مگابایت)؛ android/ در CI ساخته و در .gitignore می‌ماند؛ tests/apk-config.test.ts با ۸ تست. | — |
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۲ | ورک‌فلو apk.yml: بیلد و انتشارِ artifact | روی tagِ v* و workflow_dispatch: بیلدِ استاتیک (NEXT_PUBLIC_STATIC=1، بدونِ basePath) → npx cap sync android → ./gradlew assembleDebug → آپلودِ APK به‌عنوانِ artifact؛ مدتِ اجرا < ۱۵ دقیقه. | .github/workflows/apk.yml روی tagِ v* و workflow_dispatch: بیلدِ استاتیک با NEXT_PUBLIC_STATIC=1 (بدونِ basePath) → npx cap sync android → ./gradlew assembleDebug → آپلودِ APK؛ نیازمندِ اجرای واقعی در CI (بعد از پوشِ راه‌دور). | — |
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۳ | امضای نسخه‌ی release (مستند و اختیاری) | assembleRelease با keystore از secrets (ANDROID_KEYSTORE_BASE64 و …)؛ راهنمای ساختِ keystore در docs؛ نبودِ secrets به بیلدِ debug نسوپرد. | docs/android-signing.md: ساختِ keystore با keytool، جدولِ چهار secret (ANDROID_KEYSTORE_BASE64/PASSWORD/KEY_ALIAS/KEY_PASSWORD)، قطعه‌ی آماده‌ی ورک‌فلو برای assembleRelease و bundleRelease، و توضیحِ «نبودِ secrets به بیلدِ debug نسوپرد»؛ README به همین سند ارجاع می‌دهد. | — |
-| <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۴ | شاهدِ پایانی: APK + browser-test دوباره فعال + کلِ CI سبز | اجرای سبزِ apk.yml با artifactِ APK؛ browser-test دوباره فعال و سبز؛ quality/security/lighthouse/pages/apk همه سبز؛ تیکِ فاز P با شاهد. | ورک‌فلوی apk روی HEAD (f4bec90) با اجرای دستی سبز شد: https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36464884256 — زمان ۲ دقیقه و ۱۹ ثانیه (سقف ۱۵ دقیقه) و artifactِ golden-valley-farm-apk به اندازه‌ی ۱۰٫۲ مگابایت (۶۹۵ ورودی، ۱۵۳ فایلِ assets/public یعنی کلِ بازی داخلِ APK). browser-test دوباره فعال شد و روی همان کامیت سبز است (https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36463332153 — Pixel 7 و iPhone 13). quality و security و pages و lighthouse همه سبز. APK دانلودشده و ساختارش بررسی شد (AndroidManifest.xml، classes.dex، resources.arsc و assets/public/index.html موجودند). فاز P کامل بسته شد. | — |
+| <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۴ | شاهدِ پایانی: APK + browser-test دوباره فعال + کلِ CI سبز | اجرای سبزِ apk.yml با artifactِ APK؛ browser-test دوباره فعال و سبز؛ quality/security/lighthouse/pages/apk همه سبز؛ تیکِ فاز P با شاهد. | ورک‌فلوی apk روی HEAD (f4bec90) با اجرای دستی سبز شد: https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36464884256 — زمان ۲ دقیقه و ۱۹ ثانیه (سقف ۱۵ دقیقه) و artifactِ golden-valley-farm-apk به اندازه‌ی ۱۰٫۲ مگابایت (۶۹۵ ورودی، ۱۵۳ فایلِ assets/public یعنی کلِ بازی داخلِ APK). browser-test دوباره فعال شد و روی همان کامیت سبز است (https://github.com/amirrezahadipoor/farmer-from-Tehran/actions/runs/36463332153 — Pixel 7 و iPhone 13). quality و security و pages و lighthouse همه سبز. APK دانلودشده و ساختارش بررسی شد (AndroidManifest.xml، classes.dex، resources.arsc و assets/public/index.html موجودند). فاز P کامل بسته شد. · APKِ نهاییِ بالانس‌شده روی 3cae7e4 (پوشِ 3cae7e4 = بالانس D + preloadِ LCP) با اجرای دستیِ run 36486742556 سبز شد — آرتیفکتِ golden-valley-farm-apk ۹٫۸MB؛ لایت‌هاوسِ همان HEAD پس از preloadِ نشانِ اسپلش تمام‌سبز. | — |
 
 ## B — undefined
 
@@ -163,7 +163,7 @@
 
 **هدف فاز:** undefined
 
-**پیشرفت:** `██████████████  ۱۰۰٪` (۹/۹)
+**پیشرفت:** `██████████████  ۱۰۰٪` (۱۰/۱۰)
 
 | وضعیت | # | کار | معیار پذیرش (DoD) | شاهد | پوش |
 |:--:|:--:|---|---|---|:--:|
@@ -176,6 +176,7 @@
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۷ | alignedBlit بلایند بود به چرخش/برش — بلیتِ کج بی‌صدا | بلیتِ ترازیافته فقط برای ماتریسِ صرفاً انتقال/مقیاس (b=0,c=0)؛ بقیه به مسیرِ قبلی؛ تستِ گارد. | پوشِ 3a25738: گاردِ b/c در ground.ts + BlitMatrix + سه تستِ render. | #۳a۲۵۷۳۸ |
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۸ | main بدونِ محافظت — پوشِ مستقیمِ خطا تا ابد ممکن | branch protection روی main با پنج چکِ الزامیِ همانی که CI می‌سازد + تاریخِ خطی + ممنوعیتِ force-push. | PUT /branches/main/protection → HTTP 200 و بازخوانی تأیید شد: contexts=[quality, browser-test, pages, lighthouse, security]، linear_history=on، force_pushes=off؛ ادمین مستثنا (مخزنِ تک‌نفره — آگاهانه). | — |
 | <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۹ | بازبینِ دوم و کاربرِ واقعی — چیزی که کد نمی‌شود | ایشیوی فراخوانِ بازبینِ دوم با روشِ نمونه‌گیریِ شواهد و امتیازدهیِ مستقل؛ انتشارِ دمو برای بازخوردِ واقعی؛ B12 فرایندی با لینکِ نتیجه بسته شود. | ایشیوی #11 ساخته شد: «درخواستِ بازبینِ دوم برای دوره‌ی فرایندی (B12)» — دمو عمومی روی Pages از قبل بالاست؛ بستنِ نهاییِ B12 منوط به رسیدنِ پاسخِ انسانی است. | — |
+| <img src="docs/icons/done.svg" width="16" height="16" alt="[x]"> | ۱۰ | بالانسِ کاملِ اقتصادی از همه‌ی لحاظ‌ها (بسته‌ی D) | نردبانِ سودِ صعودیِ بدونِ جهش و بدونِ محصولِ مرده؛ هیچ دستورِ کارگاهی زیان‌ده نباشد؛ درختِ مهارت کامل‌شدنی؛ سفارش ≥۱۲۰٪ فروشِ خام؛ همه در نگهبانِ خودکار. | پوشِ 381388b + 3cae7e4: ۲۴ کالا قیمت‌دهی دوباره (نعنا ۶٬۷۵۰→۴٬۵۰۰، آلبالو ۵٬۸۷۴→۴٬۱۶۸، پرتقال ۴٬۸۳۰ تاجِ نهایی)؛ آبمیوه و شربتِ عسل از زیان به سود؛ مهارت ۴۱→۳۵ امتیاز + پاداشِ هر ۴ سطح → کامل در سطحِ ۲۸؛ tests/balance.test.ts (۹ نام‌زد) + docs/BALANCE.md؛ پلی‌تستِ ربات ۰٫۶۶ساعت تا پرستیژ؛ ۶۲۶/۵۰ سبز. | #۳۸۱۳۸۸b |
 
 ---
 
@@ -252,6 +253,10 @@
 | ۶۷ | `93934a9` | 2026-09-28 | fix(ui): LRUِ دروازه‌ی توست + تأییدِ دومرحله‌ایِ بازیابی + امتیازِ تازه (C/T4, C/T7, C/T8) |
 | ۶۸ | `14a3203` | 2026-09-28 | fix(sound): نتِ اولیه از دستگاهِ ماهور + جداسازیِ گره‌ها پس از محو (C/T5) |
 | ۶۹ | `ac4c898` | 2026-09-28 | test(e2e): بازتولیدِ پایه‌ی مقایسه‌ی پیکسلی با رندرِ تازه + همگام‌سازیِ عددِ حجم (C/T2) |
+| ۷۰ | `1ae39d7` | 2026-09-28 | docs(roadmap): فازِ C — هشت کسرِ قابلِ کد از ریویوی ۸۴۸ بسته شد + شواهدِ B1/B6 صادقانه به‌روز (۵۳/۵۶ کل) |
+| ۷۱ | `61184f8` | 2026-09-28 | ci(lighthouse): میانه‌ی ۷ اجرایی — ضربه‌ی یک ماشینِ ضعیفِ تصادفیِ رانر میانه را نمی‌اندازد |
+| ۷۲ | `381388b` | 2026-09-28 | balance: بسته‌ی D — نردبانِ سودِ صعودی، پایانِ سکه‌پاشیِ نعنا/آلبالو، درختِ مهارتِ کامل‌شدنی (C10) |
+| ۷۳ | `3cae7e4` | 2026-09-28 | perf(lcp): پیش‌بارگذاریِ نشانِ اسپلش در head — پایانِ صفِ LCP پشتِ چانک‌ها |
 
 ---
 
