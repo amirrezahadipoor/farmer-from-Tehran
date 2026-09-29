@@ -43,7 +43,7 @@ export function SeedTray({ s, seed, setSeed }: { s: State; seed: string; setSeed
             key={c.id}
             type="button"
             disabled={lock}
-            aria-label={lock ? `${c.name} (سطح ${fmt(c.lvl)})` : inSeason ? `${c.name} — فصلِ مطلوب، یک محصولِ بیشتر` : c.name}
+            aria-label={lock ? `${c.name} (سطح ${fmt(c.lvl)})` : c.name}
             aria-pressed={seed === c.id}
             onClick={() => setSeed(c.id)}
             className={`relative flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-xl p-1 transition md:w-16 ${
