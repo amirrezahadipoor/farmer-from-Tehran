@@ -155,7 +155,9 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     audioAcc = 1,
     lastFrame = performance.now(),
     ceil = maxDpr(),
-    skipGap = false;
+    skipGap = false,
+    /** P/FIX: محدودکردنِ زومِ اولیه فقط یک بار — هر resize (نوار آدرس موبایل) زومِ کاربر را نمی‌کشد */
+    firstResize = true;
 
   const resize = () => {
     const v = rt.view;
@@ -170,7 +172,8 @@ export function startGameLoop(cv: HTMLCanvasElement, getEv: () => Events): () =>
     cv.height = v.h * v.dpr;
     cv.style.width = v.w + "px";
     cv.style.height = v.h + "px";
-    if (v.w < 700) v.cam.z = Math.min(v.cam.z, 0.6);
+    if (firstResize && v.w < 700) v.cam.z = Math.min(v.cam.z, 0.6);
+    firstResize = false;
     v.reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   };
   resize();

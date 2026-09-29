@@ -10,7 +10,7 @@
 import { useRef } from "react";
 import { N, fmt } from "./data";
 import { toolAction, locked, idx, type Events } from "./logic";
-import { screenToTile, tileCenter } from "./render/core";
+import { A, B, screenToTile, tileCenter, type View } from "./render/core";
 import { haptic } from "./mobile";
 import { sound } from "./audio";
 import { game, rt } from "./store";
@@ -38,11 +38,54 @@ interface InputDeps {
 
 const HOLD_MS = 480;
 const clampZoom = (z: number) => Math.max(0.3, Math.min(2.4, z));
+/** آستانه‌ی تشخیص «کشیدن» از «ضربه» — ۷px روی گوشیِ واقعی با لغزشِ طبیعیِ انگشت تپ‌ها را می‌شکست */
+const DRAG_SLOP = 10;
+
+/** مرکزِ توده‌ی زمین‌های خریداری‌شده در مختصاتِ جهان (برای نگه‌داشتنِ مزرعه در کادر) */
+function farmCenterWorld(): { x: number; y: number } | null {
+  const st = game.get();
+  if (!st) return null;
+  let sx = 0, sy = 0, n = 0;
+  for (let i = 0; i < st.tiles.length; i++) {
+    if (locked(st, i % N, Math.floor(i / N))) continue;
+    sx += (i % N - Math.floor(i / N)) * A;
+    sy += (i % N + Math.floor(i / N) + 1) * B - N * B;
+    n++;
+  }
+  return n ? { x: sx / n, y: sy / n } : null;
+}
+
+/**
+ * P/FIX زوم‌اوت: بعد از کوچک‌نمایی، مزرعه نباید از کادر بیرون برود — گزارشِ کاربر:
+ * «زوم اوت که می‌کنیم اصلاً دیگه مزرعه رو نشون نمیده». اگر مرکزِ مزرعه از حاشیه‌ی
+ * مجازِ صفحه بیرون رفته باشد، دوربین به‌اندازه‌ی همان کمی جابه‌جا می‌شود (بدونِ پرش).
+ */
+function keepFarmInFrame(margin = 0.42) {
+  const v = rt.view;
+  const fc = farmCenterWorld();
+  if (!fc) return;
+  const sx = fc.x * v.cam.z + v.w / 2 + v.cam.x;
+  const sy = fc.y * v.cam.z + v.h / 2 + v.cam.y;
+  const mx = v.w * margin, my = v.h * margin;
+  const dx = sx < mx ? sx - mx : sx > v.w - mx ? sx - (v.w - mx) : 0;
+  const dy = sy < my ? sy - my : sy > v.h - my ? sy - (v.h - my) : 0;
+  if (dx || dy) {
+    v.cam.x -= dx;
+    v.cam.y -= dy;
+    game.bump();
+  }
+}
+
+/** نقطه‌ی صفحه → مختصاتِ جهانِ نقشه (همان قراردادِ screenToTile پیش از گرد شدن) */
+function screenToWorld(v: View, sx: number, sy: number) {
+  return { x: (sx - v.w / 2 - v.cam.x) / v.cam.z, y: (sy - v.h / 2 - v.cam.y) / v.cam.z };
+}
 
 export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBsel }: InputDeps) {
   const drag = useRef<{ x: number; y: number; cx: number; cy: number; moved: boolean } | null>(null);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinch = useRef(0);
+  const pinchEnded = useRef(false);
   const hoverClear = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdFired = useRef(false);
@@ -90,7 +133,14 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     haptic("tap");
     const tc = tileCenter(tx, ty);
     rt.fx.push({ kind: "ring", x: tc.x, y: tc.y - 4, vx: 0, vy: 0, life: 0.45, max: 0.45, color: "rgba(255,255,255,0.9)" }); // V.3
+    // P/FIX فیدبکِ شکستِ بی‌صدا: اگر ابزار هیچ تغییری در کاشی نداد، با صدا و لرزشِ خطا اعلام شود
+    // تا کاربر «لمس کار نمی‌کند» حس نکند (پیامِ توضیحی را خودِ toolAction نشان می‌دهد)
+    const before = JSON.stringify(s.tiles[idx(tx, ty)]);
     const r = toolAction(s, tx, ty, tool, arg, ev);
+    if (r !== "open" && JSON.stringify(s.tiles[idx(tx, ty)]) === before) {
+      sound("err");
+      haptic("error");
+    }
     if (r !== "open") sendHero(s, tx, ty, tool);
     if (r === "open") {
       setPanel({ bx: tx, by: ty });
@@ -123,11 +173,13 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinch.current = Math.hypot(a.x - b.x, a.y - b.y);
+      pinchEnded.current = false;
       drag.current = null;
       cancelHold();
       keepHover(null);
       return;
     }
+    pinchEnded.current = false;
     drag.current = { x: e.clientX, y: e.clientY, cx: v.cam.x, cy: v.cam.y, moved: false };
     const t0 = screenToTile(v, e.clientX, e.clientY);
     keepHover(t0);
@@ -146,15 +198,33 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch.current) v.cam.z = clampZoom(v.cam.z * (d / pinch.current));
+      if (pinch.current && d > 0) {
+        // P/FIX زومِ دوانگشتی حولِ وسطِ دو انگشت (قبلاً حولِ مرکزِ صفحه بود و دستِ کاربر را گم می‌کرد)
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const before = screenToWorld(v, mx, my);
+        const z0 = v.cam.z;
+        v.cam.z = clampZoom(v.cam.z * (d / pinch.current));
+        if (v.cam.z !== z0) {
+          const after = screenToWorld(v, mx, my);
+          v.cam.x += (after.x - before.x) * v.cam.z;
+          v.cam.y += (after.y - before.y) * v.cam.z;
+          if (v.cam.z < z0) keepFarmInFrame(); // کوچک‌نمایی → مزرعه در کادر بماند
+        }
+      }
       pinch.current = d;
       return;
     }
     const dr = drag.current;
-    if (!dr) return;
+    if (!dr) {
+      // P/FIX بعد از pinch: انگشتِ باقی‌مانده بدون برداشتن، باید بتواند درگ کند
+      if (pointers.current.size === 1 && pinchEnded.current) {
+        drag.current = { x: e.clientX, y: e.clientY, cx: v.cam.x, cy: v.cam.y, moved: true };
+      }
+      return;
+    }
     const dx = e.clientX - dr.x,
       dy = e.clientY - dr.y;
-    if (Math.abs(dx) + Math.abs(dy) > 7) {
+    if (Math.abs(dx) + Math.abs(dy) > (dr.moved ? 0 : DRAG_SLOP)) {
       dr.moved = true;
       cancelHold();
       v.cam.x = dr.cx + dx;
@@ -168,7 +238,10 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
   const endPointer = (e: React.PointerEvent, cancelled = false) => {
     cancelHold();
     pointers.current.delete(e.pointerId);
-    if (pointers.current.size < 2) pinch.current = 0;
+    if (pointers.current.size < 2) {
+      if (pinch.current) pinchEnded.current = true; // انگشتِ باقی‌مانده می‌تواند درگ را ادامه دهد
+      pinch.current = 0;
+    }
     const dr = drag.current;
     drag.current = null;
     if (cancelled || !dr || dr.moved) {
@@ -198,9 +271,15 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
   };
 }
 
-/** زوم با دکمه‌های کنار صفحه. */
+/** زوم با دکمه‌های کنار صفحه. کوچک‌نمایی مزرعه را در کادر نگه می‌دارد (P/FIX گزارشِ کاربر). */
 export function zoomBy(f: number) {
+  const z0 = rt.view.cam.z;
   rt.view.cam.z = clampZoom(rt.view.cam.z * f);
+  if (f < 1) {
+    // در رسیدن به کفِ زوم، دوربین هم به مرکزِ مزرعه برمی‌گردد تا «دیگه مزرعه نشون داده نشه» رخ ندهد
+    if (rt.view.cam.z <= 0.301 && z0 <= 0.301) recenter();
+    else keepFarmInFrame();
+  }
   game.bump();
 }
 

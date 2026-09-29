@@ -175,7 +175,9 @@ export function addInv(s: State, id: string, n: number): number {
   const room = capacity(s) - invCount(s);
   const a = Math.min(room, n);
   if (a > 0) s.inv[id] = (s.inv[id] || 0) + a;
-  return a;
+  // گاردِ انبارِ پر: room ممکن است منفی باشد (انبار سرریز/ظرفیتِ کاهش‌یافته)؛ برگشتِ منفی
+  // در harvest/collect مثل «got === 0» نادیده می‌شد و محصول بی‌صدا نابود می‌شد (باگِ اینونتوری)
+  return Math.max(0, a);
 }
 
 
