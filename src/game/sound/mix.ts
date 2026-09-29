@@ -126,7 +126,7 @@ export function selectMode(hour: number, season: string, weather = "sun"): ModeI
   return season === "autumn" || season === "winter" ? "esfahan" : "mahur";
 }
 
-const TEMPO: Record<ModeId, number> = { mahur: 72, esfahan: 64, shur: 54, chahargah: 60, dashti: 56 };
+const TEMPO: Record<ModeId, number> = { mahur: 58, esfahan: 52, shur: 46, chahargah: 50, dashti: 47 };
 
 /** دستگاه، تمپو و بلندیِ موسیقی از حالِ دره (V.9: پنج دستگاه) */
 export function musicMode(env: AmbientEnv): { mode: ModeId; tempo: number; level: number } {

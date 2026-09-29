@@ -27,10 +27,41 @@ export const SFX_MAKEUP = 2;
 export const SFX_MERGE = 0.045;
 /** بلندیِ نتِ ضبط‌شده‌ی سه‌تار نسبت به زخمه‌ی سنتزی */
 export const SETAR_GAIN = 0.6;
+/** M1: سهمِ واخوانِ گرم روی هر گذرگاه (خیلی کم تا ASMR بماند، نه «تالارِ بزرگ») */
+export const REVERB_WET = { sfx: 0.14, music: 0.22 } as const;
 
 /** شمارِ فایل‌هایی که بانک پیش از میان‌پرده بارگذاری می‌کند (برای audioDebug و آزمونِ e2e) */
 export const SAMPLE_TOTAL =
   Object.values(SFX_SAMPLES).reduce((a, x) => a + x.files.length, 0) + SETAR_NOTES.length + Object.keys(BED_SAMPLES).length;
+
+/**
+ * M1: پاسخِ ضربه‌ی واخوانِ رویه‌ای — نویزِ استریوِ میرا (۲.۲ ثانیه، توانِ ۲.۸).
+ * خالص و ارزان (یک بار در عمرِ موتور)؛ هیچ فایل صوتی‌ای اضافه نمی‌شود.
+ */
+export function makeReverbIR(ac: BaseAudioContext, seconds = 2.2): AudioBuffer {
+  const sr = ac.sampleRate;
+  const len = Math.max(1, Math.floor(sr * seconds));
+  const ir = ac.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.8);
+  }
+  return ir;
+}
+
+/**
+ * M3: دنباله‌ی ASMR کنش‌های کشاورزی — بسیار ملایم؛ فقط رنگِ پس از صدای اصلی:
+ * آب = دو چکه‌ی پلینک، برداشت = خش‌خشِ برگ، شخم/کاشت = لمسِ نرمِ خاک.
+ */
+export const ACTION_TAILS: Partial<Record<SfxKey, import("./sfx").Voice[]>> = {
+  water: [
+    { w: "sine", f: 950, to: 1500, at: 0.24, d: 0.16, g: 0.06 },
+    { w: "sine", f: 1150, to: 1750, at: 0.46, d: 0.14, g: 0.045 },
+  ],
+  harvest: [{ w: "noise", f: 3400, q: 0.5, at: 0.1, d: 0.3, g: 0.035, a: 0.05 }],
+  dig: [{ w: "sine", f: 96, to: 52, at: 0.12, d: 0.14, g: 0.1 }],
+  plant: [{ w: "sine", f: 110, to: 60, at: 0.14, d: 0.12, g: 0.08 }],
+};
 
 export class Engine {
   readonly ac: AudioContext;
@@ -43,6 +74,9 @@ export class Engine {
   private readonly interlude: Interlude | null = null;
   /** بارگذاریِ فایل‌ها (برای تست قابلِ انتظار) */
   readonly loading: Promise<void> = Promise.resolve();
+  /** M1: واخوانِ رویه‌ای — اگر مرورگر Convolver نداشت null می‌ماند (سقوطِ نرم) */
+  private readonly reverb: ConvolverNode | null = null;
+  private readonly wet: Partial<Record<"sfx" | "music", GainNode>> = {};
   private musicClock = 0;
   private lastPump = 0;
   private nextInterlude: number;
@@ -67,6 +101,23 @@ export class Engine {
     this.buses = { master: bus(), sfx: bus(), music: bus(), ambient: bus() };
     this.buses.master.connect(comp);
     for (const k of ["sfx", "music", "ambient"] as const) this.buses[k].connect(this.buses.master);
+    // M1: واخوانِ گرمِ رویه‌ای — پاسخِ ضربه (IR) = نویزِ استریوِ میرا؛ هرگز جایگزینِ صدای خشک نیست، هم‌شنیده می‌شود
+    if (typeof (ac as Partial<BaseAudioContext>).createConvolver === "function") {
+      try {
+        const rv = ac.createConvolver();
+        rv.buffer = makeReverbIR(ac);
+        const wS = ac.createGain(); wS.gain.value = REVERB_WET.sfx;
+        const wM = ac.createGain(); wM.gain.value = REVERB_WET.music;
+        this.buses.sfx.connect(wS).connect(rv);
+        this.buses.music.connect(wM).connect(rv);
+        rv.connect(this.buses.master);
+        this.reverb = rv;
+        this.wet.sfx = wS;
+        this.wet.music = wM;
+      } catch {
+        /* بدونِ واخوان ادامه می‌دهیم */
+      }
+    }
     const len = ac.sampleRate * 2;
     const noise = ac.createBuffer(1, len, ac.sampleRate);
     const ch = noise.getChannelData(0);
@@ -161,19 +212,46 @@ export class Engine {
     const buf = ready.length && bank ? bank.get(ready[Math.floor(Math.random() * ready.length)]) : null;
     if (buf) {
       // صدای واقعی: یکی از گونه‌ها با تغییرِ ریزِ زیروبمی تا تکرار خسته‌کننده نباشد
+      // M4: فیلترِ گرم — فرکانس‌های تیزِ ضبطِ نزدیک نرم می‌شوند (حسِ ASMR، نه بلندگوی خشک)
       const src = this.ac.createBufferSource();
       src.buffer = buf;
       src.playbackRate.value = 1 + (Math.random() - 0.5) * 0.06;
       const g = this.ac.createGain();
       g.gain.value = spec.gain;
-      src.connect(g).connect(this.buses.sfx);
+      let out: AudioNode = g;
+      if (typeof (this.ac as Partial<BaseAudioContext>).createBiquadFilter === "function") {
+        try {
+          const warm = this.ac.createBiquadFilter();
+          warm.type = "lowpass";
+          warm.frequency.value = 6000;
+          warm.Q.value = 0.4;
+          g.connect(warm);
+          out = warm;
+        } catch {
+          /* بدونِ فیلتر */
+        }
+      }
+      out.connect(this.buses.sfx);
       src.start(now + 0.005);
       this.active.push(now + buf.duration);
+      this.tail(k);
       return true;
     }
     playVoices(this.ac, this.buses.sfx, SFX[k], this.kit, SFX_MAKEUP, 1 + (Math.random() - 0.5) * 0.04);
     this.active.push(now + sfxLength(k));
+    this.tail(k);
     return true;
+  }
+
+  /** M3: دنباله‌ی ASMR کنش‌ها — پژواکِ بسیار ملایمِ پس از صدای اصلی (چکه‌ی آب، خش‌خشِ برگ، لمسِ خاک) */
+  private tail(k: SfxKey) {
+    const t = ACTION_TAILS[k];
+    if (!t) return;
+    try {
+      playVoices(this.ac, this.buses.sfx, t, this.kit, 0.5, 1 + (Math.random() - 0.5) * 0.03);
+    } catch {
+      /* دنباله اختیاری است */
+    }
   }
 
   setEnv(e: AmbientEnv) {
@@ -196,6 +274,7 @@ export class Engine {
       this.startAmbience();
     }
     this.amb?.schedule(until);
+    this.calm?.tick(now);
     if (this.music) {
       this.musicClock += Math.min(1, Math.max(0, now - (this.lastPump || now)));
       if (this.musicClock >= this.nextInterlude) this.tryInterlude();
@@ -258,6 +337,8 @@ export class Engine {
       ambience: this.sampleAmb ? "samples" : this.amb ? "synth" : null,
       pluck: this.bank && SETAR_NOTES.some((n) => this.bank?.has(n.file)) ? "setar" : "synth",
       interlude: !!this.interlude?.playing,
+      /** M1: واخوانِ گرم فعال است؟ */
+      reverb: !!this.reverb,
     };
   }
 }

@@ -54,7 +54,7 @@ export class Music {
       const n = this.queue.shift()!;
       this.note(n, this.next);
       this.next += n.beats * this.beat;
-      if (!this.queue.length) this.next += this.beat * (1.5 + this.r() * 3); // نفسِ بینِ دو جمله
+      if (!this.queue.length) this.next += this.beat * (2.5 + this.r() * 4); // M4: نفسِ بلندتر بینِ جمله‌ها
     }
   }
 

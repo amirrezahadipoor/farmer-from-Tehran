@@ -22,6 +22,13 @@ export class CalmLayer {
   private readonly sources: (OscillatorNode | AudioBufferSourceNode)[] = [];
   private readonly params: { p: AudioParam; base: number }[] = [];
   private stopped = false;
+  /** M2: بعدی زنگِ باد کی؟ (زمانِ AudioContext) */
+  private nextChime = 0;
+  /** دستگاهِ فعلی برای انتخابِ نتِ زنگ */
+  private mode: ReturnType<typeof musicMode>["mode"] = "mahur";
+
+  /** گذرگاهِ درونیِ لایه (زنگ‌ها هم به همین وصل می‌شوند) */
+  private readonly bus: AudioNode;
 
   private constructor(
     private readonly ac: Ctx,
@@ -33,6 +40,7 @@ export class CalmLayer {
     const out = this.ac.createGain();
     out.gain.value = 1;
     out.connect(dest);
+    this.bus = out;
 
     // ── پدِ درون: پایه + پنجم، فیلترِ گرم، نفسِ آهسته
     const filter = this.ac.createBiquadFilter();
@@ -91,6 +99,41 @@ export class CalmLayer {
     for (const s of this.sources) s.start(t);
 
     if (env) this.setEnv(env);
+    this.nextChime = this.ac.currentTime + 14 + Math.random() * 18;
+  }
+
+  /**
+   * M2: زنگ‌های باد — هر ۱۸ تا ۴۰ ثانیه یک زنگِ بسیار نرم از نت‌های دستگاهِ همان لحظه.
+   * از pump موتور (هر ۲۰۰ms) صدا زده می‌شود؛ خروجی: آیا زنگ نواخته شد (برای تست).
+   */
+  tick(now: number): boolean {
+    if (this.stopped || now < this.nextChime) return false;
+    this.nextChime = now + 18 + Math.random() * 22;
+    try {
+      const f = degreeFreq(this.mode, [0, 1, 2, 4][Math.floor(Math.random() * 4)]) * 2;
+      const t = this.ac.currentTime;
+      const g = this.ac.createGain();
+      // زنگ: حمله‌ی چکی، میراییِ پنج‌ثانیه‌ای — بهره‌ی سقفِ ۰.۰۵ تا پشتِ پد بماند
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 5);
+      g.connect(this.bus);
+      const o1 = this.ac.createOscillator();
+      o1.frequency.value = f;
+      const o2 = this.ac.createOscillator();
+      o2.frequency.value = f * 2.76; // پارشیالِ ناقصِ زنگ
+      const g2 = this.ac.createGain();
+      g2.gain.value = 0.16;
+      o1.connect(g);
+      o2.connect(g2).connect(g);
+      o1.start(t); o2.start(t);
+      o1.stop(t + 5.2); o2.stop(t + 5.2);
+      this.sources.push(o1, o2);
+      this.nodes.push(g, g2);
+    } catch {
+      return false;
+    }
+    return true;
   }
 
   private oscOf(type: OscillatorType): OscillatorNode {
@@ -113,7 +156,9 @@ export class CalmLayer {
     if (this.stopped) return;
     try {
       const t = this.ac.currentTime;
-      const f0 = degreeFreq(musicMode(e).mode, -7);
+      const mm = musicMode(e);
+      this.mode = mm.mode;
+      const f0 = degreeFreq(mm.mode, -7);
       const oscs = this.sources.filter((x): x is OscillatorNode => typeof (x as OscillatorNode).frequency === "object");
       const [padRoot, padFifth] = oscs;
       padRoot?.frequency.setTargetAtTime(f0, t, 0.8);
