@@ -105,8 +105,9 @@ it("bot plays to prestige — timing estimate", () => {
   // V.7: معیارهای رضایت — در هر اجرا در لاگ ثبت می‌شوند
   const hours = s.time / 3600;
   const ratio = s.coins / prestigeCoins(s);
-  expect(hours).toBeGreaterThanOrEqual(0.5);
-  expect(hours).toBeLessThanOrEqual(1.5);
+  // M10: پیشرفت کندتر شد — باتِ بهینه باید بین ۱٫۵ تا ۴ ساعت به تناسخ برسد
+  expect(hours).toBeGreaterThanOrEqual(1.5);
+  expect(hours).toBeLessThanOrEqual(4);
   expect(ratio).toBeLessThanOrEqual(5);
   console.log("SIM RESULT:", JSON.stringify({
     reachedPrestige: s.level >= 20 && s.coins >= prestigeCoins(s),

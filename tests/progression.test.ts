@@ -36,15 +36,15 @@ describe("منحنی تجربه (P5.4)", () => {
     for (let l = 1; l < 60; l++) expect(xpFor(l + 1)).toBeGreaterThan(xpFor(l));
   });
 
-  it("مجموع تجربه‌ی ۱۰ → ۲۰ دست‌کم ۱۰٪ کمتر از قبل (ولی نه ارزان‌تر از نصف)", () => {
+  it("M10: مجموع تجربه‌ی ۱۰ → ۲۰ سنگین‌تر از قبل است (۲ تا ۵ برابر) — ساعاتِ بازی بیشتر", () => {
     let now = 0,
       before = 0;
     for (let l = 10; l < 20; l++) {
       now += xpFor(l);
       before += oldXp(l);
     }
-    expect(now / before).toBeLessThan(0.9);
-    expect(now / before).toBeGreaterThan(0.5);
+    expect(now / before).toBeGreaterThan(5);
+    expect(now / before).toBeLessThan(10);
   });
 });
 

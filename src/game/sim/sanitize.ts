@@ -24,7 +24,7 @@ let stateKeys: Set<string> | null = null;
  * وگرنه فیلترِ پایانی (P5.13) آن را در هر بارگذاری پاک می‌کند — همان باگی که انتخابِ جشن (fest)
  * و پاداشِ «اولین برداشتِ روز» (bonusDay) را با هر رفرش از بین می‌برد.
  */
-export const OPTIONAL_STATE_KEYS = ["xpAcc", "quests", "generations", "lineage", "bonusDay", "fest"] as const;
+export const OPTIONAL_STATE_KEYS = ["xpAcc", "quests", "generations", "lineage", "bonusDay", "fest", "combo", "comboAt", "wishUntil", "streak", "streakDay"] as const;
 const allowedKeys = () => (stateKeys ??= new Set<string>([...Object.keys(newState()), ...OPTIONAL_STATE_KEYS]));
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -101,6 +101,12 @@ export function sanitizeSave(raw: unknown): State | null {
   s.wAcc = num(s.wAcc, 0, 0, 1e6);
   s.histAcc = num(s.histAcc, 0, 0, 1e6);
   s.eventAcc = num(s.eventAcc, 0, 0, 1e6);
+  // M7..M12: فیلدهای نسلِ ASMR
+  s.combo = intOr(s.combo, 0, 0, 999);
+  s.comboAt = num(s.comboAt, -999, -1e9, 1e9);
+  s.wishUntil = num(s.wishUntil, 0, 0, 1e9);
+  s.streak = intOr(s.streak, 0, 0, 9999);
+  s.streakDay = intOr(s.streakDay, 0, 0, 99991231);
   if (typeof s.weather !== "string" || !(WEATHER_TYPES as readonly string[]).includes(s.weather)) s.weather = "sun";
   if (s.currentEvent !== null && !isObj(s.currentEvent)) s.currentEvent = null;
 
@@ -116,6 +122,7 @@ export function sanitizeSave(raw: unknown): State | null {
     if (typeof raw2.b === "string" && raw2.b) tile.b = raw2.b;
     if (raw2.wet === true) tile.wet = true;
     if (raw2.fert === true) tile.fert = true;
+    if (raw2.gold === true) tile.gold = true; // M8
     if (Number.isFinite(toNum(raw2.q))) tile.q = [intOr(raw2.q, 0, 0, 1e6)];
     if (raw2.autoMode === true) tile.autoMode = true;
     return tile;
@@ -142,8 +149,8 @@ export function sanitizeSave(raw: unknown): State | null {
       .filter(([k, v]) => k in ITEMS && Number.isFinite(toNum(v)))
       .map(([k, v]) => [k, Math.max(0, Math.round(toNum(v)))])
   );
-  const statKeys = ["earned", "harvested", "orders", "produced", "spent", "animals", "decorations", "skillPoints"] as const;
-  if (!isObj(s.stats)) s.stats = { earned: 0, harvested: 0, orders: 0, produced: 0, spent: 0, animals: 0, decorations: 0, skillPoints: 0 };
+  const statKeys = ["earned", "harvested", "orders", "produced", "spent", "animals", "decorations", "skillPoints", "bestChain", "golden"] as const;
+  if (!isObj(s.stats)) s.stats = { earned: 0, harvested: 0, orders: 0, produced: 0, spent: 0, animals: 0, decorations: 0, skillPoints: 0, bestChain: 0, golden: 0 };
   statKeys.forEach((k) => {
     s.stats[k] = intOr((s.stats as unknown as Record<string, unknown>)[k], 0, 0);
   });

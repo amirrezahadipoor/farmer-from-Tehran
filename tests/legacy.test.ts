@@ -142,13 +142,13 @@ describe("مزایای تازه (عددی)", () => {
 describe("شجره‌نامه", () => {
   it("هر تناسخ کارنامه‌ی همان نسل را ثبت می‌کند (تفاضلِ آمار)", () => {
     expect(canPrestige(s)).toBe(false);
-    ready(s, 30_000);
+    ready(s, 50_000); // M10: آستانه ۱۶هزار + ۲۵٪ درآمد
     s.day = 40;
     s.stats.earned = 100_000;
     s.stats.harvested = 900;
     s.stats.orders = 30;
     doPrestige(s, ev);
-    ready(s, 60_000);
+    ready(s, 90_000);
     s.day = 25;
     s.stats.earned = 250_000;
     s.stats.harvested = 2_000;
@@ -156,8 +156,8 @@ describe("شجره‌نامه", () => {
     doPrestige(s, ev);
     const rows = generationRows(s);
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toMatchObject({ gen: 0, day: 40, earned: 100_000, harvested: 900, orders: 30, inherited: 3_000 });
-    expect(rows[1]).toMatchObject({ gen: 1, day: 25, earned: 150_000, harvested: 1_100, orders: 40, inherited: 6_000 });
+    expect(rows[0]).toMatchObject({ gen: 0, day: 40, earned: 100_000, harvested: 900, orders: 30, inherited: 5_000 }); // M10: ۵۰هزار × ۱۰٪
+    expect(rows[1]).toMatchObject({ gen: 1, day: 25, earned: 150_000, harvested: 1_100, orders: 40, inherited: 9_000 });
   });
 
   it("سیو: شجره‌نامه از sanitize سالم عبور می‌کند و رکوردِ خراب حذف یا صفر می‌شود", () => {

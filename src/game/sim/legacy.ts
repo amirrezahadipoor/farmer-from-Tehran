@@ -18,9 +18,9 @@ import { beginLineage } from "./lineage";
 import { fmt } from "../data";
 
 export const PRESTIGE_LEVEL = 20;
-export const PRESTIGE_COINS = 10_000;
+export const PRESTIGE_COINS = 16_000; // M10: آستانه‌ی تناسخ سخت‌تر شد (ساعاتِ بازی بیشتر)
 /** V.7: آستانه‌ی سکه‌ی تناسخ با درآمد کل بالا می‌رود تا نسبت سکه/تناسخ مهار شود */
-export const prestigeCoins = (s: State) => PRESTIGE_COINS + Math.round((s.stats?.earned ?? 0) * 0.2);
+export const prestigeCoins = (s: State) => PRESTIGE_COINS + Math.round((s.stats?.earned ?? 0) * 0.25); // M10
 export const INHERIT_SHARE = 0.1;
 export const MAX_GENERATIONS_LOG = 50;
 

@@ -36,7 +36,7 @@ import Hud, { CameraControls } from "./ui/Hud";
 import Toolbar, { SeedTray } from "./ui/Toolbar";
 import { Toasts, useToasts, SaveIssueBanner, AwayCard, MainMenu } from "./ui/Overlays";
 import { Tour } from "./ui/Tour";
-import { tileCenter } from "./render/core";
+import { lightInfo, tileCenter } from "./render/core";
 import Splash from "./ui/Splash";
 import Loading from "./ui/Loading";
 import { SkyLayers, TintLayers } from "./ui/ScreenLayers";
@@ -71,6 +71,73 @@ const startedStore = {
     startedSubs.forEach((f) => f());
   },
 };
+
+/** M11: تریگرِ بیرونیِ ستاره‌ی آرزو برای تستِ خودکار */
+let forceWishStar: (() => void) | null = null;
+
+/**
+ * M11 — ستاره‌ی آرزوی شبانه: شب‌ها (تاریکی > ۰٫۴۵) هر ۶ تا ۱۰ دقیقه یک ستاره‌ی
+ * دنباله‌دار از آسمانِ نقشه می‌گذرد؛ ضربه‌اش آرزو می‌کند: ۱۵ دقیقه +۱۰٪ محصول.
+ * DOM سبک روی بوم است تا ضربه‌ی واقعی بگیرد (نه کلیکِ روی canvas).
+ */
+function WishStar({ toast }: { toast: (m: string, t?: "ok" | "err" | "lvl" | "prestige") => void }) {
+  const [star, setStar] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    forceWishStar = () => setStar({ x: 0.2 + Math.random() * 0.6, y: 0.12 + Math.random() * 0.2 });
+    return () => {
+      forceWishStar = null;
+    };
+  }, []);
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const s = game.get();
+      if (!s) return;
+      if (lightInfo(s).dark <= 0.45) {
+        setStar((cur) => (cur && Math.random() < 0.5 ? null : cur)); // روز: کم‌کم محو
+        return;
+      }
+      if ((s.wishUntil ?? 0) > s.time) return; // باف فعال است
+      if (Math.random() < 1 / 420) setStar({ x: 0.2 + Math.random() * 0.6, y: 0.12 + Math.random() * 0.2 });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, []);
+  useEffect(() => {
+    if (!star) return;
+    const t = setTimeout(() => setStar(null), 7000); // هفت ثانیه فرصت
+    return () => clearTimeout(t);
+  }, [star]);
+  if (!star) return null;
+  const wish = () => {
+    const s = game.get();
+    if (!s) return;
+    s.wishUntil = s.time + 900;
+    game.bump();
+    setStar(null);
+    haptic("success");
+    sound("goal");
+    toast("آرزوی ستاره: ۱۵ دقیقه محصولِ بیشتر (+۱۰٪)", "lvl");
+  };
+  return (
+    <button
+      type="button"
+      aria-label="ستاره‌ی آرزو"
+      onClick={wish}
+      className="absolute z-40 flex h-14 w-14 items-center justify-center"
+      style={{ left: `${star.x * 100}%`, top: `${star.y * 100}%`, background: "transparent" }}
+    >
+      <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true">
+        <line x1="8" y1="8" x2="40" y2="40" stroke="url(#wishTail)" strokeWidth="2.5" strokeLinecap="round" />
+        <defs>
+          <linearGradient id="wishTail" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fffde7" stopOpacity="0" />
+            <stop offset="1" stopColor="#fff59d" />
+          </linearGradient>
+        </defs>
+        <path d="M40 30 l3.5 7 7 3.5 -7 3.5 -3.5 7 -3.5 -7 -7 -3.5 7 -3.5 z" fill="#fff9c4" className="animate-pulse" />
+      </svg>
+    </button>
+  );
+}
 
 /** زمانِ بیکاریِ مرورگر (با جایگزین برای سافاری) */
 function whenIdle(fn: () => void, timeout = 3000) {
@@ -157,6 +224,8 @@ export default function Game() {
         return { guests: rt.guests.length, say: rt.guests[0]?.w.say ?? null };
       },
       openPanel: (p: Panel) => setPanel(p),
+      /** M11: آوردنِ فوریِ ستاره‌ی آرزو (تست) */
+      wishStar: () => forceWishStar?.(),
       audio: audioDebug,
       crash: () => raiseFatal(new Error("آزمونِ مرزِ خطا (تستِ خودکار)")),
     };
@@ -248,6 +317,7 @@ export default function Game() {
       {s && started === true && (
         <>
           <CameraControls />
+          <WishStar toast={toast} />
           <Hud s={s} panel={panel} setPanel={setPanel} openMenu={() => setMenuOpen(true)} saveState={saveState} online={online} />
           {tool === "seed" && <SeedTray s={s} seed={seed} setSeed={setSeed} />}
           <Toolbar tool={tool} seed={seed} setTool={setTool} setPanel={setPanel} />

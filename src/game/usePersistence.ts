@@ -13,6 +13,7 @@ import { fmt } from "./data";
 import { readLocalWithBackup, readIdbSave, fetchCloudSave, ensurePlayerId, pickNewer, restoreQuarantined } from "./persist";
 import { saveGame, flushOutbox, useOnline, hasPendingSave, type SaveState } from "./net";
 import { SILENT, type ToastFn } from "./events";
+import { applyStreak } from "./logic";
 import { game } from "./store";
 
 export interface AwayReport {
@@ -25,6 +26,9 @@ export interface AwayReport {
 }
 
 const MAX_AWAY_SECONDS = 7200;
+
+/** رویدادهای استریک: توستِ واقعی، بقیه بی‌صدا (خارج از چرخه‌ی رندر) */
+const ev0 = (toast: ToastFn) => ({ ...SILENT, toast });
 
 const snap = (st: State) => ({
   coins: st.coins,
@@ -90,6 +94,13 @@ export function usePersistence(toast: ToastFn) {
       }
       if (!alive) return;
       game.set(s || newState());
+      // M12: استریکِ روزهای پیوسته — فقط روزِ واقعیِ تازه
+      try {
+        const st = game.get();
+        if (st) applyStreak(st, Math.floor(Date.now() / 86_400_000), ev0(toast));
+      } catch {
+        /* استریک اختیاری است */
+      }
       setSaveIssue(issue);
       setCanRestore(restorable);
       setReady(true);

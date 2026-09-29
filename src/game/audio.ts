@@ -94,10 +94,10 @@ export const isSoundOn = () => settings.on;
 export const setSoundOn = (v: boolean) => setAudioSettings({ on: v });
 
 /** یک جلوه‌ی صوتی (فقط کلیدهای تعریف‌شده در SFX_KEYS) */
-export function sound(k: SfxKey) {
+export function sound(k: SfxKey, detune?: number) {
   if (!settings.on || settings.master <= 0 || settings.sfx <= 0) return;
   const e = ensure();
-  if (e) e.sfx(k);
+  if (e) e.sfx(k, detune);
   else if (loading && !mod) pendingSfx = k;
 }
 

@@ -9,6 +9,8 @@ import type { Gender } from "../gender";
 export type TileKind = "grass"|"soil"|"tree"|"rock"|"water"|"bld";
 export interface Tile {
   k: TileKind; v: number; crop?: string; g?: number; wet?: boolean; fert?: boolean;
+  /** M8: محصولِ طلایی — شانسِ کم در کاشت، پاداشِ پنج‌برابر در برداشت */
+  gold?: boolean;
   /** ثانیه‌های باقی‌مانده‌ی رطوبت (P5.6): خاک بعد از WATER_SECONDS ثانیه خشک می‌شود */
   dry?: number;
   b?: string; q?: number[]; p?: number; out?: string[]; lr?: number; autoMode?: boolean;
@@ -28,11 +30,17 @@ export interface State {
   rep: number; techs: string[]; skills: string[];
   /** V.8: true قدیمی یا شماره‌ی روزِ گرفتن */
   achievements: Record<string, boolean | number>; contracts: ContractState[];
-  stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; };
+  stats: { earned: number; harvested: number; orders: number; produced: number; spent: number; animals: number; decorations: number; skillPoints: number; bestChain: number; golden: number };
   story: { name: string; gender: Gender; chapter: number; phase: "scenes"|"goal"|"end"; sceneIdx: number; done: boolean; shown: boolean; completed: string[] };
   savedAt: number; wAcc: number; histAcc: number; eventAcc: number;
   /** V.7: روزِ آخرین پاداشِ اولین برداشت */
   bonusDay?: number;
+  /** M7: زنجیره‌ی برداشت — شمارنده و زمانِ آخرین حلقه (ثانیه‌ی بازی) */
+  combo?: number; comboAt?: number;
+  /** M11: آرزوی ستاره‌ی شبانه تا این زمان (ثانیه‌ی بازی) +۱۰٪ محصول */
+  wishUntil?: number;
+  /** M12: استریکِ روزهای واقعیِ پیوسته و روزِ آخر (شماره‌ی روزِ یونیکس) */
+  streak?: number; streakDay?: number;
   /** V.5: فستیوال فصلی دهکده */
   fest?: { idx: number; day: number; choice: "invest" | "feast" | "rest" | null };
   /** تجربه‌ی کسریِ انبارشده — XP فقط تابع «ارزش» است نه تعداد کلیک (P5.7) */
@@ -172,6 +180,8 @@ export const SFX_KEYS = [
   "harvest", "plant", "water", "fert", "dig", "chop", "rock", "build", "demolish", "collect",
   "coin", "sell", "order", "contract", "expand", "hire",
   "unlock", "skill", "lvl", "achievement", "prestige", "chapter", "goal",
+  /** M7: زنگِ زنجیره‌ی برداشت — نرم و صعودی (سنتزِ زنده، بدونِ فایل) */
+  "chime",
 ] as const;
 export type SfxKey = (typeof SFX_KEYS)[number];
 
@@ -182,7 +192,7 @@ export type SfxKey = (typeof SFX_KEYS)[number];
 export interface Events {
   toast: (m: string, t?: "ok" | "err" | "lvl" | "prestige") => void;
   fx: (gx: number, gy: number, text: string, color?: string, burst?: string, icon?: string) => void;
-  sound: (k: SfxKey) => void;
+  sound: (k: SfxKey, detune?: number) => void;
   /** V.3: جشنِ تمام‌صفحه (کاغذرنگی) برای سطح/دستاورد/تناسخ */
   celebrate?: (kind: "level" | "achievement" | "prestige") => void;
   /** V.3: لرزشِ ملایم دوربین برای رویدادهای بزرگ (خشکسالی، تناسخ) */
@@ -241,7 +251,13 @@ export function migrate(d: unknown): State | null {
   if (!s.achievements) s.achievements = {};
   if (!s.techs) s.techs = [];
   if (!s.skills) s.skills = [];
-  if (!s.stats) s.stats = { earned:0, harvested:0, orders:0, produced:0, spent:0, animals:0, decorations:0, skillPoints:0 };
+  if (!s.stats) s.stats = { earned:0, harvested:0, orders:0, produced:0, spent:0, animals:0, decorations:0, skillPoints:0, bestChain:0, golden:0 };
+  // M7..M12: فیلدهای نسلِ ASMR — نبودشان در سیوهای قدیمی طبیعی است
+  if (typeof s.combo !== "number" || !Number.isFinite(s.combo)) s.combo = 0;
+  if (typeof s.comboAt !== "number" || !Number.isFinite(s.comboAt)) s.comboAt = -999;
+  if (typeof s.wishUntil !== "number" || !Number.isFinite(s.wishUntil)) s.wishUntil = 0;
+  if (typeof s.streak !== "number" || !Number.isFinite(s.streak)) s.streak = 0;
+  if (typeof s.streakDay !== "number" || !Number.isFinite(s.streakDay)) s.streakDay = 0;
   if (!s.currentEvent) s.currentEvent = null;
   if (!s.eventAcc) s.eventAcc = 0;
   if (!s.story) s.story = newStoryState();

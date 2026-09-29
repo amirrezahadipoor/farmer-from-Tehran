@@ -162,6 +162,7 @@ describe("P5.5 — ماشین‌ها پول از هوا نمی‌سازند", ()
     const [x, y] = soilAt();
     s.coins = 100000;
     s.inv = {};
+    s.seasonIndex = 1; // تابستان: بدون پاداشِ فصلی تا حسابِ بذرِ کارگر دقیق بماند
     plant(s, x, y, CROPS[0].id, silent);
     s.tiles[idx(x, y)].g = 1; // رسیده
     s.workers = [{ kind: "farmhand", hiredAt: 0 } as unknown as State["workers"][number]];

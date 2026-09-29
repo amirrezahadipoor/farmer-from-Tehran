@@ -90,6 +90,8 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
   const hoverClear = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdFired = useRef(false);
+  /** M11: رازِ آسیاب — هفت ضربه‌ی پیوسته (۱۲ ثانیه) هدیه‌ی یک‌باره‌ی روز */
+  const millTaps = useRef({ n: 0, at: 0, day: -1 });
 
   /** عمل دسته‌ای: همان ابزار روی ۹ زمین (۳×۳) اجرا می‌شود. */
   const groupAct = (tx: number, ty: number) => {
@@ -147,6 +149,22 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     if (r !== "open" && JSON.stringify(s.tiles[idx(tx, ty)]) === before) {
       sound("err");
       haptic("error");
+    }
+    // M11: رازِ آسیاب — ضربه‌های پشت‌سرهم با ابزارِ دست
+    if (tool === "hand" && s.tiles[idx(tx, ty)].b === "mill") {
+      const m = millTaps.current;
+      const nowMs = performance.now();
+      m.n = nowMs - m.at < 12_000 ? m.n + 1 : 1;
+      m.at = nowMs;
+      if (m.n >= 7 && m.day !== s.day) {
+        m.day = s.day;
+        m.n = 0;
+        s.coins += 77;
+        s.stats.earned += 77;
+        ev.toast("رازِ آسیاب: بادِ شب هفتاد و هفت سکه در سنگ جا گذاشته بود", "lvl");
+        sound("achievement");
+        ev.coins?.(5);
+      }
     }
     if (r !== "open") sendHero(s, tx, ty, tool);
     if (r === "open") {

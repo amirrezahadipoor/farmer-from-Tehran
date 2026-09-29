@@ -2,7 +2,7 @@
  * src/game/sim/actions.ts — کنش‌های بازیکن: برداشت، کاشت، کارگاه، ابزارها، ساخت، استخدام، تحقیق و مهارت
  * (P5.11: logic.ts به چهار ماژول ≤ ۴۰۰ خط شکسته شد؛ همه از مسیر "./logic" صادر می‌شوند)
  */
-import { BMAP, CMAP, ITEMS, WORKERS, WorkerKind, FERT_COST, HOE_COST, CLEAR_COST, TECH_TREE, SKILLS, fmt } from "../data";
+import { BMAP, CMAP, ITEMS, WORKERS, WorkerKind, FERT_COST, HOE_COST, CLEAR_COST, TECH_TREE, SKILLS, fmt, seasonBoost } from "../data";
 import {
   type State, type Tile, type Events, idx, chunkOf, locked, has, countB, hasTech, hasSkill,
   WATER_SECONDS, CLEAR_YIELD, NCH,
@@ -20,7 +20,14 @@ export function harvest(s: State, x: number, y: number, ev: Events, silent = fal
   if (hasTech(s, "greenhouse_tech")) extra += 1;
   if (hasSkill(s, "harvest_god")) extra += 1;
   if (rng() < 0.2) extra += 1;
-  const n = c.yield + extra;
+  let n = c.yield + extra;
+  // M9: فصل‌کشت — برداشت در فصلِ مطلوب یک محصولِ اضافه می‌دهد
+  if (seasonBoost(c.id, s.seasonIndex)) {
+    n += 1;
+    ev.fx(x, y, "فصلش", "#c8e6c9", "#a5d6a7");
+  }
+  // M11: آرزوی ستاره‌ی شبانه — تا پایانِ باف، +۱۰٪ (کفِ ۱)
+  if ((s.wishUntil ?? 0) > s.time) n += Math.max(1, Math.round(n * 0.1));
   const outId = c.out ?? c.id; // صنوبر ← الوار
   const got = addInv(s, outId, n);
   if (got === 0) { if (!silent) ev.toast("انبار پر است! محصولات را بفروشید یا سیلو بسازید", "err"); return false; }
@@ -32,9 +39,32 @@ export function harvest(s: State, x: number, y: number, ev: Events, silent = fal
     ev.toast(`اولین برداشت روز: +${fmt(b)} سکه`, "ok");
   }
   ev.fx(x, y, `+${fmt(got)}`, "#fff", c.color, `item:${outId}`);
-  addXp(s, c.xp, ev);
+  // M7: زنجیره‌ی برداشت — حلقه‌های پیوسته (پنجره‌ی ۴ ثانیه‌ای) تجربه‌ی بیشتری می‌دهند
+  s.combo = s.time - (s.comboAt ?? -999) <= 4 ? (s.combo ?? 0) + 1 : 1;
+  s.comboAt = s.time;
+  const chainMult = Math.min(1.5, 1 + ((s.combo ?? 1) - 1) * 0.02);
+  s.stats.bestChain = Math.max(s.stats.bestChain ?? 0, s.combo ?? 0);
+  addXp(s, Math.round(c.xp * chainMult), ev);
+  if (!silent && (s.combo ?? 0) > 1) ev.sound("chime", 1 + Math.min(12, (s.combo ?? 1) - 1) * 0.05);
+  if (!silent && (s.combo ?? 0) > 0 && (s.combo ?? 0) % 10 === 0) {
+    const bonus = 10 * (s.combo ?? 10);
+    s.coins += bonus; s.stats.earned += bonus;
+    ev.toast(`زنجیره‌ی ${fmt(s.combo ?? 0)}تایی: +${fmt(bonus)} سکه`, "ok");
+    ev.coins?.(3);
+  }
+  // M8: محصولِ طلایی — پاداشِ مستقیمِ سکه
+  if (t.gold) {
+    t.gold = false;
+    s.stats.golden = (s.stats.golden ?? 0) + 1;
+    const bonus = 5 * (ITEMS[outId]?.base ?? 10);
+    s.coins += bonus; s.stats.earned += bonus;
+    ev.fx(x, y, `+${fmt(bonus)}`, "#ffd54f", "#ffe082", "ui:coin");
+    ev.toast("محصول طلایی! پنج‌برابرِ ارزشِ بازار", "lvl");
+    ev.coins?.(4);
+    ev.sound("coin");
+  }
   updateContract(s, "harvest", got, ev);
-  t.crop = undefined; t.g = 0; t.wet = false; t.fert = false;
+  t.crop = undefined; t.g = 0; t.wet = false; t.fert = false; t.gold = false;
   if (!silent) ev.sound("harvest");
   return true;
 }
@@ -49,6 +79,8 @@ export function plant(s: State, x: number, y: number, crop: string, ev: Events, 
   if (s.coins < seedCost) { if (!silent) ev.toast("سکه کافی برای خرید بذر ندارید", "err"); return false; }
   s.coins -= seedCost; s.stats.spent += seedCost;
   t.crop = crop; t.g = 0;
+  // M8: محصولِ طلایی — ۳٪ ساده، ۸٪ روی خاکِ کودده (بازتولید نمی‌شود مگر کاشتِ تازه)
+  t.gold = rng() < (t.fert ? 0.08 : 0.03);
   if (hasTech(s, "fertilizer_master") && rng() < 0.3) t.fert = true;
   if (hasSkill(s, "fert_soil") && rng() < 0.15) t.fert = true;
   if (!silent) { ev.fx(x, y, `-${fmt(seedCost)}`, "#ffd54f", c.leaf, "ui:coin"); ev.sound("plant"); }

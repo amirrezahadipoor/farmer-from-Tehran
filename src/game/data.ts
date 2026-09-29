@@ -3,6 +3,8 @@ import { faNum } from "./faNum";
 export interface CropDef {
   id: string; name: string; seed: number; time: number; yield: number; lvl: number; xp: number;
   color: string; leaf: string; rare?: boolean; animalFeed?: number;
+  /** M9: فصل‌های مطلوبِ کشت (اندیسِ SEASONS) — برداشت در فصلِ مطلوب +۱ محصول */
+  seas?: number[];
   /** کالای برداشتی اگر با شناسه‌ی محصول فرق کند (صنوبر ← الوار) */
   out?: string;
   /** ظاهرِ عمومی برای محصول‌هایی که نقاشیِ اختصاصی ندارند */
@@ -337,7 +339,27 @@ export const CLEAR_COST = { tree: 20, rock: 30 } as const;
  * (رشدِ توانِ ۱.۲۵ به‌جای ۱.۶) تا بازه‌ی ۱۰..۲۰ خسته‌کننده نباشد — هر سطح محتوای تازه دارد.
  */
 export const xpFor = (lvl: number) =>
-  lvl <= 10 ? Math.round(40 * Math.pow(lvl, 1.6)) : Math.round(40 * Math.pow(10, 1.6) + 140 * Math.pow(lvl - 10, 1.25));
+  lvl <= 10 ? Math.round(40 * Math.pow(lvl, 1.6)) : Math.round(40 * Math.pow(10, 1.6) + 1200 * Math.pow(lvl - 10, 1.7));
+/**
+ * M9: فصل‌های مطلوبِ هر محصول — آیکونیک‌ها دستچین، بقیه پخشِ قطعی تا هر فصل حدود یک‌چهارم
+ * محصولات مطلوب داشته باشد (چرخشِ کشت معنا پیدا کند).
+ */
+const SEASON_OVERRIDES: Record<string, number[]> = {
+  wheat: [0, 2], carrot: [0, 2], barley: [0], clover: [0, 3], tulip: [0], rose: [0, 1],
+  strawberry: [0, 1], cucumber: [1], tomato: [1], corn: [1, 2], melon: [1], watermelon: [1],
+  sunflower: [1, 2], pumpkin: [2], grape: [2], apple: [2], pomegranate: [2], barberry: [2],
+  saffron: [2], cotton: [2, 3], olive: [2], rice: [1], tea: [0, 1], walnut: [2],
+  almond: [0, 2], fig: [1, 2], dates: [2], mint: [0, 1], onion: [0, 2], potato: [0, 2],
+};
+export function cropSeasons(c: CropDef): number[] {
+  return SEASON_OVERRIDES[c.id] ?? c.seas ?? [Math.max(0, CROPS.findIndex((x) => x.id === c.id)) % 4];
+}
+/** آیا این محصول در این فصل مطلوب است؟ (برداشت +۱) */
+export function seasonBoost(cropId: string, seasonIndex: number): boolean {
+  const c = CROPS.find((x) => x.id === cropId);
+  return !!c && cropSeasons(c).includes(((seasonIndex % 4) + 4) % 4);
+}
+
 /**
  * عددِ صحیحِ فارسی (کفِ عدد). بی‌ICU (faNum.ts): toLocaleString در هر فراخوانی NumberFormatِ تازه
  * می‌ساخت و حتی یک نمونه‌ی کش‌شده هم بارِ اولش ۱۰ تا ۱۶ میلی‌ثانیه داده‌ی ICU بار می‌کرد (P6.5).

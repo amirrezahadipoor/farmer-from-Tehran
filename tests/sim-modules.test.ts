@@ -271,6 +271,7 @@ describe("workers — کارگرِ مزرعه و اپراتور", () => {
     const s = newState();
     s.coins = 500;
     s.inv = { wheat: 5 };
+    s.seasonIndex = 1; // تابستان: بدون پاداشِ فصلی
     s.workers = [{ id: 1, kind: "farmhand" }];
     s.wAcc = 2.3; // یک گامِ کاملِ ۲٫۲ ثانیه
     const target = idx(CX, CY); // گندمِ رسیده‌ی زمینِ آغازین

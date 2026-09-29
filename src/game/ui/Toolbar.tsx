@@ -4,7 +4,7 @@
  * src/game/ui/Toolbar.tsx — نوار ابزار شست‌رس + سینی بذر
  */
 
-import { CROPS, CMAP, FERT_COST, HOE_COST, fmt } from "../data";
+import { CROPS, CMAP, FERT_COST, HOE_COST, fmt, seasonBoost } from "../data";
 import type { State } from "../logic";
 import { Icon, ItemIcon } from "../icons";
 import { sound } from "../audio";
@@ -37,12 +37,13 @@ export function SeedTray({ s, seed, setSeed }: { s: State; seed: string; setSeed
     <div className="absolute bottom-[86px] left-1/2 z-30 flex max-w-[96vw] -translate-x-1/2 gap-1.5 overflow-x-auto overscroll-contain rounded-2xl bg-amber-50/95 p-1.5 shadow-2xl ring-1 ring-amber-900/15 backdrop-blur-md">
       {CROPS.map((c) => {
         const lock = c.lvl > s.level;
+        const inSeason = seasonBoost(c.id, s.seasonIndex); // M9
         return (
           <button
             key={c.id}
             type="button"
             disabled={lock}
-            aria-label={lock ? `${c.name} (سطح ${fmt(c.lvl)})` : c.name}
+            aria-label={lock ? `${c.name} (سطح ${fmt(c.lvl)})` : inSeason ? `${c.name} — فصلِ مطلوب، یک محصولِ بیشتر` : c.name}
             aria-pressed={seed === c.id}
             onClick={() => setSeed(c.id)}
             className={`relative flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-xl p-1 transition md:w-16 ${
@@ -52,6 +53,9 @@ export function SeedTray({ s, seed, setSeed }: { s: State; seed: string; setSeed
             <span className="relative">
               <ItemIcon id={c.id} size={34} className={lock ? "grayscale" : ""} />
               {lock && <Icon name="lock" size={16} className="absolute -bottom-1 -left-1" />}
+              {inSeason && !lock && (
+                <span aria-hidden="true" className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-lime-400 ring-2 ring-white" title="فصلِ مطلوب: +۱ محصول" />
+              )}
             </span>
             <span className="flex items-center gap-0.5 text-[10px] font-black">
               {lock ? (

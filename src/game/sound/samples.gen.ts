@@ -5,6 +5,10 @@
 import type { SfxKey } from "../logic";
 
 export const SFX_SAMPLES: Record<SfxKey, { files: string[]; gain: number }> = {
+  "chime": {
+    "files": [],
+    "gain": 0.5
+  },
   "click": {
     "files": [
       "/audio/sfx/click.mp3"

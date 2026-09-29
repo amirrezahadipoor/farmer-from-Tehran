@@ -33,7 +33,7 @@ export function newState(): State {
     market, orders: [], nextId: 1, workers: [],
     rep: 0, techs: [], skills: [],
     achievements: {}, contracts,
-    stats: { earned: 0, harvested: 0, orders: 0, produced: 0, spent: 0, animals: 0, decorations: 0, skillPoints: 0 },
+    stats: { earned: 0, harvested: 0, orders: 0, produced: 0, spent: 0, animals: 0, decorations: 0, skillPoints: 0, bestChain: 0, golden: 0 },
     story: newStoryState(),
     savedAt: Date.now(), wAcc: 0, histAcc: 0, eventAcc: 0,
   };
@@ -169,6 +169,28 @@ export function addXp(s: State, n: number, ev: Events) {
     ev.toast(parts.join(" · "), "lvl");
   }
   checkAchievements(s, ev);
+}
+
+/**
+ * M12: استریکِ روزهای واقعیِ پیوسته — صندوقِ پلکانیِ ۵۰×روز (سقف ۷ روز).
+ * خالص و تست‌پذیر؛ روزِ گم‌شده زنجیره را از یک می‌آغازد. خروجی: پاداشی داده شد؟
+ */
+export function applyStreak(s: State, realDay: number, ev: Events): boolean {
+  if (!s.streakDay) {
+    s.streakDay = realDay;
+    s.streak = 1;
+    return false; // نخستین روز: جشنی نیست
+  }
+  if (s.streakDay === realDay) return false;
+  s.streak = s.streakDay === realDay - 1 ? (s.streak ?? 0) + 1 : 1;
+  s.streakDay = realDay;
+  const reward = 50 * Math.min(7, s.streak ?? 1);
+  s.coins += reward;
+  s.stats.earned += reward;
+  ev.toast(`روز ${fmt(s.streak ?? 1)} پیاپی: صندوقِ روزانه +${fmt(reward)} سکه`, "lvl");
+  ev.sound("contract");
+  ev.coins?.(4);
+  return true;
 }
 
 export function addInv(s: State, id: string, n: number): number {

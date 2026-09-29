@@ -199,8 +199,8 @@ export class Engine {
     }
   }
 
-  /** یک جلوه؛ false یعنی ادغام یا سقفِ هم‌زمانی مانعش شد */
-  sfx(k: SfxKey): boolean {
+  /** یک جلوه؛ false یعنی ادغام یا سقفِ هم‌زمانی مانعش شد. detune = پله‌ی زیروبمی (زنجیره) */
+  sfx(k: SfxKey, detune = 1): boolean {
     const now = this.ac.currentTime;
     if (now - (this.recent.get(k) ?? -1) < SFX_MERGE) return false;
     this.recent.set(k, now);
@@ -215,7 +215,7 @@ export class Engine {
       // M4: فیلترِ گرم — فرکانس‌های تیزِ ضبطِ نزدیک نرم می‌شوند (حسِ ASMR، نه بلندگوی خشک)
       const src = this.ac.createBufferSource();
       src.buffer = buf;
-      src.playbackRate.value = 1 + (Math.random() - 0.5) * 0.06;
+      src.playbackRate.value = (1 + (Math.random() - 0.5) * 0.06) * detune;
       const g = this.ac.createGain();
       g.gain.value = spec.gain;
       let out: AudioNode = g;
@@ -237,7 +237,7 @@ export class Engine {
       this.tail(k);
       return true;
     }
-    playVoices(this.ac, this.buses.sfx, SFX[k], this.kit, SFX_MAKEUP, 1 + (Math.random() - 0.5) * 0.04);
+    playVoices(this.ac, this.buses.sfx, SFX[k], this.kit, SFX_MAKEUP, (1 + (Math.random() - 0.5) * 0.04) * detune);
     this.active.push(now + sfxLength(k));
     this.tail(k);
     return true;
