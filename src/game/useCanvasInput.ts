@@ -15,6 +15,7 @@ import { haptic } from "./mobile";
 import { sound } from "./audio";
 import { game, rt } from "./store";
 import { sendHero } from "./hero";
+import { waterRipple } from "./juice";
 import type { Panel } from "./ui/common";
 
 /** ثبت اشاره‌گر با گارد: در بعضی مرورگرها/رویدادهای مصنوعی خطای NotFoundError می‌دهد. */
@@ -135,8 +136,14 @@ export function useCanvasInput({ tool, seed, bsel, ev, setPanel, setTool, setBse
     rt.fx.push({ kind: "ring", x: tc.x, y: tc.y - 4, vx: 0, vy: 0, life: 0.45, max: 0.45, color: "rgba(255,255,255,0.9)" }); // V.3
     // P/FIX فیدبکِ شکستِ بی‌صدا: اگر ابزار هیچ تغییری در کاشی نداد، با صدا و لرزشِ خطا اعلام شود
     // تا کاربر «لمس کار نمی‌کند» حس نکند (پیامِ توضیحی را خودِ toolAction نشان می‌دهد)
+    const tile0 = s.tiles[idx(tx, ty)];
+    const wasWet = tile0.wet === true;
     const before = JSON.stringify(s.tiles[idx(tx, ty)]);
     const r = toolAction(s, tx, ty, tool, arg, ev);
+    if (tool === "water" && !wasWet && tile0.wet === true) {
+      const tc2 = tileCenter(tx, ty);
+      waterRipple(tc2.x, tc2.y); // M6: موج و قطره‌های آبیاری
+    }
     if (r !== "open" && JSON.stringify(s.tiles[idx(tx, ty)]) === before) {
       sound("err");
       haptic("error");

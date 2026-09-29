@@ -18,6 +18,8 @@ export interface AmbientPlan {
   leaves: number;
   petals: number;
   birds: number;
+  /** M5: غبارِ نورِ روزِ آفتابی — ذراتِ بسیار ریزِ معلق */
+  motes: number;
 }
 
 export const isNight = (hour: number) => hour < 5.5 || hour > 19.5;
@@ -34,10 +36,11 @@ export function ambientPlan(season: string, hour: number, weather: string, q = 1
     leaves: season === "autumn" ? n(10) : 0,
     petals: season === "spring" && !night && calm ? n(8) : 0,
     birds: !night && calm ? n(3) : 0,
+    motes: !night && weather === "sun" && season !== "winter" ? n(6) : 0,
   };
 }
 
-export const ambientTotal = (p: AmbientPlan) => p.butterflies + p.fireflies + p.leaves + p.petals + p.birds;
+export const ambientTotal = (p: AmbientPlan) => p.butterflies + p.fireflies + p.leaves + p.petals + p.birds + p.motes;
 
 /** بیضی در مسیرِ دسته‌ای بدون خطِ اتصال: Path2D.ellipse از نقطه‌ی قبلی خط می‌کشد */
 function ell(path: Path2D, x: number, y: number, rx: number, ry: number, rot = 0) {
@@ -54,6 +57,19 @@ export function drawAmbient(ctx: CanvasRenderingContext2D, s: State, now: number
   const L = lightInfo(s);
   const plan = ambientPlan(season, L.hour, s.weather, quality);
   const C = tileCenter(18, 18); // حوالی مرکز مزرعه
+
+  // M5: غبارِ نور — ذراتِ ریزِ معلقِ روزِ آفتابی؛ یک مسیر و یک fill، سُرِشِ خیلی آرامِ بالا
+  if (plan.motes) {
+    const p = new Path2D();
+    for (let k = 0; k < plan.motes; k++) {
+      const p1 = hash(k, 11), p2 = hash(k, 13);
+      const x = C.x + (p1 - 0.5) * 520 + Math.sin(now * 0.25 + k * 2.4) * 14;
+      const y = C.y - 40 + ((p2 - 0.5) * 300 - ((now * 4 + k * 37) % 60)) ;
+      ell(p, x, y, 1.1 + p1, 1.1 + p1, 0);
+    }
+    ctx.fillStyle = "rgba(255,244,200,0.4)";
+    ctx.fill(p);
+  }
 
   // پروانه‌ها: سایه‌ها یک مسیر، بال‌ها به تفکیک رنگ، تنه‌ها یک مسیر
   if (plan.butterflies) {

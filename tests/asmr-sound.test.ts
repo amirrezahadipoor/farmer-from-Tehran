@@ -42,9 +42,9 @@ describe("M1: واخوانِ گرم (کنولوشنِ رویه‌ای)", () => {
   });
 
   it("موتور با Convolver واخوان را سیم‌کشی می‌کند؛ بدونش سقوطِ نرم است", () => {
-    const withRv = new Engine(ConvolverAC, { on: true, master: 0.8, sfx: 1, music: 1, ambient: 1 });
+    const withRv = new Engine(ConvolverAC as unknown as ConstructorParameters<typeof Engine>[0], { on: true, master: 0.8, sfx: 1, music: 1, ambient: 1 });
     expect(withRv.layers.reverb).toBe(true);
-    const without = new Engine(FakeDecodingAC, { on: true, master: 0.8, sfx: 1, music: 1, ambient: 1 });
+    const without = new Engine(FakeDecodingAC as unknown as ConstructorParameters<typeof Engine>[0], { on: true, master: 0.8, sfx: 1, music: 1, ambient: 1 });
     expect(without.layers.reverb).toBe(false);
   });
 
@@ -59,7 +59,7 @@ describe("M2: زنگ‌های باد در لایه‌ی آرامش", () => {
   it("زنگ طبقِ برنامه می‌آید و لایه را نمی‌شکند", () => {
     const ac = new FakeDecodingAC();
     const noise = new FakeBuffer(1, 1000, 8000);
-    const layer = CalmLayer.create(ac as unknown as BaseAudioContext, ac.destination, noise as unknown as AudioBuffer, null);
+    const layer = CalmLayer.create(ac as unknown as BaseAudioContext, ac.destination as unknown as AudioNode, noise as unknown as AudioBuffer, null);
     expect(layer).not.toBeNull();
     const nOsc0 = ac.nodes.length;
     expect(layer!.tick(1)).toBe(false); // هنوز زود است

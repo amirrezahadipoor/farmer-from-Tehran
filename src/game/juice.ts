@@ -60,6 +60,26 @@ export function flyCoins(n: number) {
   }
 }
 
+/**
+ * M6: موجِ آبیاری — سه حلقه‌ی نرمِ پشت‌سرهم + شش قطره‌ی براقِ پراکنده روی کاشیِ تازه‌آبیاری‌شده.
+ * همه در سیستمِ fx موجود؛ هیچ چیزِ تازه‌ای در هر فریم ساخته نمی‌شود.
+ */
+export function waterRipple(x: number, y: number) {
+  const cols = ["rgba(130,205,255,0.75)", "rgba(170,225,255,0.55)", "rgba(200,240,255,0.4)"];
+  for (let i = 0; i < 3; i++) {
+    rt.fx.push({ kind: "ring", x, y, vx: 0, vy: 0, life: 1.05 - i * 0.22, max: 0.6, color: cols[i] });
+  }
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + Math.random();
+    rt.fx.push({
+      kind: "spark", x: x + Math.cos(a) * 10, y: y - 6,
+      vx: Math.cos(a) * 34, vy: -70 - Math.random() * 50,
+      life: 0.5 + Math.random() * 0.25, max: 0.75,
+      color: "rgba(160,220,255,0.9)",
+    });
+  }
+}
+
 export function stepSfx(dt: number) {
   rt.sfx = rt.sfx.filter((f) => {
     f.t += dt;

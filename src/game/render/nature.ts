@@ -230,7 +230,17 @@ export function drawCropTile(ctx: CanvasRenderingContext2D, t: Tile, gx: number,
       drawPlant(c, crop, (u - v) * A * 0.85, (u + v - 1) * B * 0.85, gq, 0, hash(vr * 9 + i, vr * 7 + j), seasonId);
     }
   });
-  blit(ctx, sp, x, y, sway ? (Math.sin(now * 1.9 + hash(gx, gy) * 7) * (1 + g)) / 26 : 0);
+  // M5: تنفسِ محصولِ رسیده — پالسِ مقیاسِ بسیار نرم (±۲٪ در ~۲.۴ ثانیه) پایه‌ثابت، دعوتِ لمس
+  const skew = sway ? (Math.sin(now * 1.9 + hash(gx, gy) * 7) * (1 + g)) / 26 : 0;
+  if (g >= 1) {
+    const s = 1 + 0.022 * (0.5 + 0.5 * Math.sin(now * 2.6 + hash(gx, gy) * 6));
+    if (skew) {
+      ctx.save();
+      ctx.transform(1, 0, -skew, 1, skew * y, 0);
+      ctx.drawImage(sp.cv, x + sp.x0 * s, y + sp.y0 * s, sp.w * s, sp.h * s);
+      ctx.restore();
+    } else ctx.drawImage(sp.cv, x + sp.x0 * s, y + sp.y0 * s, sp.w * s, sp.h * s);
+  } else blit(ctx, sp, x, y, skew);
   if (g >= 1) {
     const bob = Math.sin(now * 4 + gx) * 3;
     for (let k = 0; k < 3; k++) {
