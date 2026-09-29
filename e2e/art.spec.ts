@@ -60,6 +60,19 @@ async function scene(page: import("@playwright/test").Page) {
 test("A.10: diff پیکسلیِ صحنه‌ی مرجع با پایه‌ی ثبت‌شده زیرِ آستانه می‌ماند", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "diff پیکسلی فقط روی کروم");
   await scene(page);
+  // بازضبطِ پایه پس از تغییرِ عمدیِ آرت: ART_RECORD=1 npx playwright test e2e/art.spec.ts
+  // ضبط از خودِ بکینگ‌استور (toDataURL) تا ضبط و مقایسه دقیقاً یک مسیر باشند —
+  // اسکرین‌شاتِ المان به DPR/مقیاسِ مرورگر وابسته است و با drawImage هم‌خوان نمی‌شد.
+  if (process.env.ART_RECORD) {
+    const png = await page.evaluate(() => {
+      const all = [...document.querySelectorAll("canvas")] as HTMLCanvasElement[];
+      const cv = all.sort((a, b) => b.width * b.height - a.width * a.height)[0];
+      return cv.toDataURL("image/png");
+    });
+    writeFileSync(BASE, Buffer.from(png.split(",")[1], "base64"));
+    test.info().annotations.push({ type: "note", description: "پایه‌ی artdiff بازضبط شد" });
+    return;
+  }
   const b64 = readFileSync(BASE).toString("base64");
   const diff = await page.evaluate(async (b64s) => {
     const bin = atob(b64s);
