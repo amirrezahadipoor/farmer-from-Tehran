@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@capacitor/android": "^7.6.9",
-    "@capacitor/cli": "^7.6.9",
+    "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^7.6.9",
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
